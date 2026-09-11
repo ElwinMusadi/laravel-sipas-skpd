@@ -20,6 +20,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -155,20 +156,16 @@ export default function BukuKendaliIndex({
                                     aria-label="Cari nomor BAP, Loket, atau nomeratur"
                                 />
                             </div>
-                            <Input
-                                type="date"
+                            <DatePicker
                                 value={startDate}
-                                onChange={(event) =>
-                                    setStartDate(event.target.value)
-                                }
+                                onChange={setStartDate}
+                                placeholder="Tanggal mulai"
                                 aria-label="Tanggal mulai pelayanan"
                             />
-                            <Input
-                                type="date"
+                            <DatePicker
                                 value={endDate}
-                                onChange={(event) =>
-                                    setEndDate(event.target.value)
-                                }
+                                onChange={setEndDate}
+                                placeholder="Tanggal akhir"
                                 aria-label="Tanggal akhir pelayanan"
                             />
                             <Select value={loket} onValueChange={setLoket}>

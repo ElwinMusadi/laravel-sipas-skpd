@@ -13,6 +13,7 @@ import type { PaginationLink } from "@/components/inventory/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -153,10 +154,10 @@ export default function BapAdministrationIndex({
                   aria-label="Cari nomor BAP, Loket, atau nomeratur"
                 />
               </div>
-              <Input
-                type="date"
+              <DatePicker
                 value={serviceDate}
-                onChange={(event) => setServiceDate(event.target.value)}
+                onChange={setServiceDate}
+                placeholder="Tanggal pelayanan"
                 aria-label="Filter tanggal pelayanan"
               />
               <Select value={loket} onValueChange={setLoket}>
