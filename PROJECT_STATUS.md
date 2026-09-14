@@ -12,6 +12,19 @@ Scope rebranding mencakup app name fallback, title browser/Inertia, logo/sidebar
 
 Tidak diubah: database `sipak`/`sipak_testing`, folder/repository `laravel-sipak`, Git remote, route, namespace/model, migration, audit historis, nomor dokumen BAP, blueprint historis, dan runtime capture pada `storage/**`. Perubahan infrastruktur tersebut memerlukan task deployment/repository terpisah.
 
+## Seeder Laravel Cloud — Loket dan Superadmin
+
+Disediakan seeder deployment khusus `LaravelCloudLoketAndSuperadminSeeder` yang **tidak** dipanggil oleh `DatabaseSeeder`, sehingga hanya berjalan saat dipanggil eksplisit pada Laravel Cloud.
+
+Seeder idempotent:
+
+- menyinkronkan enam master Loket berdasarkan `code`: `SAMSAT-KANTOR`, `SAMLING-01`, `SAMSAT-CORNER`, `MPP`, `SAMLING-02`, dan `SAMLING-03`;
+- menyinkronkan akun `elwinmusadi16` berdasarkan username;
+- menetapkan `Elwin Bessiesura, S.Kom`, NIP `199707162025061002`, email `elwinmusadi@gmail.com`, role `superadmin`, password deployment `password`, dan Loket `MPP`;
+- me-resolve FK Loket dari kode `MPP`, bukan hard-code ID `4`; pada database baru dengan urutan data seed ini, `MPP` bernilai ID `4` sesuai kebutuhan.
+
+Seeder tidak dijalankan selama development task ini. Test SQLite terisolasi memverifikasi enam Loket, akun Superadmin, password hash, relasi MPP, dan idempotensi dua kali pemanggilan.
+
 ## Refinement — Unified BAP Pemakaian + BAP Batal/Rusak
 
 BAP Pemakaian dan detail Batal/Rusak kini memakai satu form BAP dan satu parent document identity. `bap_cancellations` tetap dipertahankan sebagai child record dari `baps`; tidak ada tabel historis yang dihapus atau data cancellation lama yang dimutasi.
