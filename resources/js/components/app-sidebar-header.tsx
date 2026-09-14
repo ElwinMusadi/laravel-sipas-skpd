@@ -17,7 +17,9 @@ export function AppSidebarHeader({
                 {/* <Breadcrumbs breadcrumbs={breadcrumbs} /> */}
                 <div className="flex flex-col">
                     <Breadcrumbs breadcrumbs={breadcrumbs} />
-                    <span className="text-xs text-muted-foreground leading-tight">Sistem Informasi Pemakaian Bukti SKPD</span>
+                    <span className="text-muted-foreground text-xs leading-tight">
+                        Sistem Informasi Pengelolaan Administrasi SKPD
+                    </span>
                 </div>
             </div>
             <div className="ml-auto flex items-center gap-1">

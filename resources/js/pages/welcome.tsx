@@ -9,11 +9,11 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Sistem Informasi Pengelolaan Bukti SKPD" />
+            <Head title="Sistem Informasi Pengelolaan Administrasi SKPD" />
             <main className="bg-muted/40 min-h-svh px-4 py-6 sm:px-6 lg:px-8">
                 <div className="mx-auto flex min-h-[calc(100svh-3rem)] max-w-6xl flex-col">
                     <header className="flex items-center justify-between gap-4 py-4">
-                        <Link href={home()} aria-label="SIPAK">
+                        <Link href={home()} aria-label="SIPAS-SKPD">
                             <AppLogo />
                         </Link>
                         {auth.user ? (
@@ -36,12 +36,13 @@ export default function Welcome() {
                                 SAMSAT Kota Kupang
                             </p>
                             <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-                                Sistem Informasi Pengelolaan Bukti SKPD
+                                Sistem Informasi Pengelolaan Administrasi SKPD
                             </h1>
                             <p className="text-muted-foreground max-w-2xl text-lg leading-8 text-pretty">
-                                SIPAK mendukung pengelolaan bukti SKPD yang
-                                tertib, terarah, dan dapat ditelusuri untuk UPTD
-                                Pendapatan Daerah Wilayah Kota Kupang.
+                                SIPAS-SKPD mendukung pengelolaan administrasi
+                                SKPD yang tertib, terarah, dan dapat ditelusuri
+                                untuk UPTD Pendapatan Daerah Wilayah Kota
+                                Kupang.
                             </p>
                             <div className="flex flex-wrap gap-3 pt-2">
                                 {auth.user ? (
@@ -54,7 +55,7 @@ export default function Welcome() {
                                 ) : (
                                     <Button size="lg" asChild>
                                         <Link href={login()}>
-                                            Masuk ke SIPAK
+                                            Masuk ke SIPAS-SKPD
                                             <ArrowRight />
                                         </Link>
                                     </Button>

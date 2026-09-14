@@ -41,7 +41,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     /**
-     * Determine whether the user is the global SIPAK administrator.
+     * Determine whether the user is the global SIPAS-SKPD administrator.
      */
     public function isGlobalAdministrator(): bool
     {

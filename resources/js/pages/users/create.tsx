@@ -23,7 +23,7 @@ export default function CreateUser({ roles, lokets }: Props) {
             <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
                 <Heading
                     title="Tambah Pengguna"
-                    description="Hanya Superadmin yang dapat membuat akun SIPAK. Email bukan credential login."
+                    description="Hanya Superadmin yang dapat membuat akun SIPAS-SKPD. Email bukan credential login."
                 />
 
                 <Card className="max-w-3xl">

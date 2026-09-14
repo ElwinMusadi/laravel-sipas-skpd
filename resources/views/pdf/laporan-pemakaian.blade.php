@@ -44,8 +44,8 @@
             </div>
         @endif
         <div class="identity-copy">
-            <strong>SIPAK-SKPD</strong>
-            <span>Sistem Informasi Pemakaian Bukti SKPD</span>
+            <strong>SIPAS-SKPD</strong>
+            <span>Sistem Informasi Pengelolaan Administrasi SKPD</span>
             <span>UPTD Pendapatan Daerah Wilayah Kota Kupang</span>
         </div>
         <div class="identity-meta">

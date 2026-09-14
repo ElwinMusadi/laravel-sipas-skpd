@@ -1,8 +1,16 @@
-# SIPAK — STATUS PROYEK
+# SIPAS-SKPD — STATUS PROYEK
 
 **Pembaruan terakhir:** 3 September 2026
 **Fase saat ini:** Phase 19 — Manual Testing Readiness & End-to-End Workflow Hardening
 **Status:** PARTIAL — regresi otomatis siap; validasi browser manual belum dapat dinyatakan lulus.
+
+## Rebranding — SIPAS-SKPD
+
+Brand aplikasi berubah dari SIPAK menjadi `SIPAS-SKPD` dengan kepanjangan `Sistem Informasi Pengelolaan Administrasi SKPD` dan identitas `UPTD Pendapatan Daerah Wilayah Kota Kupang`.
+
+Scope rebranding mencakup app name fallback, title browser/Inertia, logo/sidebar/header, landing/login/user-management copy, PDF/XLSX dan metadata export, serta heading status proyek. Istilah domain seperti `BAP SKPD`, `Box SKPD`, `SKPD Terpakai`, dan `Bukti SKPD` dipertahankan.
+
+Tidak diubah: database `sipak`/`sipak_testing`, folder/repository `laravel-sipak`, Git remote, route, namespace/model, migration, audit historis, nomor dokumen BAP, blueprint historis, dan runtime capture pada `storage/**`. Perubahan infrastruktur tersebut memerlukan task deployment/repository terpisah.
 
 ## Refinement — Unified BAP Pemakaian + BAP Batal/Rusak
 
@@ -35,7 +43,7 @@ BAP Pemakaian dan detail Batal/Rusak kini memakai satu form BAP dan satu parent 
 
 ### Testing
 
-- SQLite: `php artisan test --compact` PASS — 194 test, 1.737 assertion.
+- SQLite: `php artisan test --compact` PASS — 195 test, 1.750 assertion.
 - MySQL: `php artisan test --configuration=phpunit.mysql.xml --compact` PASS — 194 test, 1.737 assertion.
 - PHPStan: PASS — 0 error.
 - TypeScript: PASS.
@@ -261,7 +269,7 @@ PASS — `php artisan test --configuration=phpunit.mysql.xml --compact`: 194 tes
 
 ### SQLite
 
-PASS — `php artisan test --compact`: 194 test, 1.737 assertion lulus.
+PASS — `php artisan test --compact`: 195 test, 1.750 assertion lulus.
 
 ### TypeScript
 

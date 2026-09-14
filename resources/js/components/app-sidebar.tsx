@@ -26,7 +26,7 @@ export function AppSidebar() {
                             <Link
                                 href={dashboard()}
                                 prefetch
-                                aria-label="SIPAK — Dashboard"
+                                aria-label="SIPAS-SKPD — Dashboard"
                             >
                                 <AppLogo />
                             </Link>

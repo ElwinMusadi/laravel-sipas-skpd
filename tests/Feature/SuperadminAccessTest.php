@@ -52,7 +52,7 @@ function phaseSixteenDiscrepancyVerificationPayload(Bap $bap): array
     return $payload;
 }
 
-test('Superadmin without a Loket can administer all available SIPAK workflows while retaining their audit identity', function () {
+test('Superadmin without a Loket can administer all available SIPAS-SKPD workflows while retaining their audit identity', function () {
     $superadmin = User::factory()->create([
         'role' => UserRole::Superadmin,
         'loket_id' => null,

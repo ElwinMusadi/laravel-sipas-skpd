@@ -56,7 +56,7 @@ class SkpdLaporanPemakaianController extends Controller
         $report = $this->report($request);
 
         return Pdf::loadView('pdf.laporan-pemakaian', [
-            'appName' => (string) config('app.name', 'SIPAK-SKPD'),
+            'appName' => (string) config('app.name', 'SIPAS-SKPD'),
             'baps' => $report->detailQuery()->get(),
             'generatedAt' => now(),
             'logoDataUri' => $this->logoDataUri(),
@@ -69,7 +69,7 @@ class SkpdLaporanPemakaianController extends Controller
             ->setWarnings(false)
             ->addInfo([
                 'Title' => 'Laporan Sistem Pemakaian SKPD',
-                'Author' => 'SIPAK-SKPD',
+                'Author' => 'SIPAS-SKPD',
             ])
             ->download($report->pdfFilename());
     }

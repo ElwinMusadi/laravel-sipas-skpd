@@ -23,7 +23,7 @@ final class SkpdLaporanPemakaianRingkasanSheet implements FromArray, ShouldAutoS
         $summary = $this->report->summary();
 
         return [
-            ['SIPAK-SKPD'],
+            ['SIPAS-SKPD'],
             ['Laporan Sistem — Laporan Pemakaian SKPD'],
             ['Periode', $this->report->periodLabel()],
             ['Loket', $this->report->selectedLoketName() ?? 'Semua Loket'],

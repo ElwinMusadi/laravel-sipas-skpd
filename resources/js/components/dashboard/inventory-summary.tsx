@@ -19,7 +19,7 @@ export function InventorySummary() {
             <EmptyState
                 icon={Boxes}
                 title="Belum ada ringkasan persediaan"
-                description="Data persediaan akan ditampilkan ketika integrasi inventaris SIPAK tersedia."
+                description="Data persediaan akan ditampilkan ketika integrasi inventaris SIPAS-SKPD tersedia."
             />
         </Card>
     );

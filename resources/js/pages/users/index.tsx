@@ -111,7 +111,7 @@ export default function UserIndex({ users, filters, roles, lokets }: Props) {
                         </h1>
                         <p className="text-muted-foreground max-w-2xl text-sm">
                             Kelola akun, role sistem, status, dan penugasan
-                            loket SIPAK.
+                            loket SIPAS-SKPD.
                         </p>
                     </div>
                     <Button asChild>
