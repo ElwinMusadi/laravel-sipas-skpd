@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { store } from "@/routes/login";
-import skpdLq310Image from "../../../../blueprint/SKPD-LQ310.jpg";
+import skpdMotionGraphics from "../../../../blueprint/video/Motion-graphics-skpd.mp4";
 
 type Props = {
   status?: string;
@@ -94,10 +94,15 @@ export default function Login({ status }: Props) {
               </Form>
 
               <div className="bg-muted relative hidden overflow-hidden md:block">
-                <img
-                  src={skpdLq310Image}
-                  alt="Dokumen Surat Ketetapan Pajak Daerah"
-                  className="h-full object-cover scale-115 ml-5"
+                <video
+                  src={skpdMotionGraphics}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  aria-hidden="true"
+                  className="absolute inset-0 size-full object-cover object-center"
                 />
               </div>
             </CardContent>
