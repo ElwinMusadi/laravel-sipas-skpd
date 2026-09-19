@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/app/empty-state';
 import {
     formatDate,
     formatDateTime,
-    formatNomeratur,
+    formatNomerator,
 } from '@/components/inventory/format';
 import { Pagination } from '@/components/inventory/pagination';
 import type { PaginationLink } from '@/components/inventory/types';
@@ -99,7 +99,7 @@ export default function BapCancellationIndex({
                             BAP Batal/Rusak
                         </h1>
                         <p className="text-muted-foreground max-w-2xl text-sm">
-                            Riwayat nomeratur yang telah dipakai tetapi
+                            Riwayat nomerator yang telah dipakai tetapi
                             diklasifikasikan sebagai batal atau rusak.
                         </p>
                     </div>
@@ -119,7 +119,7 @@ export default function BapCancellationIndex({
                                         setSearch(event.target.value)
                                     }
                                     className="pl-9"
-                                    placeholder="Cari nomeratur, BAP, Loket, atau keterangan"
+                                    placeholder="Cari nomerator, BAP, Loket, atau keterangan"
                                 />
                             </div>
                             <Select
@@ -173,7 +173,7 @@ export default function BapCancellationIndex({
                         {cancellations.data.length === 0 ? (
                             <EmptyState
                                 title="Belum ada BAP Batal/Rusak."
-                                description="Nomeratur yang dicatat dari BAP SKPD akan muncul di sini."
+                                description="Nomerator yang dicatat dari BAP SKPD akan muncul di sini."
                             />
                         ) : (
                             <div className="overflow-x-auto">
@@ -183,7 +183,7 @@ export default function BapCancellationIndex({
                                             <TableHead>BAP</TableHead>
                                             <TableHead>Tanggal</TableHead>
                                             <TableHead>Loket</TableHead>
-                                            <TableHead>Nomeratur</TableHead>
+                                            <TableHead>Nomerator</TableHead>
                                             <TableHead>Alasan</TableHead>
                                             <TableHead>
                                                 Keterangan singkat
@@ -214,7 +214,7 @@ export default function BapCancellationIndex({
                                                         {cancellation.loket}
                                                     </TableCell>
                                                     <TableCell className="font-mono text-xs whitespace-nowrap">
-                                                        {formatNomeratur(
+                                                        {formatNomerator(
                                                             cancellation.numerator,
                                                         )}
                                                     </TableCell>
@@ -258,7 +258,7 @@ export default function BapCancellationIndex({
                                                                 href={show(
                                                                     cancellation.id,
                                                                 )}
-                                                                aria-label={`Detail BAP Batal/Rusak ${formatNomeratur(cancellation.numerator)}`}
+                                                                aria-label={`Detail BAP Batal/Rusak ${formatNomerator(cancellation.numerator)}`}
                                                             >
                                                                 <Eye />
                                                             </Link>

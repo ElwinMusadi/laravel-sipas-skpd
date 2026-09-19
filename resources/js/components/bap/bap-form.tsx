@@ -6,7 +6,7 @@ import { CalendarIcon } from 'lucide-react';
 import SkpdBapController from '@/actions/App/Http/Controllers/SkpdBapController';
 import InputError from '@/components/input-error';
 import {
-    formatNomeratur,
+    formatNomerator,
     formatQuantity,
     formatRange,
 } from '@/components/inventory/format';
@@ -113,14 +113,14 @@ export function BapForm({
     );
     const [numeratorStart, setNumeratorStart] = useState(
         bap
-            ? formatNomeratur(bap.numerator_start)
+            ? formatNomerator(bap.numerator_start)
             : expectedNumeratorStart === null ||
                 expectedNumeratorStart === undefined
               ? ''
-              : formatNomeratur(expectedNumeratorStart),
+              : formatNomerator(expectedNumeratorStart),
     );
     const [numeratorEnd, setNumeratorEnd] = useState(
-        bap ? formatNomeratur(bap.numerator_end) : '',
+        bap ? formatNomerator(bap.numerator_end) : '',
     );
     const [onlineUsageCount, setOnlineUsageCount] = useState(
         bap ? String(bap.online_usage_count) : '0',
@@ -129,7 +129,7 @@ export function BapForm({
     // Cancellation state
     const initialItems: CancellationItem[] = (bap?.cancellations ?? []).map(
         (c) => ({
-            numerator: formatNomeratur(c.numerator),
+            numerator: formatNomerator(c.numerator),
             reason: c.reason,
             description: c.description ?? '',
         }),
@@ -340,7 +340,7 @@ export function BapForm({
 
                                     <div className="grid gap-2">
                                         <Label htmlFor="numerator_start">
-                                            Nomeratur awal
+                                            Nomerator awal
                                         </Label>
                                         <Input
                                             id="numerator_start"
@@ -367,7 +367,7 @@ export function BapForm({
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="numerator_end">
-                                            Nomeratur akhir
+                                            Nomerator akhir
                                         </Label>
                                         <Input
                                             id="numerator_end"
@@ -497,7 +497,7 @@ export function BapForm({
                             }
                         />
                         <ReviewRow
-                            label="Nomeratur"
+                            label="Nomerator"
                             value={
                                 totalUsage === null
                                     ? 'Masukkan range valid'
@@ -604,7 +604,7 @@ function CancellationDetails({
             <div className="grid gap-1">
                 <h2 className="font-medium">Detail SKPD Batal/Rusak</h2>
                 <p className="text-muted-foreground text-sm">
-                    Lengkapi nomeratur dan alasan untuk setiap SKPD Batal/Rusak.
+                    Lengkapi nomerator dan alasan untuk setiap SKPD Batal/Rusak.
                 </p>
             </div>
 
@@ -641,7 +641,7 @@ function CancellationDetails({
                                 <Label
                                     htmlFor={`cancellations-${idx}-numerator`}
                                 >
-                                    Nomeratur
+                                    Nomerator
                                 </Label>
                                 <Input
                                     id={`cancellations-${idx}-numerator`}

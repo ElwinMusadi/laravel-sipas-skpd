@@ -11,7 +11,7 @@ import { AllocationStatusBadge } from "@/components/allocation/allocation-status
 import {
   formatDate,
   formatDateTime,
-  formatNomeratur,
+  formatNomerator,
   formatQuantity,
   formatRange,
 } from "@/components/inventory/format";
@@ -153,12 +153,12 @@ export default function ShowAllocation({
             </CardHeader>
             <CardContent className="grid gap-3 text-sm">
               <DetailRow
-                label="Nomeratur awal"
-                value={formatNomeratur(allocation.numerator_start)}
+                label="Nomerator awal"
+                value={formatNomerator(allocation.numerator_start)}
               />
               <DetailRow
-                label="Nomeratur akhir"
-                value={formatNomeratur(allocation.numerator_end)}
+                label="Nomerator akhir"
+                value={formatNomerator(allocation.numerator_end)}
               />
               <DetailRow
                 label="Quantity"

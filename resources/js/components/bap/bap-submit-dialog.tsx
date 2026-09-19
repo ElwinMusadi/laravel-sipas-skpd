@@ -38,7 +38,7 @@ export function BapSubmitDialog({ bap }: Props) {
                 <DialogHeader>
                     <DialogTitle>Ajukan BAP SKPD?</DialogTitle>
                     <DialogDescription>
-                        Setelah diajukan, data Loket, tanggal, nomeratur, total,
+                        Setelah diajukan, data Loket, tanggal, nomerator, total,
                         dan pemakaian online menjadi read-only hingga workflow
                         verifikasi pada fase berikutnya.
                     </DialogDescription>
@@ -47,7 +47,7 @@ export function BapSubmitDialog({ bap }: Props) {
                     <ReviewLine label="Loket" value={bap.loket.name} />
                     <ReviewLine label="Tanggal" value={bap.service_date} />
                     <ReviewLine
-                        label="Nomeratur"
+                        label="Nomerator"
                         value={formatRange(
                             bap.numerator_start,
                             bap.numerator_end,

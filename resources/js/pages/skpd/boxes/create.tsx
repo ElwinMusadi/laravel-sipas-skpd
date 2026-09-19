@@ -32,7 +32,7 @@ export default function CreateBox() {
       <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
         <Heading
           title="Tambah Box SKPD"
-          description="Daftarkan range nomeratur penerimaan pusat. Quantity akan dihitung dari rentang yang valid."
+          description="Daftarkan range nomerator penerimaan pusat. Quantity akan dihitung dari rentang yang valid."
         />
 
         <Card className="max-w-3xl">

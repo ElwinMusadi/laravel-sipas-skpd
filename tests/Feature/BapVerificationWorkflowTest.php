@@ -277,7 +277,7 @@ test('a physical mismatch records a structured discrepancy and sends the BAP to 
     $payload['checklist'][2]['actual_quantity'] = 12;
     $payload['discrepancies'] = [[
         'type' => BapVerificationChecklistType::TindisanSets->value,
-        'notes' => 'Tindisan nomeratur 0582615 belum ditemukan.',
+        'notes' => 'Tindisan nomerator 0582615 belum ditemukan.',
     ]];
 
     $this->actingAs($verifier)

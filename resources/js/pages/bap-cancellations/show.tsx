@@ -7,7 +7,7 @@ import {
 import {
   formatDate,
   formatDateTime,
-  formatNomeratur,
+  formatNomerator,
   formatQuantity,
   formatRange,
 } from "@/components/inventory/format";
@@ -46,7 +46,7 @@ export default function ShowBapCancellation({ cancellation }: Props) {
   return (
     <>
       <Head
-        title={`BAP Batal/Rusak ${formatNomeratur(cancellation.numerator)}`}
+        title={`BAP Batal/Rusak ${formatNomerator(cancellation.numerator)}`}
       />
 
       <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
@@ -65,7 +65,7 @@ export default function ShowBapCancellation({ cancellation }: Props) {
             </Button>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="font-mono text-2xl font-semibold tracking-tight">
-                {formatNomeratur(cancellation.numerator)}
+                {formatNomerator(cancellation.numerator)}
               </h1>
               <Badge variant="outline">{cancellation.reason_label}</Badge>
             </div>
@@ -88,8 +88,8 @@ export default function ShowBapCancellation({ cancellation }: Props) {
             </CardHeader>
             <CardContent className="grid gap-3 text-sm">
               <DetailRow
-                label="Nomeratur"
-                value={formatNomeratur(cancellation.numerator)}
+                label="Nomerator"
+                value={formatNomerator(cancellation.numerator)}
                 mono
               />
               <DetailRow

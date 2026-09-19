@@ -1,9 +1,9 @@
-export function formatNomeratur(value: number): string {
+export function formatNomerator(value: number): string {
     return value.toString().padStart(7, '0');
 }
 
 export function formatRange(start: number, end: number): string {
-    return `${formatNomeratur(start)}–${formatNomeratur(end)}`;
+    return `${formatNomerator(start)}–${formatNomerator(end)}`;
 }
 
 export function formatQuantity(value: number): string {

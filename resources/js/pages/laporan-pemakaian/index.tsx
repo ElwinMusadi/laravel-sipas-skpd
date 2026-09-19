@@ -298,7 +298,7 @@ export default function LaporanPemakaianIndex({
                     <SummaryCard
                         label="Batal/Rusak"
                         value={formatQuantity(summary.total_cancellations)}
-                        description="Nomeratur pada BAP completed"
+                        description="Nomerator pada BAP completed"
                     />
                 </section>
 
@@ -405,7 +405,7 @@ export default function LaporanPemakaianIndex({
                         <CardTitle>Detail BAP</CardTitle>
                         <CardDescription>
                             Setiap angka dapat ditelusuri ke BAP sumber,
-                            termasuk range nomeratur tujuh digit.
+                            termasuk range nomerator tujuh digit.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -434,7 +434,7 @@ export default function LaporanPemakaianIndex({
                                                 <TableHead>Tanggal</TableHead>
                                                 <TableHead>BAP</TableHead>
                                                 <TableHead>Loket</TableHead>
-                                                <TableHead>Nomeratur</TableHead>
+                                                <TableHead>Nomerator</TableHead>
                                                 <TableHead className="text-right">
                                                     Terpakai
                                                 </TableHead>
@@ -654,7 +654,7 @@ function BapMobileCard({ bap }: { bap: LaporanBap }) {
             <CardContent className="flex flex-col gap-4">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                     <MobileValue
-                        label="Nomeratur"
+                        label="Nomerator"
                         value={formatRange(
                             bap.numerator_start,
                             bap.numerator_end,

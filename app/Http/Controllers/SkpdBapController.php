@@ -17,6 +17,8 @@ use App\Models\Loket;
 use App\Models\SkpdAllocation;
 use App\Models\User;
 use App\SkpdAllocationStatus;
+use App\Support\BapSkpdDocumentData;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -97,17 +99,17 @@ class SkpdBapController extends Controller
         return Inertia::render('baps/create', [
             'loket' => $loket === null ? null : ['id' => $loket->id, 'name' => $loket->name],
             'lokets' => $actor->isGlobalAdministrator()
-                ? Loket::query()
-                    ->where('is_active', true)
-                    ->orderBy('name')
-                    ->get(['id', 'name'])
-                    ->map(fn (Loket $option): array => ['id' => $option->id, 'name' => $option->name])
-                    ->all()
-                : [],
+              ? Loket::query()
+                  ->where('is_active', true)
+                  ->orderBy('name')
+                  ->get(['id', 'name'])
+                  ->map(fn (Loket $option): array => ['id' => $option->id, 'name' => $option->name])
+                  ->all()
+              : [],
             'default_service_date' => now()->toDateString(),
             'expected_numerator_start' => $latestBap === null
-                ? $allocations->first()?->numerator_start
-                : $latestBap->numerator_end + 1,
+              ? $allocations->first()?->numerator_start
+              : $latestBap->numerator_end + 1,
             'allocations' => $allocations
                 ->map(fn (SkpdAllocation $allocation): array => [
                     'id' => $allocation->id,
@@ -148,7 +150,42 @@ class SkpdBapController extends Controller
     }
 
     /**
-     * Display the BAP detail according to the current role's authorized scope.
+     * Stream the official BAP SKPD PDF inline for every role allowed to view the BAP.
+     */
+    public function pdf(Bap $bap, Request $request, BapSkpdDocumentData $documentData): \Illuminate\Http\Response
+    {
+        $this->actor($request);
+
+        Gate::authorize('view-bap', $bap);
+
+        $bap->load([
+            'cancellations' => fn ($query) => $query->orderBy('numerator'),
+        ]);
+
+        $data = $documentData->for($bap);
+        $logoPath = public_path('images/logo-pemprov-ntt.png');
+        $logoDataUri = is_file($logoPath)
+          ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath))
+          : null;
+
+        $pdf = Pdf::loadView('pdf.bap-skpd', [
+            ...$data,
+            'logoDataUri' => $logoDataUri,
+        ])->setPaper([0, 0, 595.28, 935.43], 'portrait')->setWarnings(false);
+        // ])->setPaper('a4', 'portrait')->setWarnings(false);
+
+        $pdf->getDomPDF()->addInfo('Title', 'Berita Acara Pemakaian Bukti SKPD '.$bap->document_number);
+        $pdf->getDomPDF()->addInfo('Author', config('app.name', 'SIPAS-SKPD'));
+        $pdf->getDomPDF()->addInfo('Subject', 'Berita Acara Pemakaian Bukti SKPD');
+
+        return new \Illuminate\Http\Response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename='.$data['filename'],
+        ]);
+    }
+
+    /**
+     * Show the selected BAP with full Phase 07 context.
      */
     public function show(Bap $bap, Request $request): Response
     {
@@ -218,8 +255,8 @@ class SkpdBapController extends Controller
                         'id' => $audit->id,
                         'event' => $this->auditLabel($audit->event),
                         'actor' => $audit->actor_id === null
-                            ? 'Sistem'
-                            : $audit->actor->name,
+                          ? 'Sistem'
+                          : $audit->actor->name,
                         'created_at' => $audit->created_at->toIso8601String(),
                     ])
                     ->values()
@@ -340,14 +377,14 @@ class SkpdBapController extends Controller
             'submitted_at' => $bap->submitted_at?->toIso8601String(),
             'can' => [
                 'edit' => $bap->status === BapStatus::Draft
-                    && $actor->can('update-bap', $bap),
+                  && $actor->can('update-bap', $bap),
                 'submit' => $bap->status === BapStatus::Draft
-                    && $actor->can('submit-bap', $bap),
+                  && $actor->can('submit-bap', $bap),
                 'delete' => $bap->status === BapStatus::Draft
-                    && $actor->can('delete-bap', $bap)
-                    && (int) $bap->cancellations_count === 0
-                    && (int) $bap->verifications_count === 0
-                    && (int) $bap->clarification_requests_count === 0,
+                  && $actor->can('delete-bap', $bap)
+                  && (int) $bap->cancellations_count === 0
+                  && (int) $bap->verifications_count === 0
+                  && (int) $bap->clarification_requests_count === 0,
             ],
         ];
     }
@@ -405,9 +442,9 @@ class SkpdBapController extends Controller
             'bap_clarification.reverification_completed' => 'Verifikasi ulang diselesaikan',
             'bap_usage_segments.created' => 'Usage segment BAP dicatat',
             'bap_usage_segments.updated' => 'Usage segment BAP diperbarui',
-            'bap_cancellation.recorded' => 'Nomeratur batal/rusak dicatat',
-            'bap_cancellation.updated' => 'Nomeratur batal/rusak diperbarui',
-            'bap_cancellation.removed' => 'Nomeratur batal/rusak dihapus dari draft',
+            'bap_cancellation.recorded' => 'Nomerator batal/rusak dicatat',
+            'bap_cancellation.updated' => 'Nomerator batal/rusak diperbarui',
+            'bap_cancellation.removed' => 'Nomerator batal/rusak dihapus dari draft',
             default => 'Perubahan BAP',
         };
     }
@@ -443,8 +480,8 @@ class SkpdBapController extends Controller
             'numerator' => (int) $item['numerator'],
             'reason' => BapCancellationReason::from((string) $item['reason']),
             'description' => isset($item['description']) && filled($item['description'])
-                ? (string) $item['description']
-                : null,
+              ? (string) $item['description']
+              : null,
         ], $raw));
     }
 

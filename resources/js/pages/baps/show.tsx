@@ -1,5 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, History, MessageSquare, Pencil } from 'lucide-react';
+import {
+    ArrowLeft,
+    History,
+    MessageSquare,
+    Pencil,
+    Printer,
+} from 'lucide-react';
 import {
     BapStatusBadge,
     type BapStatus,
@@ -9,7 +15,7 @@ import { BapDeleteDialog } from '@/components/bap/bap-delete-dialog';
 import {
     formatDate,
     formatDateTime,
-    formatNomeratur,
+    formatNomerator,
     formatQuantity,
     formatRange,
 } from '@/components/inventory/format';
@@ -25,7 +31,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { show as showCancellation } from '@/routes/bap-cancellations';
-import { edit, index } from '@/routes/baps';
+import { edit, index, pdf } from '@/routes/baps';
 import { show as showClarification } from '@/routes/bap-clarifications';
 
 type Props = {
@@ -61,7 +67,12 @@ type Props = {
             items: {
                 id: number;
                 numerator: number;
-                reason: 'cancelled' | 'damaged';
+                reason:
+                    | 'cancelled'
+                    | 'damaged'
+                    | 'network_error'
+                    | 'printer_error'
+                    | 'custom';
                 reason_label: string;
                 description: string | null;
                 created_by: string;
@@ -132,6 +143,16 @@ export default function ShowBap({ bap }: Props) {
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" asChild>
+                            <a
+                                href={pdf.url(bap.id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Printer />
+                                Cetak BAP SKPD
+                            </a>
+                        </Button>
                         {bap.can.edit ? (
                             <Button variant="outline" asChild>
                                 <Link href={edit(bap.id)}>
@@ -209,13 +230,13 @@ export default function ShowBap({ bap }: Props) {
                         </CardHeader>
                         <CardContent className="grid gap-3 text-sm">
                             <DetailRow
-                                label="Nomeratur awal"
-                                value={formatNomeratur(bap.numerator_start)}
+                                label="Nomerator awal"
+                                value={formatNomerator(bap.numerator_start)}
                                 mono
                             />
                             <DetailRow
-                                label="Nomeratur akhir"
-                                value={formatNomeratur(bap.numerator_end)}
+                                label="Nomerator akhir"
+                                value={formatNomerator(bap.numerator_end)}
                                 mono
                             />
                             <DetailRow
@@ -329,7 +350,7 @@ export default function ShowBap({ bap }: Props) {
                         <div className="grid gap-1">
                             <CardTitle>Batal / Rusak</CardTitle>
                             <p className="text-muted-foreground text-sm">
-                                Klasifikasi nomeratur yang tetap dihitung
+                                Klasifikasi nomerator yang tetap dihitung
                                 sebagai pemakaian BAP.
                             </p>
                         </div>
@@ -356,7 +377,7 @@ export default function ShowBap({ bap }: Props) {
 
                         {bap.cancellations.items.length === 0 ? (
                             <p className="text-muted-foreground text-sm">
-                                Belum ada nomeratur batal atau rusak pada BAP
+                                Belum ada nomerator batal atau rusak pada BAP
                                 ini.
                             </p>
                         ) : (
@@ -365,7 +386,7 @@ export default function ShowBap({ bap }: Props) {
                                     <TableHeader className="text-muted-foreground border-b text-left">
                                         <TableRow>
                                             <TableHead className="px-2 py-3 font-medium">
-                                                Nomeratur
+                                                Nomerator
                                             </TableHead>
                                             <TableHead className="px-2 py-3 font-medium">
                                                 Klasifikasi
@@ -389,7 +410,7 @@ export default function ShowBap({ bap }: Props) {
                                                             )}
                                                             className="font-medium underline-offset-4 hover:underline"
                                                         >
-                                                            {formatNomeratur(
+                                                            {formatNomerator(
                                                                 cancellation.numerator,
                                                             )}
                                                         </Link>
@@ -436,7 +457,7 @@ export default function ShowBap({ bap }: Props) {
                                             Box
                                         </TableHead>
                                         <TableHead className="px-2 py-3 font-medium">
-                                            Nomeratur
+                                            Nomerator
                                         </TableHead>
                                         <TableHead className="px-2 py-3 text-right font-medium">
                                             Quantity

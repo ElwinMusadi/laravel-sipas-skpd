@@ -152,8 +152,8 @@ export default function BukuKendaliIndex({
                                         setSearch(event.target.value)
                                     }
                                     className="pl-9"
-                                    placeholder="Cari nomor BAP, Loket, atau nomeratur"
-                                    aria-label="Cari nomor BAP, Loket, atau nomeratur"
+                                    placeholder="Cari nomor BAP, Loket, atau nomerator"
+                                    aria-label="Cari nomor BAP, Loket, atau nomerator"
                                 />
                             </div>
                             <DatePicker
@@ -258,7 +258,7 @@ export default function BukuKendaliIndex({
                                                 <TableHead>Tanggal</TableHead>
                                                 <TableHead>BAP</TableHead>
                                                 <TableHead>Loket</TableHead>
-                                                <TableHead>Nomeratur</TableHead>
+                                                <TableHead>Nomerator</TableHead>
                                                 <TableHead>Total</TableHead>
                                                 <TableHead>Online</TableHead>
                                                 <TableHead>
@@ -404,7 +404,7 @@ function BapMobileCard({ bap }: { bap: BukuKendaliBap }) {
             <CardContent className="flex flex-col gap-4">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                     <MobileValue
-                        label="Nomeratur"
+                        label="Nomerator"
                         value={formatRange(
                             bap.numerator_start,
                             bap.numerator_end,

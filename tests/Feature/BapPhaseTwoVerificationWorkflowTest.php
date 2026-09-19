@@ -289,7 +289,7 @@ test('multiple Phase 2 physical mismatches record independent discrepancies and 
     $payload['discrepancies'] = [
         [
             'type' => BapVerificationChecklistType::Numerator->value,
-            'notes' => 'Nomeratur fisik terakhir belum ditemukan.',
+            'notes' => 'Nomerator fisik terakhir belum ditemukan.',
         ],
         [
             'type' => BapVerificationChecklistType::Online->value,

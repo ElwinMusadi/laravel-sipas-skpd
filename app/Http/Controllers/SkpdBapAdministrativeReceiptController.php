@@ -406,7 +406,7 @@ class SkpdBapAdministrativeReceiptController extends Controller
             'bap.submitted' => 'BAP SKPD diajukan',
             'bap_usage_segments.created' => 'Usage segment BAP dicatat',
             'bap_usage_segments.updated' => 'Usage segment BAP diperbarui',
-            'bap_cancellation.recorded' => 'Nomeratur batal/rusak dicatat',
+            'bap_cancellation.recorded' => 'Nomerator batal/rusak dicatat',
             'bap_verification.phase_1_started' => 'Verifikasi Tahap 1 dimulai',
             'bap_verification.phase_1_checklist_completed' => 'Checklist Verifikasi Tahap 1 selesai',
             'bap_verification.phase_1_passed' => 'Verifikasi Tahap 1 lulus',

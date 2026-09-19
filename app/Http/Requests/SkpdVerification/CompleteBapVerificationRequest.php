@@ -79,15 +79,15 @@ class CompleteBapVerificationRequest extends FormRequest
                     $end = $item['actual_numerator_end'] ?? null;
 
                     if ($start === null || $start === '') {
-                        $validator->errors()->add("checklist.{$index}.actual_numerator_start", 'Nomeratur fisik awal wajib diisi.');
+                        $validator->errors()->add("checklist.{$index}.actual_numerator_start", 'Nomerator fisik awal wajib diisi.');
                     }
 
                     if ($end === null || $end === '') {
-                        $validator->errors()->add("checklist.{$index}.actual_numerator_end", 'Nomeratur fisik akhir wajib diisi.');
+                        $validator->errors()->add("checklist.{$index}.actual_numerator_end", 'Nomerator fisik akhir wajib diisi.');
                     }
 
                     if (is_numeric($start) && is_numeric($end) && (int) $end < (int) $start) {
-                        $validator->errors()->add("checklist.{$index}.actual_numerator_end", 'Nomeratur fisik akhir tidak boleh lebih kecil dari nomeratur fisik awal.');
+                        $validator->errors()->add("checklist.{$index}.actual_numerator_end", 'Nomerator fisik akhir tidak boleh lebih kecil dari nomerator fisik awal.');
                     }
 
                     continue;

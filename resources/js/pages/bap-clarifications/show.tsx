@@ -194,7 +194,7 @@ export default function ShowBapClarification({ clarification, can }: Props) {
                 value={formatDate(clarification.bap.service_date)}
               />
               <DetailRow
-                label="Nomeratur"
+                label="Nomerator"
                 value={formatRange(
                   clarification.bap.numerator_start,
                   clarification.bap.numerator_end,

@@ -43,13 +43,13 @@ class StoreSkpdBoxRequest extends FormRequest
                 }
 
                 if ((int) $this->input('numerator_start') < 1) {
-                    $validator->errors()->add('numerator_start', 'Nomeratur awal minimal 0000001.');
+                    $validator->errors()->add('numerator_start', 'Nomerator awal minimal 0000001.');
 
                     return;
                 }
 
                 if ((int) $this->input('numerator_end') <= (int) $this->input('numerator_start')) {
-                    $validator->errors()->add('numerator_end', 'Nomeratur akhir harus lebih besar dari nomeratur awal.');
+                    $validator->errors()->add('numerator_end', 'Nomerator akhir harus lebih besar dari nomerator awal.');
                 }
             },
         ];

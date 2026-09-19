@@ -12,7 +12,7 @@ import { useState } from "react";
 import {
   formatDate,
   formatDateTime,
-  formatNomeratur,
+  formatNomerator,
   formatQuantity,
   formatRange,
 } from "@/components/inventory/format";
@@ -266,7 +266,7 @@ export default function BapAdministrationShow({ bap }: Props) {
                       }
                     />
                     <DataItem
-                      label="Nomeratur"
+                      label="Nomerator"
                       value={formatRange(
                         bap.numerator_start,
                         bap.numerator_end,
@@ -293,7 +293,7 @@ export default function BapAdministrationShow({ bap }: Props) {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Box sumber</TableHead>
-                          <TableHead>Nomeratur</TableHead>
+                          <TableHead>Nomerator</TableHead>
                           <TableHead className="text-right">Jumlah</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -325,7 +325,7 @@ export default function BapAdministrationShow({ bap }: Props) {
                 <CardContent>
                   {bap.cancellations.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
-                      Tidak ada nomeratur batal atau rusak.
+                      Tidak ada nomerator batal atau rusak.
                     </p>
                   ) : (
                     <div className="grid gap-3">
@@ -336,7 +336,7 @@ export default function BapAdministrationShow({ bap }: Props) {
                         >
                           <div className="flex items-center justify-between gap-3">
                             <span className="font-mono font-medium">
-                              {formatNomeratur(cancellation.numerator)}
+                              {formatNomerator(cancellation.numerator)}
                             </span>
                             <Badge variant="outline">
                               {cancellation.reason === "damaged"

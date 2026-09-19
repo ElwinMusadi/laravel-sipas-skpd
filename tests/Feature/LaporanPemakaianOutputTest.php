@@ -126,7 +126,7 @@ function laporanPemakaianOutputSpreadsheet(BinaryFileResponse $response): Spread
     return IOFactory::load($response->getFile()->getPathname());
 }
 
-test('PDF and Excel exports contain the same completed BAP totals and preserve seven-digit nomeratur', function () {
+test('PDF and Excel exports contain the same completed BAP totals and preserve seven-digit nomerator', function () {
     $bendahara = laporanPemakaianOutputBendahara();
     $loket = Loket::factory()->create(['name' => 'Loket Satu']);
     $first = laporanPemakaianOutputBap(582_608, 10, 3, loket: $loket, receivedBy: $bendahara);

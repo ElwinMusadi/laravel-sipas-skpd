@@ -48,7 +48,7 @@ class StoreBapCancellationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'numerator.regex' => 'Nomeratur harus berupa angka maksimal tujuh digit.',
+            'numerator.regex' => 'Nomerator harus berupa angka maksimal tujuh digit.',
             'reason.required' => 'Pilih klasifikasi batal atau rusak.',
         ];
     }

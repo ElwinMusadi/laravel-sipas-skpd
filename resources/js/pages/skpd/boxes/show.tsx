@@ -6,7 +6,7 @@ import { BoxDeleteDialog } from "@/components/inventory/box-delete-dialog";
 import {
   formatDate,
   formatDateTime,
-  formatNomeratur,
+  formatNomerator,
   formatQuantity,
   formatRange,
 } from "@/components/inventory/format";
@@ -135,12 +135,12 @@ export default function ShowBox({ box, can }: Props) {
             </CardHeader>
             <CardContent className="grid gap-3 text-sm">
               <DetailRow
-                label="Nomeratur awal"
-                value={formatNomeratur(box.numerator_start)}
+                label="Nomerator awal"
+                value={formatNomerator(box.numerator_start)}
               />
               <DetailRow
-                label="Nomeratur akhir"
-                value={formatNomeratur(box.numerator_end)}
+                label="Nomerator akhir"
+                value={formatNomerator(box.numerator_end)}
               />
               <DetailRow
                 label="Total"

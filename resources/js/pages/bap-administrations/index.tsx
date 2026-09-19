@@ -150,8 +150,8 @@ export default function BapAdministrationIndex({
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   className="pl-9"
-                  placeholder="Cari nomor BAP, Loket, atau nomeratur"
-                  aria-label="Cari nomor BAP, Loket, atau nomeratur"
+                  placeholder="Cari nomor BAP, Loket, atau nomerator"
+                  aria-label="Cari nomor BAP, Loket, atau nomerator"
                 />
               </div>
               <DatePicker
@@ -231,7 +231,7 @@ export default function BapAdministrationIndex({
                     <TableHead>BAP</TableHead>
                     <TableHead>Tanggal</TableHead>
                     <TableHead>Loket</TableHead>
-                    <TableHead>Nomeratur</TableHead>
+                    <TableHead>Nomerator</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Batal/Rusak</TableHead>
                     <TableHead>Online</TableHead>

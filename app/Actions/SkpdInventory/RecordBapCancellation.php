@@ -50,13 +50,13 @@ class RecordBapCancellation
                     ->exists()
             ) {
                 throw ValidationException::withMessages([
-                    'numerator' => 'Nomeratur tersebut belum tercatat sebagai pemakaian pada BAP ini.',
+                    'numerator' => 'Nomerator tersebut belum tercatat sebagai pemakaian pada BAP ini.',
                 ]);
             }
 
             if (BapCancellation::query()->where('numerator', $numerator)->lockForUpdate()->exists()) {
                 throw ValidationException::withMessages([
-                    'numerator' => 'Nomeratur batal atau rusak sudah pernah dicatat dan tidak dapat digunakan ulang.',
+                    'numerator' => 'Nomerator batal atau rusak sudah pernah dicatat dan tidak dapat digunakan ulang.',
                 ]);
             }
 

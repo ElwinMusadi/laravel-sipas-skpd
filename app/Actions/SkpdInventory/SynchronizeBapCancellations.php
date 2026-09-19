@@ -59,7 +59,7 @@ class SynchronizeBapCancellations
 
             if ($numerator < $numeratorStart || $numerator > $numeratorEnd) {
                 throw ValidationException::withMessages([
-                    "cancellations.{$index}.numerator" => "Nomeratur {$numerator} berada di luar range BAP ({$numeratorStart}–{$numeratorEnd}).",
+                    "cancellations.{$index}.numerator" => "Nomerator {$numerator} berada di luar range BAP ({$numeratorStart}–{$numeratorEnd}).",
                 ]);
             }
 
@@ -71,13 +71,13 @@ class SynchronizeBapCancellations
                 ->exists()
             ) {
                 throw ValidationException::withMessages([
-                    "cancellations.{$index}.numerator" => "Nomeratur {$numerator} tidak tercatat sebagai pemakaian pada BAP ini.",
+                    "cancellations.{$index}.numerator" => "Nomerator {$numerator} tidak tercatat sebagai pemakaian pada BAP ini.",
                 ]);
             }
 
             if (in_array($numerator, $incomingNumerators, true)) {
                 throw ValidationException::withMessages([
-                    "cancellations.{$index}.numerator" => "Nomeratur {$numerator} muncul lebih dari satu kali dalam detail Batal/Rusak.",
+                    "cancellations.{$index}.numerator" => "Nomerator {$numerator} muncul lebih dari satu kali dalam detail Batal/Rusak.",
                 ]);
             }
 
@@ -108,7 +108,7 @@ class SynchronizeBapCancellations
                     ->exists()
                 ) {
                     throw ValidationException::withMessages([
-                        'cancellations' => "Nomeratur {$numerator} sudah pernah dicatat sebagai batal/rusak dan tidak dapat digunakan ulang.",
+                        'cancellations' => "Nomerator {$numerator} sudah pernah dicatat sebagai batal/rusak dan tidak dapat digunakan ulang.",
                     ]);
                 }
             }

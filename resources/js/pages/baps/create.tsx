@@ -34,7 +34,7 @@ export default function CreateBap({
             <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
                 <Heading
                     title="Buat BAP SKPD"
-                    description="Catat pemakaian aktual setelah pelayanan Loket selesai. Total selalu dihitung dari range nomeratur."
+                    description="Catat pemakaian aktual setelah pelayanan Loket selesai. Total selalu dihitung dari range nomerator."
                 />
 
                 <BapForm

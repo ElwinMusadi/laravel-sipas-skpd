@@ -111,7 +111,7 @@ test('registration rejects an invalid Box range before it reaches the domain act
         ])
         ->assertRedirect(route('skpd.boxes.create'))
         ->assertSessionHasErrors([
-            'numerator_end' => 'Nomeratur akhir harus lebih besar dari nomeratur awal.',
+            'numerator_end' => 'Nomerator akhir harus lebih besar dari nomerator awal.',
         ]);
 
     $this->assertDatabaseMissing('skpd_boxes', ['box_number' => 'BOX-INVALID']);
@@ -130,7 +130,7 @@ test('registration rejects the zero numerator boundary before it reaches the dom
         ])
         ->assertRedirect(route('skpd.boxes.create'))
         ->assertSessionHasErrors([
-            'numerator_start' => 'Nomeratur awal minimal 0000001.',
+            'numerator_start' => 'Nomerator awal minimal 0000001.',
         ]);
 
     $this->assertDatabaseMissing('skpd_boxes', ['box_number' => 'BOX-ZERO-BOUNDARY']);

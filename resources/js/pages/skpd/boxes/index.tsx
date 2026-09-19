@@ -89,7 +89,7 @@ export default function BoxIndex({ boxes, filters, lokets, can }: Props) {
           <div className="space-y-1.5">
             <h1 className="text-2xl font-semibold tracking-tight">Box SKPD</h1>
             <p className="text-muted-foreground max-w-2xl text-sm">
-              Daftar persediaan pusat dan status ledger setiap range nomeratur.
+              Daftar persediaan pusat dan status ledger setiap range nomerator.
             </p>
           </div>
           {can.create ? (
@@ -184,7 +184,7 @@ export default function BoxIndex({ boxes, filters, lokets, can }: Props) {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nomor Box</TableHead>
-                      <TableHead>Range nomeratur</TableHead>
+                      <TableHead>Range nomerator</TableHead>
                       <TableHead>Total</TableHead>
                       <TableHead>Dialokasikan</TableHead>
                       <TableHead>Tersedia</TableHead>

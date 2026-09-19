@@ -14,7 +14,7 @@ enum BapVerificationChecklistType: string
     {
         return match ($this) {
             self::UsageQuantity => 'Jumlah SKPD',
-            self::Numerator => 'Nomeratur',
+            self::Numerator => 'Nomerator',
             self::TindisanSets => 'Jumlah set tindisan',
             self::Cancellation => 'Jumlah SKPD batal/rusak',
             self::Online => 'Jumlah SKPD online',

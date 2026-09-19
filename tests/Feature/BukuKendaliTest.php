@@ -177,7 +177,7 @@ test('Buku Kendali filters completed BAPs by service-date range and Loket', func
         ->and($otherLoket['bap']->id)->not->toBe($matching['bap']->id);
 });
 
-test('Buku Kendali searches completed BAPs by number, Loket, and seven-digit nomeratur', function () {
+test('Buku Kendali searches completed BAPs by number, Loket, and seven-digit nomerator', function () {
     $bendahara = bukuKendaliBendahara();
     $matchingLoket = Loket::factory()->create(['name' => 'Kantor SAMSAT']);
     $matching = bukuKendaliBap(

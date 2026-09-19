@@ -145,7 +145,7 @@ class UpdateSkpdAllocation
     {
         if ($numeratorStart < 1 || $numeratorEnd > 9_999_999 || $numeratorEnd < $numeratorStart) {
             throw ValidationException::withMessages([
-                'numerator_start' => 'Range nomeratur harus berada pada 0000001–9999999 dan berurutan.',
+                'numerator_start' => 'Range nomerator harus berada pada 0000001–9999999 dan berurutan.',
             ]);
         }
     }

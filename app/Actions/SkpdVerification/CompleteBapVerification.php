@@ -251,7 +251,7 @@ class CompleteBapVerification
 
             if ($actualStart < 0 || $actualEnd < $actualStart) {
                 throw ValidationException::withMessages([
-                    'checklist' => 'Range nomeratur fisik tidak valid.',
+                    'checklist' => 'Range nomerator fisik tidak valid.',
                 ]);
             }
 

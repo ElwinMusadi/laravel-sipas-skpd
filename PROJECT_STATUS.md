@@ -4,6 +4,53 @@
 **Fase saat ini:** Phase 19 — Manual Testing Readiness & End-to-End Workflow Hardening
 **Status:** PARTIAL — regresi otomatis siap; validasi browser manual belum dapat dinyatakan lulus.
 
+## Terminologi — Nomerator
+
+Terminologi bisnis Indonesia dikoreksi secara menyeluruh dari `Nomeratur/nomeratur` menjadi `Nomerator/nomerator` pada UI, navigasi, validasi, toast, audit label, PDF/XLSX, test copy, dan dokumentasi. Helper frontend berubah dari `formatNomeratur` menjadi `formatNomerator` serta `onlyNomeraturDigits` menjadi `onlyNomeratorDigits`.
+
+Identifier teknis berbahasa Inggris tetap dipertahankan untuk kompatibilitas: kolom/database `numerator_start`, `numerator_end`, parameter route, relasi, payload API, dan nama property model tidak diubah. Tidak ada migration atau mutasi data.
+
+## Cetak BAP SKPD — PDF Resmi
+
+Setiap BAP yang dapat dilihat oleh user kini dapat dicetak sebagai dokumen PDF resmi melalui tombol `Cetak BAP SKPD` pada halaman detail BAP. PDF dibuka inline pada tab baru sehingga user dapat langsung mencetak atau mengunduh.
+
+### Implementasi
+
+- Route: `GET /baps/{bap}/pdf` dengan nama `baps.pdf` dan Gate `view-bap`.
+- Controller: `SkpdBapController@pdf` menggunakan DomPDF, A4 portrait, response inline (`Content-Disposition: inline`).
+- Konfigurasi pejabat: `config/bap-document.php` menyimpan identitas instansi dan empat pejabat sesuai DOCX blueprint. Data pejabat bersifat static/configurable, bukan dari database user.
+- Formatter tanggal formal: `app/Support/IndonesianFormalDate.php` menghasilkan hari/tanggal/bulan/tahun dalam kata-kata Bahasa Indonesia yang deterministik.
+- Data mapper: `app/Support/BapSkpdDocumentData.php` memetakan BAP dan child cancellation ke view model PDF.
+- Template: `resources/views/pdf/bap-skpd.blade.php` mengikuti struktur DOCX blueprint: kop surat, nomor dokumen, tanggal formal, identitas Pihak Pertama/Kedua, rincian pemakaian SKPD, detail Batal/Rusak conditional, penutup, dan blok empat tanda tangan.
+- Tanggal dokumen: `baps.created_at` dikonversi ke WITA (`Asia/Makassar`) sebelum diformat.
+- Cancellation: section `Nomerator dan Keterangan` hanya ditampilkan bila terdapat child cancellation; jumlah row mengikuti data aplikasi tanpa batas lima.
+- Frontend: tombol `Cetak BAP SKPD` menggunakan native anchor `target="_blank"` dengan Wayfinder route `pdf.url(bap.id)`, tersedia pada semua status BAP.
+
+### Authorization
+
+Gate `view-bap` digunakan; tidak ada permission baru. Seluruh role yang dapat melihat BAP dapat mencetaknya, termasuk Petugas Loket (hanya Loket sendiri), Superadmin, Bendahara Barang, Petugas Penetapan/Verifikasi, Kasie Penetapan/Verifikasi, dan Kepala UPTD. Guest diarahkan ke login.
+
+### Testing
+
+- Unit test `IndonesianFormalDateTest`: format tanggal formal dan terbilang angka Bahasa Indonesia.
+- Feature test `BapSkpdPdfTest`:
+  - response 200, `Content-Type: application/pdf`, `Content-Disposition: inline`;
+  - content PDF dimulai `%PDF`;
+  - document number, tanggal formal WITA, nomerator tujuh digit;
+  - cancellation count 0 menyembunyikan detail;
+  - cancellation count > 0 menampilkan nomor dan keterangan;
+  - semua delapan role dengan `view-bap` menerima PDF;
+  - Petugas Loket cross-Loket ditolak 403;
+  - guest diarahkan login;
+  - streaming PDF tidak memutasi data BAP.
+- Regresi penuh: 220 test, 1.831 assertion — PASS.
+
+### Limitation
+
+- Kesamaan visual "persis" dengan DOCX memerlukan pemeriksaan manual PDF vs tampilan asli DOCX; ekstraksi teks DOCX tidak membawa semua informasi layout Word (font, lebar tabel, spasi vertikal).
+- Data pejabat static; bila pejabat berubah, update `config/bap-document.php`.
+- Timezone global aplikasi masih UTC; hanya PDF BAP yang memakai `Asia/Makassar`.
+
 ## Rebranding — SIPAS-SKPD
 
 Brand aplikasi berubah dari SIPAK menjadi `SIPAS-SKPD` dengan kepanjangan `Sistem Informasi Pengelolaan Administrasi SKPD` dan identitas `UPTD Pendapatan Daerah Wilayah Kota Kupang`.
@@ -33,7 +80,7 @@ BAP Pemakaian dan detail Batal/Rusak kini memakai satu form BAP dan satu parent 
 
 - Form BAP memiliki `SKPD Batal/Rusak` dengan nilai awal `0`.
 - Bila jumlah lebih dari `0`, form menampilkan jumlah row detail yang sama secara dinamis.
-- Setiap detail memuat nomeratur tujuh digit dan alasan `Jaringan Error`, `Printer Error`, atau `Isi Sendiri`.
+- Setiap detail memuat nomerator tujuh digit dan alasan `Jaringan Error`, `Printer Error`, atau `Isi Sendiri`.
 - `Isi Sendiri` wajib mengisi `description` existing.
 - `total_usage` tetap derived dari range; Online dan Batal/Rusak tidak mengurangi total.
 - Review form menunjukkan Total, Online, Batal/Rusak, dan Pemakaian normal (`total - online - batal/rusak`).
@@ -66,11 +113,11 @@ BAP Pemakaian dan detail Batal/Rusak kini memakai satu form BAP dan satu parent 
 
 ## Refinement — Registrasi Range Box Tidak Bersambung
 
-Bendahara Barang dapat mendaftarkan Box SKPD baru dengan range nomeratur yang tidak melanjutkan Box terakhir. Kedatangan Box tidak menjamin urutan nomeratur antar-Box, sehingga kontinuitas global antar-Box bukan lagi business rule.
+Bendahara Barang dapat mendaftarkan Box SKPD baru dengan range nomerator yang tidak melanjutkan Box terakhir. Kedatangan Box tidak menjamin urutan nomerator antar-Box, sehingga kontinuitas global antar-Box bukan lagi business rule.
 
 Validasi yang tetap berlaku:
 
-- nomeratur menggunakan tujuh digit dan minimum `0000001`;
+- nomerator menggunakan tujuh digit dan minimum `0000001`;
 - akhir range lebih besar dari awal range;
 - nomor Box harus unik;
 - range setiap Box tidak boleh overlap dengan Box lain;
@@ -191,7 +238,7 @@ Regression memvalidasi Batal/Rusak berada dalam range BAP, tidak duplikat, tidak
 
 ## Verifikasi Tahap 1
 
-Regression memvalidasi transition `submitted → under_verification → needs_clarification` atau `waiting_verification_phase_2`, termasuk lima checklist dan authorization Petugas Penetapan. Input angka checklist dari browser dinormalisasi menjadi integer sebelum dikirim, sehingga nomeratur fisik dengan leading zero dapat menyelesaikan verifikasi tanpa gagal validasi tipe.
+Regression memvalidasi transition `submitted → under_verification → needs_clarification` atau `waiting_verification_phase_2`, termasuk lima checklist dan authorization Petugas Penetapan. Input angka checklist dari browser dinormalisasi menjadi integer sebelum dikirim, sehingga nomerator fisik dengan leading zero dapat menyelesaikan verifikasi tanpa gagal validasi tipe.
 
 ## Verifikasi Tahap 2
 
@@ -282,7 +329,7 @@ PASS — `php artisan test --configuration=phpunit.mysql.xml --compact`: 194 tes
 
 ### SQLite
 
-PASS — `php artisan test --compact`: 195 test, 1.750 assertion lulus.
+PASS — `php artisan test --compact`: 220 test, 1.831 assertion lulus.
 
 ### TypeScript
 
@@ -334,7 +381,7 @@ Tidak ada temuan kosmetik yang dapat diklaim dari browser.
 - Menambahkan regression test untuk fixture dan preservation data existing.
 - Menambahkan regression test matrix permission implementasi delapan role.
 - Mengunci aksi detail BAP Petugas Loket setelah Verifikasi Tahap 1 dimulai dan menambahkan regression untuk visibilitas aksi serta penolakan mutasi direct HTTP.
-- Menormalisasi input numerik checklist verifikasi menjadi integer sebelum request agar nomeratur fisik browser tidak gagal pada validasi backend.
+- Menormalisasi input numerik checklist verifikasi menjadi integer sebelum request agar nomerator fisik browser tidak gagal pada validasi backend.
 - Menambahkan nomor dokumen BAP permanen berformat `PB/<KODE_LOKET>/<DD>/<MM>/<YYYY>`, melakukan backfill BAP existing, dan mengganti referensi `#ID` pada seluruh lifecycle BAP.
 - Menyatukan input BAP Pemakaian dan BAP Batal/Rusak dalam satu form draft BAP dengan child cancellation atomic, count/detail invariant, alasan baru, dan audit create/update/remove.
 - Mengubah BAP Batal/Rusak standalone menjadi riwayat read-only serta meregenerasi Wayfinder setelah route mutation dihapus.
@@ -365,7 +412,7 @@ Tidak ada temuan kosmetik yang dapat diklaim dari browser.
 
 ## Keputusan Bisnis
 
-- Range nomeratur antar-Box SKPD boleh tidak bersambung karena Box yang datang dapat memiliki urutan acak. Uniqueness dan larangan overlap tetap wajib.
+- Range nomerator antar-Box SKPD boleh tidak bersambung karena Box yang datang dapat memiliki urutan acak. Uniqueness dan larangan overlap tetap wajib.
 - **Business Decision Required:** sediakan identitas, username, dan credential akun development Kepala UPTD bila pengujian browser Laporan oleh role tersebut harus diselesaikan.
 
 ## Batasan

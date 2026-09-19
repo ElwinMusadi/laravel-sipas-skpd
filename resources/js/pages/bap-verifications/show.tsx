@@ -15,7 +15,7 @@ import {
 import {
     formatDate,
     formatDateTime,
-    formatNomeratur,
+    formatNomerator,
     formatQuantity,
     formatRange,
 } from '@/components/inventory/format';
@@ -298,11 +298,11 @@ export default function ShowBapVerification({
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Nomeratur dan pemakaian</CardTitle>
+                            <CardTitle>Nomerator dan pemakaian</CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-3 text-sm">
                             <DetailRow
-                                label="Nomeratur"
+                                label="Nomerator"
                                 value={formatRange(
                                     bap.numerator_start,
                                     bap.numerator_end,
@@ -421,7 +421,7 @@ export default function ShowBapVerification({
                                         <TableHeader className="text-muted-foreground border-b text-left">
                                             <TableRow>
                                                 <TableHead className="pb-3 font-medium">
-                                                    Nomeratur
+                                                    Nomerator
                                                 </TableHead>
                                                 <TableHead className="pb-3 font-medium">
                                                     Alasan
@@ -438,7 +438,7 @@ export default function ShowBapVerification({
                                                         key={cancellation.id}
                                                     >
                                                         <TableCell className="py-3 font-mono text-xs">
-                                                            {formatNomeratur(
+                                                            {formatNomerator(
                                                                 cancellation.numerator,
                                                             )}
                                                         </TableCell>
@@ -769,7 +769,7 @@ function ChecklistRow({
 
             {comparison.type === 'numerator' ? (
                 <div className="grid gap-2">
-                    <Label>Range nomeratur fisik</Label>
+                    <Label>Range nomerator fisik</Label>
                     <div className="grid grid-cols-2 gap-2">
                         <Input
                             value={comparison.actual_numerator_start}
@@ -782,7 +782,7 @@ function ChecklistRow({
                             inputMode="numeric"
                             maxLength={7}
                             placeholder="Awal"
-                            aria-label="Nomeratur fisik awal"
+                            aria-label="Nomerator fisik awal"
                         />
                         <Input
                             value={comparison.actual_numerator_end}
@@ -795,7 +795,7 @@ function ChecklistRow({
                             inputMode="numeric"
                             maxLength={7}
                             placeholder="Akhir"
-                            aria-label="Nomeratur fisik akhir"
+                            aria-label="Nomerator fisik akhir"
                         />
                     </div>
                     {rangeStartError || rangeEndError ? (

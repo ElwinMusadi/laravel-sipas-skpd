@@ -193,7 +193,7 @@ export default function BapIndex({ baps, filters, can }: Props) {
                     <TableRow>
                       <TableHead>Tanggal</TableHead>
                       <TableHead>Loket</TableHead>
-                      <TableHead>Nomeratur</TableHead>
+                      <TableHead>Nomerator</TableHead>
                       <TableHead>Total</TableHead>
                       <TableHead>Online</TableHead>
                       <TableHead>Batal</TableHead>

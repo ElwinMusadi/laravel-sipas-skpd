@@ -148,7 +148,7 @@ class SkpdBapCancellationController extends Controller
             $attributes['description'] ?? null,
         );
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Nomeratur batal/rusak berhasil dicatat.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Nomerator batal/rusak berhasil dicatat.']);
 
         return to_route('bap-cancellations.show', $cancellation);
     }

@@ -96,7 +96,7 @@ export const applicationNavigation: readonly ApplicationNavigationGroup[] = [
         title: 'SKPD',
         items: [
             {
-                title: 'Persediaan Nomeratur',
+                title: 'Persediaan Nomerator',
                 icon: Hash,
                 href: skpdInventoryIndex(),
                 availability: 'available',

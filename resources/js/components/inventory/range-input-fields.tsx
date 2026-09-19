@@ -14,7 +14,7 @@ type Props = {
     };
 };
 
-function onlyNomeraturDigits(value: string): string {
+function onlyNomeratorDigits(value: string): string {
     return value.replace(/\D/g, '').slice(0, 7);
 }
 
@@ -40,14 +40,14 @@ export function RangeInputFields({
     return (
         <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-                <Label htmlFor="numerator_start">Nomeratur awal</Label>
+                <Label htmlFor="numerator_start">Nomerator awal</Label>
                 <Input
                     id="numerator_start"
                     name="numerator_start"
                     value={numeratorStart}
                     onChange={(event) =>
                         onNumeratorStartChange(
-                            onlyNomeraturDigits(event.target.value),
+                            onlyNomeratorDigits(event.target.value),
                         )
                     }
                     inputMode="numeric"
@@ -58,14 +58,14 @@ export function RangeInputFields({
                 <InputError message={errors.numerator_start} />
             </div>
             <div className="grid gap-2">
-                <Label htmlFor="numerator_end">Nomeratur akhir</Label>
+                <Label htmlFor="numerator_end">Nomerator akhir</Label>
                 <Input
                     id="numerator_end"
                     name="numerator_end"
                     value={numeratorEnd}
                     onChange={(event) =>
                         onNumeratorEndChange(
-                            onlyNomeraturDigits(event.target.value),
+                            onlyNomeratorDigits(event.target.value),
                         )
                     }
                     inputMode="numeric"

@@ -229,7 +229,7 @@ test('Laporan Pemakaian returns a zero summary for an empty period', function ()
         );
 });
 
-test('Laporan Pemakaian exposes BAP traceability with seven-digit nomeratur and stays consistent with Buku Kendali', function () {
+test('Laporan Pemakaian exposes BAP traceability with seven-digit nomerator and stays consistent with Buku Kendali', function () {
     $bendahara = laporanPemakaianBendahara();
     $first = laporanPemakaianBap(582_608, 10, 3, receivedBy: $bendahara);
     laporanPemakaianCancellation($first, 582_610);

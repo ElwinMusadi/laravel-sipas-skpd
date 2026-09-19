@@ -114,7 +114,7 @@
                     <th>Tanggal</th>
                     <th>BAP</th>
                     <th>Loket</th>
-                    <th>Nomeratur</th>
+                    <th>Nomerator</th>
                     <th class="number">Terpakai</th>
                     <th class="number">Online</th>
                     <th class="number">Batal/Rusak</th>

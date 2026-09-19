@@ -62,13 +62,13 @@ class UpdateBapRequest extends FormRequest
             $cancellationCount = (int) $this->input('cancellation_count');
 
             if ($numeratorStart < 1) {
-                $validator->errors()->add('numerator_start', 'Nomeratur awal minimal 0000001.');
+                $validator->errors()->add('numerator_start', 'Nomerator awal minimal 0000001.');
 
                 return;
             }
 
             if ($numeratorEnd < $numeratorStart) {
-                $validator->errors()->add('numerator_end', 'Nomeratur akhir harus sama dengan atau lebih besar dari nomeratur awal.');
+                $validator->errors()->add('numerator_end', 'Nomerator akhir harus sama dengan atau lebih besar dari nomerator awal.');
 
                 return;
             }
@@ -106,7 +106,7 @@ class UpdateBapRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cancellations.*.numerator.regex' => 'Nomeratur harus berupa angka maksimal tujuh digit.',
+            'cancellations.*.numerator.regex' => 'Nomerator harus berupa angka maksimal tujuh digit.',
             'cancellations.*.reason.required' => 'Pilih alasan batal atau rusak.',
             'cancellations.*.reason.in' => 'Alasan tidak valid.',
         ];

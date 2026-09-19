@@ -4,6 +4,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| {app,resources,tests}/** | .ai/rules/appresourcestests.md |
 | app/Http/Controllers/SkpdBukuKendaliController.php, app/Http/Controllers/SkpdLaporanPemakaianController.php | .ai/rules/controllers.md |
 | app/Providers/** | .ai/rules/providers.md |
 | database/seeders/LaravelCloudLoketAndSuperadminSeeder.php | .ai/rules/seeders.md |
