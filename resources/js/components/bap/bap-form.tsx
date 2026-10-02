@@ -427,14 +427,13 @@ export function BapForm({
                                             id="cancellation_count"
                                             name="cancellation_count"
                                             value={cancellationCount}
-                                            onChange={(event) => {
-                                                const raw = digitsOnly(
-                                                    event.target.value,
-                                                );
+                                            onChange={(event) =>
                                                 setCancellationCount(
-                                                    raw === '' ? '0' : raw,
-                                                );
-                                            }}
+                                                    digitsOnly(
+                                                        event.target.value,
+                                                    ),
+                                                )
+                                            }
                                             inputMode="numeric"
                                             placeholder="0"
                                             aria-invalid={Boolean(
