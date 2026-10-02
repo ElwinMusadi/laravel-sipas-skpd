@@ -574,3 +574,65 @@ test('Phase 2 discrepancy result still requires a verifier note for every detect
     expect($bap->refresh()->status)->toBe(BapStatus::UnderVerificationPhase2);
     $this->assertDatabaseCount('bap_verification_discrepancies', 0);
 });
+
+test('Phase 2 passed result with filled notes stores trimmed notes on the verification record', function () {
+    $verifier = phaseNineVerifier();
+    $bap = phaseNineWaitingBap();
+    phaseNineStartVerification($verifier, $bap);
+    $payload = phaseNineCompletionPayload($bap);
+    $payload['notes'] = '  Catatan pemeriksaan fisik Tahap 2 lengkap.  ';
+
+    $this->actingAs($verifier)
+        ->post(route('bap-verifications-phase-2.complete', $bap), $payload)
+        ->assertRedirect(route('bap-verifications-phase-2.show', $bap));
+
+    $verification = BapVerification::query()->where('stage', BapVerificationStage::Phase2)->sole();
+
+    $this->assertDatabaseHas('bap_verifications', [
+        'id' => $verification->id,
+        'result' => BapVerificationResult::Passed->value,
+        'notes' => 'Catatan pemeriksaan fisik Tahap 2 lengkap.',
+    ]);
+});
+
+test('Phase 2 passed result with whitespace notes stores null on the verification record', function () {
+    $verifier = phaseNineVerifier();
+    $bap = phaseNineWaitingBap();
+    phaseNineStartVerification($verifier, $bap);
+    $payload = phaseNineCompletionPayload($bap);
+    $payload['notes'] = '   ';
+
+    $this->actingAs($verifier)
+        ->post(route('bap-verifications-phase-2.complete', $bap), $payload)
+        ->assertRedirect(route('bap-verifications-phase-2.show', $bap));
+
+    $verification = BapVerification::query()->where('stage', BapVerificationStage::Phase2)->sole();
+
+    $this->assertDatabaseHas('bap_verifications', [
+        'id' => $verification->id,
+        'result' => BapVerificationResult::Passed->value,
+        'notes' => null,
+    ]);
+});
+
+test('Phase 2 discrepancy result with blank per-finding note fails validation', function () {
+    $verifier = phaseNineVerifier();
+    $bap = phaseNineWaitingBap();
+    phaseNineStartVerification($verifier, $bap);
+    $payload = phaseNineCompletionPayload($bap);
+    $payload['result'] = BapVerificationResult::Discrepancy->value;
+    $payload['checklist'][4]['actual_quantity'] = 4;
+    $payload['discrepancies'] = [[
+        'type' => BapVerificationChecklistType::Online->value,
+        'notes' => '',
+    ]];
+
+    $this->actingAs($verifier)
+        ->from(route('bap-verifications-phase-2.show', $bap))
+        ->post(route('bap-verifications-phase-2.complete', $bap), $payload)
+        ->assertRedirect(route('bap-verifications-phase-2.show', $bap))
+        ->assertSessionHasErrors('discrepancies.0.notes');
+
+    expect($bap->refresh()->status)->toBe(BapStatus::UnderVerificationPhase2);
+    $this->assertDatabaseCount('bap_verification_discrepancies', 0);
+});

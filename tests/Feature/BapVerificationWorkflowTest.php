@@ -572,3 +572,61 @@ test('discrepancy result still requires a verifier note for every detected discr
     expect($bap->refresh()->status)->toBe(BapStatus::UnderVerification);
     $this->assertDatabaseCount('bap_verification_discrepancies', 0);
 });
+
+test('passed result with filled notes stores trimmed notes on the verification record', function () {
+    $verifier = phaseEightVerifier();
+    $bap = phaseEightSubmittedBap();
+    phaseEightStartVerification($verifier, $bap);
+    $payload = phaseEightCompletionPayload($bap);
+    $payload['notes'] = '  Catatan pemeriksaan fisik lengkap.  ';
+
+    $this->actingAs($verifier)
+        ->post(route('bap-verifications.complete', $bap), $payload)
+        ->assertRedirect(route('bap-verifications.show', $bap));
+
+    $this->assertDatabaseHas('bap_verifications', [
+        'bap_id' => $bap->id,
+        'result' => BapVerificationResult::Passed->value,
+        'notes' => 'Catatan pemeriksaan fisik lengkap.',
+    ]);
+});
+
+test('passed result with whitespace notes stores null on the verification record', function () {
+    $verifier = phaseEightVerifier();
+    $bap = phaseEightSubmittedBap();
+    phaseEightStartVerification($verifier, $bap);
+    $payload = phaseEightCompletionPayload($bap);
+    $payload['notes'] = '   ';
+
+    $this->actingAs($verifier)
+        ->post(route('bap-verifications.complete', $bap), $payload)
+        ->assertRedirect(route('bap-verifications.show', $bap));
+
+    $this->assertDatabaseHas('bap_verifications', [
+        'bap_id' => $bap->id,
+        'result' => BapVerificationResult::Passed->value,
+        'notes' => null,
+    ]);
+});
+
+test('discrepancy result with blank per-finding note fails validation', function () {
+    $verifier = phaseEightVerifier();
+    $bap = phaseEightSubmittedBap();
+    phaseEightStartVerification($verifier, $bap);
+    $payload = phaseEightCompletionPayload($bap);
+    $payload['result'] = BapVerificationResult::Discrepancy->value;
+    $payload['checklist'][1]['actual_numerator_end'] = 582_619;
+    $payload['discrepancies'] = [[
+        'type' => BapVerificationChecklistType::Numerator->value,
+        'notes' => '',
+    ]];
+
+    $this->actingAs($verifier)
+        ->from(route('bap-verifications.show', $bap))
+        ->post(route('bap-verifications.complete', $bap), $payload)
+        ->assertRedirect(route('bap-verifications.show', $bap))
+        ->assertSessionHasErrors('discrepancies.0.notes');
+
+    expect($bap->refresh()->status)->toBe(BapStatus::UnderVerification);
+    $this->assertDatabaseCount('bap_verification_discrepancies', 0);
+});

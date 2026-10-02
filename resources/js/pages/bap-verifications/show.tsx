@@ -595,68 +595,92 @@ export default function ShowBapVerification({
                                     {form.data.result === 'discrepancy' &&
                                     mismatches.length > 0 ? (
                                         <div className="grid gap-4 pt-2">
-                                            {mismatches.map((mismatch) => (
-                                                <div
-                                                    key={mismatch.type}
-                                                    className="border-destructive/25 bg-destructive/5 grid gap-3 rounded-xl border p-4"
-                                                >
-                                                    <div className="flex flex-wrap items-center justify-between gap-2">
-                                                        <p className="font-medium">
-                                                            {mismatch.label}
-                                                        </p>
-                                                        <span className="text-destructive text-sm tabular-nums">
-                                                            Selisih{' '}
-                                                            {formatDifference(
-                                                                mismatch.difference,
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-muted-foreground text-sm">
-                                                        Sistem:{' '}
-                                                        <span className="text-foreground font-medium">
-                                                            {
-                                                                mismatch.expected_value
-                                                            }
-                                                        </span>{' '}
-                                                        • Fisik:{' '}
-                                                        <span className="text-foreground font-medium">
-                                                            {
-                                                                mismatch.actual_value
-                                                            }
-                                                        </span>
-                                                    </p>
-                                                    <div className="grid gap-2">
-                                                        <Label
-                                                            htmlFor={`discrepancy-${mismatch.type}`}
+                                            {mismatches.map(
+                                                (mismatch, index) => {
+                                                    const discrepancyNoteError =
+                                                        form.errors[
+                                                            `discrepancies.${index}.notes` as keyof typeof form.errors
+                                                        ];
+
+                                                    return (
+                                                        <div
+                                                            key={mismatch.type}
+                                                            className="border-destructive/25 bg-destructive/5 grid gap-3 rounded-xl border p-4"
                                                         >
-                                                            Catatan verifier
-                                                        </Label>
-                                                        <Textarea
-                                                            id={`discrepancy-${mismatch.type}`}
-                                                            value={
-                                                                discrepancyNotes[
-                                                                    mismatch
-                                                                        .type
-                                                                ] ?? ''
-                                                            }
-                                                            onChange={(event) =>
-                                                                setDiscrepancyNotes(
-                                                                    (
-                                                                        current,
-                                                                    ) => ({
-                                                                        ...current,
-                                                                        [mismatch.type]:
-                                                                            event
-                                                                                .target
-                                                                                .value,
-                                                                    }),
-                                                                )
-                                                            }
-                                                            placeholder="Jelaskan temuan fisik dan kebutuhan konfirmasi."
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                                <p className="font-medium">
+                                                                    {
+                                                                        mismatch.label
+                                                                    }
+                                                                </p>
+                                                                <span className="text-destructive text-sm tabular-nums">
+                                                                    Selisih{' '}
+                                                                    {formatDifference(
+                                                                        mismatch.difference,
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-muted-foreground text-sm">
+                                                                Sistem:{' '}
+                                                                <span className="text-foreground font-medium">
+                                                                    {
+                                                                        mismatch.expected_value
+                                                                    }
+                                                                </span>{' '}
+                                                                • Fisik:{' '}
+                                                                <span className="text-foreground font-medium">
+                                                                    {
+                                                                        mismatch.actual_value
+                                                                    }
+                                                                </span>
+                                                            </p>
+                                                            <div className="grid gap-2">
+                                                                <Label
+                                                                    htmlFor={`discrepancy-${mismatch.type}`}
+                                                                >
+                                                                    Catatan
+                                                                    verifier
+                                                                </Label>
+                                                                <Textarea
+                                                                    id={`discrepancy-${mismatch.type}`}
+                                                                    value={
+                                                                        discrepancyNotes[
+                                                                            mismatch
+                                                                                .type
+                                                                        ] ?? ''
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
+                                                                        setDiscrepancyNotes(
+                                                                            (
+                                                                                current,
+                                                                            ) => ({
+                                                                                ...current,
+                                                                                [mismatch.type]:
+                                                                                    event
+                                                                                        .target
+                                                                                        .value,
+                                                                            }),
+                                                                        )
+                                                                    }
+                                                                    placeholder="Jelaskan temuan fisik dan kebutuhan konfirmasi."
+                                                                    aria-invalid={Boolean(
+                                                                        discrepancyNoteError,
+                                                                    )}
+                                                                />
+                                                                {discrepancyNoteError ? (
+                                                                    <ValidationNotice>
+                                                                        {
+                                                                            discrepancyNoteError
+                                                                        }
+                                                                    </ValidationNotice>
+                                                                ) : null}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                },
+                                            )}
                                         </div>
                                     ) : null}
 
