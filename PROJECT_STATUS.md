@@ -238,11 +238,11 @@ Regression memvalidasi Batal/Rusak berada dalam range BAP, tidak duplikat, tidak
 
 ## Verifikasi Tahap 1
 
-Regression memvalidasi transition `submitted → under_verification → needs_clarification` atau `waiting_verification_phase_2`, termasuk lima checklist dan authorization Petugas Penetapan. Input angka checklist dari browser dinormalisasi menjadi integer sebelum dikirim, sehingga nomerator fisik dengan leading zero dapat menyelesaikan verifikasi tanpa gagal validasi tipe.
+Regression memvalidasi transition `submitted → under_verification → needs_clarification` atau `waiting_verification_phase_2`, termasuk lima checklist dan authorization Petugas Penetapan. Input angka checklist dari browser dinormalisasi menjadi integer sebelum dikirim, sehingga nomerator fisik dengan leading zero dapat menyelesaikan verifikasi tanpa gagal validasi tipe. Jika ditemukan selisih, Catatan verifier per temuan menjadi satu-satunya catatan dan tetap wajib; Catatan umum tidak ditampilkan maupun disimpan. Jika verifikasi lulus, Catatan umum tetap opsional dan menerima nilai kosong atau `NULL`.
 
 ## Verifikasi Tahap 2
 
-Regression memvalidasi eligibility Tahap 2 dan transition `waiting_verification_phase_2 → under_verification_phase_2 → verified_phase_2`, atau `needs_clarification` bila ada discrepancy.
+Regression memvalidasi eligibility Tahap 2 dan transition `waiting_verification_phase_2 → under_verification_phase_2 → verified_phase_2`, atau `needs_clarification` bila ada discrepancy. Aturan catatan sama dengan Tahap 1: selisih hanya memakai Catatan verifier per temuan, sedangkan Catatan umum hanya tersedia secara opsional untuk hasil lulus.
 
 ## Klarifikasi
 

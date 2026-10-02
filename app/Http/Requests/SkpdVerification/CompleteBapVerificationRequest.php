@@ -28,7 +28,12 @@ class CompleteBapVerificationRequest extends FormRequest
     {
         return [
             'result' => ['required', Rule::enum(BapVerificationResult::class)],
-            'notes' => ['nullable', 'string', 'max:2000'],
+            'notes' => [
+                Rule::excludeIf($this->input('result') === BapVerificationResult::Discrepancy->value),
+                'nullable',
+                'string',
+                'max:2000',
+            ],
             'checklist' => ['required', 'array', 'size:5'],
             'checklist.*' => ['required', 'array'],
             'checklist.*.type' => ['required', Rule::enum(BapVerificationChecklistType::class), 'distinct'],
@@ -97,18 +102,13 @@ class CompleteBapVerificationRequest extends FormRequest
                     $validator->errors()->add("checklist.{$index}.actual_quantity", 'Nilai fisik wajib diisi.');
                 }
             }
-
-            if ($this->input('result') === BapVerificationResult::Discrepancy->value
-                && blank($this->input('notes'))) {
-                $validator->errors()->add('notes', 'Permintaan klarifikasi dari verifier wajib diisi ketika ditemukan selisih.');
-            }
         }];
     }
 
     /**
      * @return array{
      *     result: string,
-     *     notes?: string|null,
+     *     notes: string|null,
      *     checklist: list<array{
      *         type: string,
      *         is_attested: bool,
@@ -164,9 +164,15 @@ class CompleteBapVerificationRequest extends FormRequest
             ];
         }
 
+        $result = (string) ($attributes['result'] ?? '');
+
+        $notes = $result === BapVerificationResult::Discrepancy->value
+            ? null
+            : (filled($attributes['notes'] ?? null) ? trim((string) $attributes['notes']) : null);
+
         return [
-            'result' => (string) ($attributes['result'] ?? ''),
-            'notes' => isset($attributes['notes']) ? (string) $attributes['notes'] : null,
+            'result' => $result,
+            'notes' => $notes,
             'checklist' => $normalizedChecklist,
             'discrepancies' => $normalizedDiscrepancies,
         ];

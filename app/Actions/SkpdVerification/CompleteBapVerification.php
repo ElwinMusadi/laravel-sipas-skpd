@@ -88,7 +88,9 @@ class CompleteBapVerification
             $verification->update([
                 'status' => BapVerificationStatus::Completed,
                 'result' => $result,
-                'notes' => filled($attributes['notes'] ?? null) ? trim((string) $attributes['notes']) : null,
+                'notes' => $result === BapVerificationResult::Passed
+                    ? (filled($attributes['notes'] ?? null) ? trim((string) $attributes['notes']) : null)
+                    : null,
                 'completed_at' => now(),
             ]);
 
@@ -129,7 +131,7 @@ class CompleteBapVerification
                     'bap_verification_id' => $verification->id,
                     'requested_by' => $actor->id,
                     'status' => BapClarificationStatus::WaitingResponse,
-                    'notes' => filled($attributes['notes'] ?? null) ? trim((string) $attributes['notes']) : null,
+                    'notes' => null,
                 ]);
 
                 $this->audit->handle($actor, $lockedBap, $stage->auditPrefix().'_discrepancy_recorded', [

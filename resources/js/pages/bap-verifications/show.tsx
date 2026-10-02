@@ -135,7 +135,7 @@ type ChecklistInput = {
 
 type VerificationForm = {
     result: 'passed' | 'discrepancy';
-    notes: string;
+    notes: string | null;
     checklist: ChecklistInput[];
     discrepancies: { type: ChecklistType; notes: string }[];
 };
@@ -209,6 +209,7 @@ export default function ShowBapVerification({
     const submit = (): void => {
         form.transform((data) => ({
             ...data,
+            notes: data.result === 'discrepancy' ? null : data.notes,
             checklist: data.checklist.map((item) => ({
                 ...item,
                 actual_quantity: parsePhysicalNumber(item.actual_quantity),
@@ -659,22 +660,24 @@ export default function ShowBapVerification({
                                         </div>
                                     ) : null}
 
-                                    <div className="grid gap-2 pt-2">
-                                        <Label htmlFor="verification-notes">
-                                            Catatan umum (opsional)
-                                        </Label>
-                                        <Textarea
-                                            id="verification-notes"
-                                            value={form.data.notes}
-                                            onChange={(event) =>
-                                                form.setData(
-                                                    'notes',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="Catatan tambahan untuk riwayat verifikasi."
-                                        />
-                                    </div>
+                                    {form.data.result === 'passed' ? (
+                                        <div className="grid gap-2 pt-2">
+                                            <Label htmlFor="verification-notes">
+                                                Catatan umum (opsional)
+                                            </Label>
+                                            <Textarea
+                                                id="verification-notes"
+                                                value={form.data.notes ?? ''}
+                                                onChange={(event) =>
+                                                    form.setData(
+                                                        'notes',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Catatan tambahan untuk riwayat verifikasi."
+                                            />
+                                        </div>
+                                    ) : null}
                                     {form.errors.result ? (
                                         <ValidationNotice>
                                             {form.errors.result}
