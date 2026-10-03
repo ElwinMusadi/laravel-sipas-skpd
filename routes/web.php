@@ -90,6 +90,9 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::delete('{bap}', [SkpdBapController::class, 'destroy'])
                 ->middleware('can:delete-bap,bap')
                 ->name('destroy');
+            Route::delete('{bap}/hard-delete', [SkpdBapController::class, 'hardDelete'])
+                ->middleware('can:hard-delete-bap,bap')
+                ->name('hard-delete');
         });
 
     Route::middleware('can:view-bap-verifications-phase-1')

@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Actions\SkpdInventory\CreateBap;
 use App\Actions\SkpdInventory\DeleteDraftBap;
+use App\Actions\SkpdInventory\HardDeleteCompletedBap;
 use App\Actions\SkpdInventory\SubmitBap;
 use App\Actions\SkpdInventory\UpdateBap;
 use App\BapCancellationReason;
 use App\BapClarificationStatus;
 use App\BapStatus;
+use App\Http\Requests\SkpdInventory\HardDeleteBapRequest;
 use App\Http\Requests\SkpdInventory\StoreBapRequest;
 use App\Http\Requests\SkpdInventory\UpdateBapRequest;
 use App\Models\Bap;
@@ -220,9 +222,14 @@ class SkpdBapController extends Controller
             },
         ])->loadCount(['cancellations', 'verifications', 'clarificationRequests']);
 
+        $isTail = ! Bap::query()
+            ->where('loket_id', $bap->loket_id)
+            ->where('numerator_start', '>', $bap->numerator_end)
+            ->exists();
+
         return Inertia::render('baps/show', [
             'bap' => [
-                ...$this->bapData($actor, $bap),
+                ...$this->bapData($actor, $bap, $isTail),
                 'segments' => $bap->usageSegments
                     ->map(fn ($segment): array => [
                         'id' => $segment->id,
@@ -355,9 +362,25 @@ class SkpdBapController extends Controller
     }
 
     /**
-     * @return array{id: int, service_date: string, loket: array{id: int, name: string}, numerator_start: int, numerator_end: int, total_usage: int, online_usage_count: int, cancellation_count: int, non_online_usage_count: int, status: string, created_by: string, creator_role: string, created_at: string, submitted_at: string|null, can: array{edit: bool, submit: bool, delete: bool}}
+     * Permanently hard-delete a completed tail BAP (Superadmin only).
      */
-    private function bapData(User $actor, Bap $bap): array
+    public function hardDelete(Bap $bap, HardDeleteBapRequest $request, HardDeleteCompletedBap $hardDeleteBap): RedirectResponse
+    {
+        Gate::authorize('hard-delete-bap', $bap);
+
+        $attributes = $request->validated();
+
+        $hardDeleteBap->handle($this->actor($request), $bap, $attributes['reason']);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'BAP SKPD berhasil dihapus secara permanen.']);
+
+        return to_route('baps.index');
+    }
+
+    /**
+     * @return array{id: int, service_date: string, loket: array{id: int, name: string}, numerator_start: int, numerator_end: int, total_usage: int, online_usage_count: int, cancellation_count: int, non_online_usage_count: int, status: string, created_by: string, creator_role: string, created_at: string, submitted_at: string|null, can: array{edit: bool, submit: bool, delete: bool, hard_delete: bool}}
+     */
+    private function bapData(User $actor, Bap $bap, bool $isTail = false): array
     {
         return [
             'id' => $bap->id,
@@ -385,6 +408,9 @@ class SkpdBapController extends Controller
                   && (int) $bap->cancellations_count === 0
                   && (int) $bap->verifications_count === 0
                   && (int) $bap->clarification_requests_count === 0,
+                'hard_delete' => $isTail
+                  && $bap->status === BapStatus::Completed
+                  && $actor->can('hard-delete-bap', $bap),
             ],
         ];
     }
@@ -419,6 +445,7 @@ class SkpdBapController extends Controller
             'bap.created' => 'BAP SKPD dibuat',
             'bap.updated' => 'Draft BAP diperbarui',
             'bap.deleted' => 'Draft BAP dihapus',
+            'bap.hard_deleted' => 'BAP SKPD dihapus secara permanen',
             'bap.submitted' => 'BAP SKPD diajukan',
             'bap_verification.phase_1_started' => 'Verifikasi Tahap 1 dimulai',
             'bap_verification.phase_1_checklist_completed' => 'Checklist Verifikasi Tahap 1 selesai',

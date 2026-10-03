@@ -232,6 +232,8 @@ Workflow pending → accept, range di dalam Box, satu Box satu Loket, overlap, h
 
 Draft, update, submit, numerator berurutan, total derived, online tidak melebihi total, range allocation valid, dan satu BAP per Loket/hari tercakup oleh suite. Setiap BAP menyimpan nomor dokumen saat dibuat dengan format `PB/<KODE_LOKET>/<DD>/<MM>/<YYYY>` berdasarkan tanggal pembuatan: `MPP` untuk Mall Pelayanan Publik, `LOKET` untuk SAMSAT Kantor, dan nama Loket tanpa spasi dalam huruf kapital untuk Loket lain. Nomor dokumen dipakai sebagai referensi tampilan BAP, verifikasi, pembatalan, klarifikasi, receipt, Buku Kendali, laporan, dan kelak ekspor/print; primary key numerik tetap internal untuk relasi dan route. Setelah Verifikasi Tahap 1 dimulai (`under_verification`), halaman detail tidak lagi menyediakan aksi ubah draft, ajukan ulang, hapus, atau catat batal/rusak bagi Petugas Loket; direct HTTP untuk seluruh mutasi tersebut tetap ditolak. Range awal siap dipakai untuk uji manual: MPP `0582001`, SAMSAT Kantor `0584001`.
 
+Superadmin memiliki aksi Hard Delete terpisah untuk membersihkan BAP training yang telah `completed`. Aksi hanya tersedia pada BAP tail setiap Loket, mewajibkan konfirmasi nomor dokumen dan alasan, mengunci ledger inventaris, menghapus seluruh child verifikasi/klarifikasi/cancellation/usage secara eksplisit dalam satu transaction, merekonsiliasi status allocation, serta mempertahankan audit lama dan menambah event `bap.hard_deleted`. Box, allocation, Loket, user, generator nomor dokumen, FK, dan workflow BAP normal tidak diubah.
+
 ## BAP Batal/Rusak
 
 Regression memvalidasi Batal/Rusak berada dalam range BAP, tidak duplikat, tidak mengurangi total pemakaian, dan tidak dapat dimutasi setelah BAP submitted.

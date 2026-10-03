@@ -171,6 +171,9 @@ class AppServiceProvider extends ServiceProvider
     Gate::define('receive-bap-administratively', fn(User $user, Bap $bap): bool => $user->role === UserRole::BendaharaBarang
       && $bap->status === BapStatus::VerifiedPhase2);
 
+    Gate::define('hard-delete-bap', fn(User $user, Bap $bap): bool => $user->role === UserRole::Superadmin
+      && $bap->status === BapStatus::Completed);
+
     Gate::define('view-bap-clarifications', fn(User $user): bool => in_array($user->role, [
       UserRole::PetugasLoket,
       UserRole::PetugasPenetapan,

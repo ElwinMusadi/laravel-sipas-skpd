@@ -10,6 +10,7 @@ import {
     BapStatusBadge,
     type BapStatus,
 } from '@/components/bap/bap-status-badge';
+import { BapHardDeleteDialog } from '@/components/bap/bap-hard-delete-dialog';
 import { BapSubmitDialog } from '@/components/bap/bap-submit-dialog';
 import { BapDeleteDialog } from '@/components/bap/bap-delete-dialog';
 import {
@@ -54,6 +55,7 @@ type Props = {
             edit: boolean;
             submit: boolean;
             delete: boolean;
+            hard_delete: boolean;
         };
         segments: {
             id: number;
@@ -163,6 +165,9 @@ export default function ShowBap({ bap }: Props) {
                         ) : null}
                         {bap.can.submit ? <BapSubmitDialog bap={bap} /> : null}
                         {bap.can.delete ? <BapDeleteDialog bap={bap} /> : null}
+                        {bap.can.hard_delete ? (
+                            <BapHardDeleteDialog bap={bap} />
+                        ) : null}
                     </div>
                 </div>
 
