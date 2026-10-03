@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\SkpdInventory\CreateBap;
+use App\Actions\SkpdInventory\HardDeleteCompletedBap;
 use App\Actions\SkpdInventory\RecordDomainAudit;
 use App\BapCancellationReason;
 use App\BapClarificationResolutionOutcome;
@@ -26,6 +27,7 @@ use App\Models\User;
 use App\SkpdAllocationStatus;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
@@ -782,4 +784,44 @@ test('11: show endpoint exposes can.hard_delete as true only for Superadmin on c
             ->component('baps/show')
             ->where('bap.can.hard_delete', false)
         );
+});
+
+test('domain action rejects a non-superadmin caller without relying on HTTP authorization', function () {
+    $ctx = createHardDeleteFullGraphContext();
+
+    expect(fn () => app(HardDeleteCompletedBap::class)->handle(
+        $ctx['petugasLoket'],
+        $ctx['tailBap'],
+        'Alasan langsung yang seharusnya tetap ditolak oleh action.',
+    ))->toThrow(ValidationException::class);
+
+    $this->assertDatabaseHas('baps', ['id' => $ctx['tailBap']->id]);
+    $this->assertDatabaseMissing('audit_logs', [
+        'auditable_type' => Bap::class,
+        'auditable_id' => $ctx['tailBap']->id,
+        'event' => 'bap.hard_deleted',
+    ]);
+});
+
+test('a completed BAP is eligible for hard delete when it is the only BAP at its Loket', function () {
+    $ctx = createHardDeleteFullGraphContext();
+    $ctx['nonTailBap']->usageSegments()->delete();
+    $ctx['nonTailBap']->delete();
+
+    $this->actingAs($ctx['superadmin'])
+        ->get(route('baps.show', $ctx['tailBap']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('baps/show')
+            ->where('bap.can.hard_delete', true)
+        );
+
+    $this->actingAs($ctx['superadmin'])
+        ->delete(route('baps.hard-delete', $ctx['tailBap']), [
+            'confirmation_document_number' => $ctx['tailBap']->document_number,
+            'reason' => 'Membersihkan satu-satunya BAP training pada Loket ini.',
+        ])
+        ->assertRedirect(route('baps.index'));
+
+    $this->assertDatabaseMissing('baps', ['id' => $ctx['tailBap']->id]);
 });
