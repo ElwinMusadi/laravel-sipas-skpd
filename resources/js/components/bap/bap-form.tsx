@@ -1,5 +1,5 @@
 import { Form, Link, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
@@ -111,13 +111,12 @@ export function BapForm({
             ? new Date(`${initialServiceDateStr}T00:00:00`)
             : undefined,
     );
+    const expectedStart =
+        expectedNumeratorStart === null || expectedNumeratorStart === undefined
+            ? ''
+            : formatNomerator(expectedNumeratorStart);
     const [numeratorStart, setNumeratorStart] = useState(
-        bap
-            ? formatNomerator(bap.numerator_start)
-            : expectedNumeratorStart === null ||
-                expectedNumeratorStart === undefined
-              ? ''
-              : formatNomerator(expectedNumeratorStart),
+        bap ? formatNomerator(bap.numerator_start) : expectedStart,
     );
     const [numeratorEnd, setNumeratorEnd] = useState(
         bap ? formatNomerator(bap.numerator_end) : '',
@@ -141,6 +140,25 @@ export function BapForm({
         useState<CancellationItem[]>(initialItems);
 
     const parsedCount = Math.max(0, parseInt(cancellationCount, 10) || 0);
+
+    // Create mode: follow backend expected start when Loket/expected start
+    // changes, and drop the previous range so it is not carried over.
+    const allocationKey = `${formLoket?.id ?? ''}:${expectedStart}`;
+    const previousAllocationKey = useRef(allocationKey);
+
+    useEffect(() => {
+        if (
+            mode !== 'create' ||
+            previousAllocationKey.current === allocationKey
+        ) {
+            return;
+        }
+
+        previousAllocationKey.current = allocationKey;
+        setNumeratorStart(expectedStart);
+        setNumeratorEnd('');
+        setCancellationItems((prev) => prev.map(emptyItem));
+    }, [mode, allocationKey, expectedStart]);
 
     // Keep items array in sync with count
     useEffect(() => {

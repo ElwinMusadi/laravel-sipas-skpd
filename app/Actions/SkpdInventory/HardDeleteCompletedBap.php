@@ -40,7 +40,8 @@ class HardDeleteCompletedBap
             /** @var Collection<int, Bap> $loketBaps */
             $loketBaps = Bap::query()
                 ->where('loket_id', $lockedLoket->id)
-                ->orderBy('numerator_end')
+                ->orderBy('service_date')
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->get();
 

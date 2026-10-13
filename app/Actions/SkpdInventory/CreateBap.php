@@ -7,7 +7,6 @@ use App\BapStatus;
 use App\Models\Bap;
 use App\Models\BapUsageSegment;
 use App\Models\Loket;
-use App\Models\SkpdAllocation;
 use App\Models\User;
 use App\SkpdAllocationStatus;
 use Carbon\CarbonInterface;
@@ -21,6 +20,7 @@ class CreateBap
         private readonly RecordDomainAudit $audit,
         private readonly GenerateBapDocumentNumber $generateDocumentNumber,
         private readonly SynchronizeBapCancellations $syncCancellations,
+        private readonly BapAllocationSequence $allocationSequence,
     ) {}
 
     /**
@@ -65,7 +65,8 @@ class CreateBap
             /** @var Collection<int, Bap> $existingBaps */
             $existingBaps = Bap::query()
                 ->where('loket_id', $lockedLoket->id)
-                ->orderBy('numerator_end')
+                ->orderBy('service_date')
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->get();
 
@@ -78,13 +79,7 @@ class CreateBap
                 ]);
             }
 
-            /** @var Collection<int, SkpdAllocation> $allocations */
-            $allocations = SkpdAllocation::query()
-                ->where('loket_id', $lockedLoket->id)
-                ->whereIn('status', [SkpdAllocationStatus::Accepted->value, SkpdAllocationStatus::Completed->value])
-                ->orderBy('numerator_start')
-                ->lockForUpdate()
-                ->get();
+            $allocations = $this->allocationSequence->receivedAllocations($lockedLoket->id, lockForUpdate: true);
 
             if ($allocations->isEmpty()) {
                 throw ValidationException::withMessages([
@@ -100,9 +95,13 @@ class CreateBap
                 ]);
             }
 
-            $expectedStart = $latestBap === null
-                ? $allocations->first()->numerator_start
-                : $latestBap->numerator_end + 1;
+            $expectedStart = $this->allocationSequence->expectedStart($allocations, $latestBap);
+
+            if ($expectedStart === null) {
+                throw ValidationException::withMessages([
+                    'numerator_start' => 'Tidak ada sisa Nomerator pada alokasi Loket yang telah diterima.',
+                ]);
+            }
 
             if ($numeratorStart !== $expectedStart) {
                 throw ValidationException::withMessages([
@@ -110,11 +109,11 @@ class CreateBap
                 ]);
             }
 
-            $segments = $this->segmentsForRange($allocations, $numeratorStart, $numeratorEnd);
+            $segments = $this->allocationSequence->segmentsForRange($allocations, $numeratorStart, $numeratorEnd, lockForUpdate: true);
 
             if ($segments === []) {
                 throw ValidationException::withMessages([
-                    'numerator_end' => 'Range BAP berada di luar alokasi Loket yang telah diterima atau memiliki celah.',
+                    'numerator_end' => 'Range Nomerator BAP harus berada dalam urutan alokasi Loket yang telah diterima, tanpa celah atau tumpang tindih pemakaian.',
                 ]);
             }
 
@@ -165,43 +164,6 @@ class CreateBap
 
             return $bap;
         }, attempts: 3);
-    }
-
-    /**
-     * @param  Collection<int, SkpdAllocation>  $allocations
-     * @return list<array{skpd_allocation_id: int, numerator_start: int, numerator_end: int, quantity: int}>
-     */
-    private function segmentsForRange(Collection $allocations, int $numeratorStart, int $numeratorEnd): array
-    {
-        $cursor = $numeratorStart;
-        $segments = [];
-
-        foreach ($allocations as $allocation) {
-            if ($allocation->numerator_end < $cursor) {
-                continue;
-            }
-
-            if ($allocation->numerator_start > $cursor) {
-                break;
-            }
-
-            $segmentEnd = min($numeratorEnd, $allocation->numerator_end);
-
-            $segments[] = [
-                'skpd_allocation_id' => $allocation->id,
-                'numerator_start' => $cursor,
-                'numerator_end' => $segmentEnd,
-                'quantity' => $segmentEnd - $cursor + 1,
-            ];
-
-            $cursor = $segmentEnd + 1;
-
-            if ($cursor > $numeratorEnd) {
-                return $segments;
-            }
-        }
-
-        return [];
     }
 
     private function lockInventory(): void

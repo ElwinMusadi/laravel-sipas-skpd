@@ -825,3 +825,46 @@ test('a completed BAP is eligible for hard delete when it is the only BAP at its
 
     $this->assertDatabaseMissing('baps', ['id' => $ctx['tailBap']->id]);
 });
+
+test('hard delete tail follows service chronology when a later allocation has a lower numerator range', function () {
+    $ctx = createHardDeleteFullGraphContext();
+    $olderBap = $ctx['nonTailBap'];
+    $laterBap = $ctx['tailBap'];
+
+    $olderBap->update([
+        'service_date' => now()->subDays(2)->toDateString(),
+        'numerator_start' => 500_001,
+        'numerator_end' => 500_025,
+    ]);
+    $laterBap->update([
+        'service_date' => now()->subDay()->toDateString(),
+        'numerator_start' => 100_001,
+        'numerator_end' => 100_025,
+    ]);
+
+    $this->actingAs($ctx['superadmin'])
+        ->get(route('baps.show', $olderBap))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('baps/show')
+            ->where('bap.can.hard_delete', false)
+        );
+
+    $this->actingAs($ctx['superadmin'])
+        ->get(route('baps.show', $laterBap))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('baps/show')
+            ->where('bap.can.hard_delete', true)
+        );
+
+    $this->actingAs($ctx['superadmin'])
+        ->delete(route('baps.hard-delete', $laterBap), [
+            'confirmation_document_number' => $laterBap->document_number,
+            'reason' => 'Membersihkan BAP training terakhir dengan range lebih rendah.',
+        ])
+        ->assertRedirect(route('baps.index'));
+
+    $this->assertDatabaseHas('baps', ['id' => $olderBap->id]);
+    $this->assertDatabaseMissing('baps', ['id' => $laterBap->id]);
+});

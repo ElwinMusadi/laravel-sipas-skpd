@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\SkpdInventory\BapAllocationSequence;
 use App\Actions\SkpdInventory\CreateBap;
 use App\Actions\SkpdInventory\DeleteDraftBap;
 use App\Actions\SkpdInventory\HardDeleteCompletedBap;
@@ -18,11 +19,11 @@ use App\Models\BapCancellation;
 use App\Models\Loket;
 use App\Models\SkpdAllocation;
 use App\Models\User;
-use App\SkpdAllocationStatus;
 use App\Support\BapSkpdDocumentData;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,7 +81,7 @@ class SkpdBapController extends Controller
     /**
      * Show the BAP draft form for the active Loket context.
      */
-    public function create(Request $request): Response
+    public function create(Request $request, BapAllocationSequence $allocationSequence): Response
     {
         $actor = $this->actor($request);
 
@@ -89,14 +90,12 @@ class SkpdBapController extends Controller
         $loket = $this->selectedLoket($actor, $request);
         $latestBap = $loket === null ? null : Bap::query()
             ->where('loket_id', $loket->id)
-            ->orderByDesc('numerator_end')
-            ->first(['id', 'numerator_end']);
-        $allocations = $loket === null ? collect() : SkpdAllocation::query()
-            ->with('usageSegments:id,skpd_allocation_id,quantity')
-            ->where('loket_id', $loket->id)
-            ->whereIn('status', [SkpdAllocationStatus::Accepted->value, SkpdAllocationStatus::Completed->value])
-            ->orderBy('numerator_start')
-            ->get();
+            ->orderByDesc('service_date')
+            ->orderByDesc('id')
+            ->first(['id', 'service_date', 'numerator_start', 'numerator_end']);
+        $allocations = $loket === null
+            ? new Collection
+            : $allocationSequence->receivedAllocations($loket->id);
 
         return Inertia::render('baps/create', [
             'loket' => $loket === null ? null : ['id' => $loket->id, 'name' => $loket->name],
@@ -109,15 +108,13 @@ class SkpdBapController extends Controller
                   ->all()
               : [],
             'default_service_date' => now()->toDateString(),
-            'expected_numerator_start' => $latestBap === null
-              ? $allocations->first()?->numerator_start
-              : $latestBap->numerator_end + 1,
+            'expected_numerator_start' => $allocationSequence->expectedStart($allocations, $latestBap),
             'allocations' => $allocations
                 ->map(fn (SkpdAllocation $allocation): array => [
                     'id' => $allocation->id,
                     'numerator_start' => $allocation->numerator_start,
                     'numerator_end' => $allocation->numerator_end,
-                    'remaining_quantity' => $allocation->quantity - (int) $allocation->usageSegments->sum('quantity'),
+                    'remaining_quantity' => $allocationSequence->remainingQuantity($allocation),
                 ])
                 ->values()
                 ->all(),
@@ -224,7 +221,15 @@ class SkpdBapController extends Controller
 
         $isTail = ! Bap::query()
             ->where('loket_id', $bap->loket_id)
-            ->where('numerator_start', '>', $bap->numerator_end)
+            ->where(function ($query) use ($bap): void {
+                $query
+                    ->whereDate('service_date', '>', $bap->service_date)
+                    ->orWhere(function ($query) use ($bap): void {
+                        $query
+                            ->whereDate('service_date', $bap->service_date)
+                            ->where('id', '>', $bap->id);
+                    });
+            })
             ->exists();
 
         return Inertia::render('baps/show', [

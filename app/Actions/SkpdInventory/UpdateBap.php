@@ -6,7 +6,6 @@ use App\BapCancellationReason;
 use App\BapStatus;
 use App\Models\Bap;
 use App\Models\BapUsageSegment;
-use App\Models\SkpdAllocation;
 use App\Models\User;
 use App\SkpdAllocationStatus;
 use Carbon\CarbonInterface;
@@ -19,6 +18,7 @@ class UpdateBap
     public function __construct(
         private readonly RecordDomainAudit $audit,
         private readonly SynchronizeBapCancellations $syncCancellations,
+        private readonly BapAllocationSequence $allocationSequence,
     ) {}
 
     /**
@@ -65,7 +65,8 @@ class UpdateBap
             $otherBaps = Bap::query()
                 ->where('loket_id', $lockedBap->loket_id)
                 ->whereKeyNot($lockedBap->id)
-                ->orderBy('numerator_end')
+                ->orderBy('service_date')
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->get();
 
@@ -75,19 +76,25 @@ class UpdateBap
                 ]);
             }
 
-            if ($otherBaps->contains(fn (Bap $existingBap): bool => $existingBap->numerator_start > $lockedBap->numerator_start)) {
+            $isTailDraft = ! $otherBaps->contains(function (Bap $existingBap) use ($lockedBap): bool {
+                if ($existingBap->service_date->greaterThan($lockedBap->service_date)) {
+                    return true;
+                }
+
+                return $existingBap->service_date->equalTo($lockedBap->service_date) && $existingBap->id > $lockedBap->id;
+            });
+
+            if (! $isTailDraft) {
                 throw ValidationException::withMessages([
                     'numerator_start' => 'BAP draft tidak dapat diubah setelah terdapat BAP Loket berikutnya.',
                 ]);
             }
 
-            /** @var Collection<int, SkpdAllocation> $allocations */
-            $allocations = SkpdAllocation::query()
-                ->where('loket_id', $lockedBap->loket_id)
-                ->whereIn('status', [SkpdAllocationStatus::Accepted->value, SkpdAllocationStatus::Completed->value])
-                ->orderBy('numerator_start')
-                ->lockForUpdate()
-                ->get();
+            $allocations = $this->allocationSequence->receivedAllocations(
+                $lockedBap->loket_id,
+                excludedBapId: $lockedBap->id,
+                lockForUpdate: true,
+            );
 
             if ($allocations->isEmpty()) {
                 throw ValidationException::withMessages([
@@ -96,7 +103,13 @@ class UpdateBap
             }
 
             $previousBap = $otherBaps
-                ->filter(fn (Bap $existingBap): bool => $existingBap->numerator_end < $lockedBap->numerator_start)
+                ->filter(function (Bap $existingBap) use ($lockedBap): bool {
+                    if ($existingBap->service_date->lessThan($lockedBap->service_date)) {
+                        return true;
+                    }
+
+                    return $existingBap->service_date->equalTo($lockedBap->service_date) && $existingBap->id < $lockedBap->id;
+                })
                 ->last();
 
             if ($previousBap !== null && $serviceDate->lessThan($previousBap->service_date)) {
@@ -105,9 +118,13 @@ class UpdateBap
                 ]);
             }
 
-            $expectedStart = $previousBap === null
-                ? $allocations->first()->numerator_start
-                : $previousBap->numerator_end + 1;
+            $expectedStart = $this->allocationSequence->expectedStart($allocations, $previousBap);
+
+            if ($expectedStart === null) {
+                throw ValidationException::withMessages([
+                    'numerator_start' => 'Tidak ada sisa Nomerator pada alokasi Loket yang telah diterima.',
+                ]);
+            }
 
             if ($numeratorStart !== $expectedStart) {
                 throw ValidationException::withMessages([
@@ -115,11 +132,17 @@ class UpdateBap
                 ]);
             }
 
-            $segments = $this->segmentsForRange($allocations, $numeratorStart, $numeratorEnd);
+            $segments = $this->allocationSequence->segmentsForRange(
+                $allocations,
+                $numeratorStart,
+                $numeratorEnd,
+                excludedBapId: $lockedBap->id,
+                lockForUpdate: true,
+            );
 
             if ($segments === []) {
                 throw ValidationException::withMessages([
-                    'numerator_end' => 'Range BAP berada di luar alokasi Loket yang telah diterima atau memiliki celah.',
+                    'numerator_end' => 'Range Nomerator BAP harus berada dalam urutan alokasi Loket yang telah diterima, tanpa celah atau tumpang tindih pemakaian.',
                 ]);
             }
 
@@ -191,43 +214,6 @@ class UpdateBap
 
             return $lockedBap;
         }, attempts: 3);
-    }
-
-    /**
-     * @param  Collection<int, SkpdAllocation>  $allocations
-     * @return list<array{skpd_allocation_id: int, numerator_start: int, numerator_end: int, quantity: int}>
-     */
-    private function segmentsForRange(Collection $allocations, int $numeratorStart, int $numeratorEnd): array
-    {
-        $cursor = $numeratorStart;
-        $segments = [];
-
-        foreach ($allocations as $allocation) {
-            if ($allocation->numerator_end < $cursor) {
-                continue;
-            }
-
-            if ($allocation->numerator_start > $cursor) {
-                break;
-            }
-
-            $segmentEnd = min($numeratorEnd, $allocation->numerator_end);
-
-            $segments[] = [
-                'skpd_allocation_id' => $allocation->id,
-                'numerator_start' => $cursor,
-                'numerator_end' => $segmentEnd,
-                'quantity' => $segmentEnd - $cursor + 1,
-            ];
-
-            $cursor = $segmentEnd + 1;
-
-            if ($cursor > $numeratorEnd) {
-                return $segments;
-            }
-        }
-
-        return [];
     }
 
     private function lockInventory(): void
