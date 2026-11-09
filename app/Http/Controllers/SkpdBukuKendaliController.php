@@ -7,6 +7,7 @@ use App\Models\Bap;
 use App\Models\BapCancellation;
 use App\Models\Loket;
 use App\Models\User;
+use App\Support\BusinessDate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -27,8 +28,8 @@ class SkpdBukuKendaliController extends Controller
             'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
             'loket' => ['nullable', 'integer', 'exists:lokets,id'],
         ]);
-        $startDate = $filters['start_date'] ?? now()->startOfMonth()->toDateString();
-        $endDate = $filters['end_date'] ?? now()->toDateString();
+        $startDate = $filters['start_date'] ?? BusinessDate::now()->startOfMonth()->toDateString();
+        $endDate = $filters['end_date'] ?? BusinessDate::today();
         $search = trim((string) ($filters['search'] ?? ''));
 
         $query = $this->completedBapQuery(

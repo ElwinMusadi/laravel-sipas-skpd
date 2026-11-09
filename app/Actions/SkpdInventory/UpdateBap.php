@@ -19,6 +19,7 @@ class UpdateBap
         private readonly RecordDomainAudit $audit,
         private readonly SynchronizeBapCancellations $syncCancellations,
         private readonly BapAllocationSequence $allocationSequence,
+        private readonly GenerateBapDocumentNumber $generateDocumentNumber,
     ) {}
 
     /**
@@ -70,12 +71,6 @@ class UpdateBap
                 ->lockForUpdate()
                 ->get();
 
-            if ($otherBaps->contains(fn (Bap $existingBap): bool => $existingBap->service_date->toDateString() === $serviceDate->toDateString())) {
-                throw ValidationException::withMessages([
-                    'service_date' => 'Loket hanya dapat memiliki satu BAP pada satu hari pelayanan.',
-                ]);
-            }
-
             $isTailDraft = ! $otherBaps->contains(function (Bap $existingBap) use ($lockedBap): bool {
                 if ($existingBap->service_date->greaterThan($lockedBap->service_date)) {
                     return true;
@@ -126,6 +121,14 @@ class UpdateBap
                 ]);
             }
 
+            if ($previousBap !== null
+                && $previousBap->service_date->toDateString() === $serviceDate->toDateString()
+                && ! $this->allocationSequence->exhaustsAllocation($allocations, $previousBap)) {
+                throw ValidationException::withMessages([
+                    'service_date' => CreateBap::SAME_DATE_MESSAGE,
+                ]);
+            }
+
             $expectedStart = $this->allocationSequence->expectedStart($allocations, $previousBap);
 
             if ($expectedStart === null) {
@@ -155,12 +158,16 @@ class UpdateBap
             }
 
             $oldValues = [
+                'document_number' => $lockedBap->document_number,
                 'service_date' => $lockedBap->service_date->toDateString(),
                 'numerator_start' => $lockedBap->numerator_start,
                 'numerator_end' => $lockedBap->numerator_end,
                 'total_usage' => $lockedBap->total_usage,
                 'online_usage_count' => $lockedBap->online_usage_count,
             ];
+            $documentNumber = $lockedBap->service_date->toDateString() === $serviceDate->toDateString()
+                ? $lockedBap->document_number
+                : $this->generateDocumentNumber->handle($lockedBap->loket, $serviceDate, ignoredBapId: $lockedBap->id);
             $oldSegments = $lockedBap->usageSegments()
                 ->lockForUpdate()
                 ->get(['skpd_allocation_id', 'numerator_start', 'numerator_end', 'quantity'])
@@ -178,6 +185,7 @@ class UpdateBap
 
             $lockedBap->usageSegments()->delete();
             $lockedBap->update([
+                'document_number' => $documentNumber,
                 'service_date' => $serviceDate->toDateString(),
                 'numerator_start' => $numeratorStart,
                 'numerator_end' => $numeratorEnd,
@@ -201,6 +209,7 @@ class UpdateBap
             }
 
             $newValues = [
+                'document_number' => $lockedBap->document_number,
                 'service_date' => $lockedBap->service_date->toDateString(),
                 'numerator_start' => $lockedBap->numerator_start,
                 'numerator_end' => $lockedBap->numerator_end,

@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/table';
 import { index, show } from '@/routes/bap-cancellations';
 
-type CancellationReason = 'cancelled' | 'damaged';
+type CancellationReason = string;
 
 type Cancellation = {
     id: number;
@@ -61,11 +61,13 @@ type Props = {
         total: number;
     };
     filters: { search?: string; reason?: CancellationReason };
+    reasons: { value: CancellationReason; label: string }[];
 };
 
 export default function BapCancellationIndex({
     cancellations,
     filters,
+    reasons,
 }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [reason, setReason] = useState<CancellationReason | ''>(
@@ -143,12 +145,14 @@ export default function BapCancellationIndex({
                                         <SelectItem value="all">
                                             Semua klasifikasi
                                         </SelectItem>
-                                        <SelectItem value="cancelled">
-                                            Batal
-                                        </SelectItem>
-                                        <SelectItem value="damaged">
-                                            Rusak
-                                        </SelectItem>
+                                        {reasons.map((option) => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>

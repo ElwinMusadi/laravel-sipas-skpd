@@ -114,7 +114,8 @@ type Props = {
     cancellations: {
       id: number;
       numerator: number;
-      reason: "cancelled" | "damaged";
+      reason: string;
+      reason_label: string;
       description: string | null;
       created_by: string;
       created_at: string;
@@ -340,9 +341,7 @@ export default function BapAdministrationShow({ bap }: Props) {
                               {formatNomerator(cancellation.numerator)}
                             </span>
                             <Badge variant="outline">
-                              {cancellation.reason === "damaged"
-                                ? "Rusak"
-                                : "Batal"}
+                              {cancellation.reason_label}
                             </Badge>
                           </div>
                           {cancellation.description ? (

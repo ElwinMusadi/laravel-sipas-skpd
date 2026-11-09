@@ -1,8 +1,22 @@
 # SIPAS-SKPD — STATUS PROYEK
 
-**Pembaruan terakhir:** 9 November 2026
+**Pembaruan terakhir:** 10 November 2026
 **Fase saat ini:** Phase 19 — Manual Testing Readiness & End-to-End Workflow Hardening
 **Status:** PARTIAL — regresi otomatis siap; validasi browser manual belum dapat dinyatakan lulus.
+
+## Integritas Data P1 + Revisi BAP Ganda per Hari (10 November 2026)
+
+Bagian ini menggantikan aturan lama "satu BAP per Loket per hari" dan "nomor dokumen dari tanggal pembuatan" yang masih disebut pada bagian-bagian historis di bawah.
+
+1. **Dua BAP dalam satu tanggal pelayanan.** Unique `(loket_id, service_date)` dihapus (migration `relax_bap_service_date_uniqueness`). Loket boleh membuat BAP berikutnya pada tanggal yang sama hanya jika BAP sebelumnya berakhir tepat di Nomerator akhir sebuah alokasi, misalnya Box lama habis lalu dilanjutkan dengan Box baru yang Nomeratornya berbeda. Selama alokasi lama masih bersisa, BAP kedua ditolak.
+2. **Nomor dokumen dari tanggal pelayanan.** Format `PB/<KODE_LOKET>/<DD>/<MM>/<YYYY>` kini memakai tanggal pelayanan. BAP kedua pada tanggal yang sama mendapat akhiran `-2` (berikutnya `-3`, dst.). `baps.document_number` dibuat unik (migration `add_unique_index_to_bap_document_numbers`); nomor lama yang kebetulan ganda diberi akhiran urutan dengan audit `bap.document_number_deduplicated`. Nomor lama berbasis tanggal pembuatan tidak diubah. Draft tail yang dipindah tanggalnya mendapat nomor baru.
+3. **Tanggal di PDF BAP** ("Pada hari ini …") memakai tanggal pelayanan, bukan tanggal BAP dibuat.
+4. **Tanggal bisnis WITA.** `App\Support\BusinessDate` (config `app.business_timezone`, default `Asia/Makassar`) dipakai untuk validasi tanggal pelayanan maksimum hari ini, default tanggal form BAP, "BAP Hari Ini" di dashboard, default periode Buku Kendali dan Laporan, serta waktu "Dibuat" pada PDF laporan. `APP_TIMEZONE` tetap UTC agar timestamp lama tidak bergeser.
+5. **Hapus draft hanya untuk BAP terakhir Loket** sehingga tidak ada lubang Nomerator permanen.
+6. **Label dan angka.** Pemakaian normal = total − Batal/Rusak (SKPD online termasuk pemakaian normal), konsisten di form dan detail. Halaman Administrasi BAP memakai label alasan dari server; filter riwayat Batal/Rusak memuat semua alasan.
+7. **Keamanan akun.** Middleware `auth.session` aktif: sesi lain otomatis keluar setelah password direset admin atau diganti sendiri (sesi yang sedang dipakai tetap masuk). Superadmin tidak dapat menonaktifkan atau mengubah peran akunnya sendiri, sehingga selalu ada minimal satu Superadmin aktif. Aturan password minimal 8 karakter tidak diubah.
+
+Verifikasi: SQLite dan MySQL masing-masing 297 test / 2.625 assertion PASS, PHPStan 0 error, TypeScript PASS, build PASS. Uji browser belum dijalankan.
 
 ## Hardening P0 — Audit Produksi (9 November 2026)
 

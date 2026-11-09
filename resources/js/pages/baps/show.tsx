@@ -382,7 +382,7 @@ export default function ShowBap({ bap }: Props) {
                                 value={`${formatQuantity(bap.cancellations.quantity)} set`}
                             />
                             <SummaryValue
-                                label="Pemakaian normal"
+                                label="Pemakaian normal (termasuk online)"
                                 value={`${formatQuantity(bap.cancellations.normal_usage_quantity)} set`}
                             />
                         </div>

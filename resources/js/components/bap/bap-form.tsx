@@ -186,11 +186,10 @@ export function BapForm({
     const totalUsage = quantityForRange(numeratorStart, numeratorEnd);
     const onlineUsage = onlineUsageCount === '' ? 0 : Number(onlineUsageCount);
     const onlineIsValid = Number.isInteger(onlineUsage) && onlineUsage >= 0;
+    // Online SKPD count as normal usage; only Batal/Rusak is excluded.
     const normalUsage =
-        totalUsage !== null &&
-        onlineIsValid &&
-        onlineUsage + parsedCount <= totalUsage
-            ? totalUsage - onlineUsage - parsedCount
+        totalUsage !== null && parsedCount <= totalUsage
+            ? totalUsage - parsedCount
             : null;
     const formAction =
         mode === 'create'
@@ -585,7 +584,7 @@ export function BapForm({
                             value={`${formatQuantity(parsedCount)} set`}
                         />
                         <ReviewRow
-                            label="Pemakaian normal"
+                            label="Pemakaian normal (termasuk online)"
                             value={
                                 normalUsage === null
                                     ? '—'

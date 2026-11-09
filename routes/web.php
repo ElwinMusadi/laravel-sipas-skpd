@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
 
-Route::middleware(['auth', 'active'])->group(function () {
+Route::middleware(['auth', 'auth.session', 'active'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::middleware('can:view-bap-cancellations')
@@ -130,7 +130,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         });
 });
 
-Route::middleware(['auth', 'active', 'can:manage-users'])
+Route::middleware(['auth', 'auth.session', 'active', 'can:manage-users'])
     ->prefix('users')
     ->name('users.')
     ->group(function (): void {
@@ -143,7 +143,7 @@ Route::middleware(['auth', 'active', 'can:manage-users'])
         Route::post('{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('reset-password');
     });
 
-Route::middleware(['auth', 'active', 'can:view-skpd-inventory'])
+Route::middleware(['auth', 'auth.session', 'active', 'can:view-skpd-inventory'])
     ->prefix('skpd')
     ->name('skpd.')
     ->group(function (): void {
@@ -168,7 +168,7 @@ Route::middleware(['auth', 'active', 'can:view-skpd-inventory'])
         Route::post('allocations/{skpdAllocation}/cancel', [SkpdAllocationController::class, 'cancel'])->name('allocations.cancel');
     });
 
-Route::middleware(['auth', 'active', 'can:manage-lokets'])
+Route::middleware(['auth', 'auth.session', 'active', 'can:manage-lokets'])
     ->resource('lokets', LoketController::class);
 
 require __DIR__.'/settings.php';

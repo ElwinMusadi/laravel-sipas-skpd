@@ -340,7 +340,7 @@ test('rejects invalid BAP ranges and online usage above the range total', functi
     $this->assertDatabaseMissing('baps', ['loket_id' => $loket->id]);
 });
 
-test('enforces one BAP per loket per date and allows a zero-usage day', function () {
+test('rejects a second BAP on the same date while the allocation still has numerators and allows a zero-usage day', function () {
     $loket = Loket::factory()->create();
     $actor = petugasLoket($loket);
     $box = registerBox($actor);

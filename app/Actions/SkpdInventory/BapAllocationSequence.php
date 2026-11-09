@@ -175,6 +175,20 @@ class BapAllocationSequence
         return [];
     }
 
+    /**
+     * A Loket may file another BAP on the same service date only after the previous
+     * BAP used the last numerator of an allocation (for example, an old Box ran out
+     * and the Loket continues with a newly accepted Box).
+     *
+     * @param  Collection<int, SkpdAllocation>  $allocations
+     */
+    public function exhaustsAllocation(Collection $allocations, Bap $bap): bool
+    {
+        return $allocations->contains(
+            fn (SkpdAllocation $allocation): bool => $allocation->numerator_end === $bap->numerator_end,
+        );
+    }
+
     private function firstUnusedNumerator(SkpdAllocation $allocation, ?int $numeratorStart = null): ?int
     {
         $cursor = max($allocation->numerator_start, $numeratorStart ?? $allocation->numerator_start);

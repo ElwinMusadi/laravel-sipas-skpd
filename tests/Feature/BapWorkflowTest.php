@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\SkpdInventory\CreateBap;
 use App\Actions\SkpdInventory\GenerateBapDocumentNumber;
 use App\BapStatus;
 use App\Models\Bap;
@@ -143,7 +144,7 @@ test('BAP index provides the cancellation count for its Batal/Rusak column', fun
         );
 });
 
-test('created BAP persists a document number from its Loket and creation date', function () {
+test('created BAP persists a document number from its Loket and service date, not its creation date', function () {
     $loket = Loket::factory()->create([
         'code' => 'SAMLING-01',
         'name' => 'SAMLING 01',
@@ -154,19 +155,19 @@ test('created BAP persists a document number from its Loket and creation date', 
     $this->travelTo('2026-09-03 10:15:00');
 
     $this->actingAs($petugas)
-        ->post(route('baps.store'), bapPayload())
+        ->post(route('baps.store'), bapPayload(serviceDate: '2026-09-02'))
         ->assertRedirect();
 
     $bap = Bap::query()->sole();
 
-    expect($bap->document_number)->toBe('PB/SAMLING01/03/09/2026');
+    expect($bap->document_number)->toBe('PB/SAMLING01/02/09/2026');
     $this->assertDatabaseHas('audit_logs', [
         'auditable_type' => Bap::class,
         'auditable_id' => $bap->id,
         'event' => 'bap.created',
     ]);
     expect($bap->auditLogs()->where('event', 'bap.created')->sole()->new_values)
-        ->toMatchArray(['document_number' => 'PB/SAMLING01/03/09/2026']);
+        ->toMatchArray(['document_number' => 'PB/SAMLING01/02/09/2026']);
 });
 
 test('document number uses fixed codes for Mall Pelayanan Publik and Loket utama', function () {
@@ -227,7 +228,7 @@ test('BAP requires an accepted allocation for the same Loket and keeps leading z
         );
 });
 
-test('one Loket cannot create two BAPs for the same service date', function () {
+test('one Loket cannot create a second BAP for the same service date while its allocation still has numerators', function () {
     $loket = Loket::factory()->create();
     $petugas = bapPetugas($loket);
     bapAllocation($petugas, $loket);
@@ -240,7 +241,7 @@ test('one Loket cannot create two BAPs for the same service date', function () {
         ->from(route('baps.create'))
         ->post(route('baps.store'), bapPayload(582_611, 582_620, 0))
         ->assertRedirect(route('baps.create'))
-        ->assertSessionHasErrors('service_date');
+        ->assertSessionHasErrors(['service_date' => CreateBap::SAME_DATE_MESSAGE]);
 
     $this->assertDatabaseCount('baps', 1);
 });
@@ -357,6 +358,8 @@ test('draft can be updated by its creator with new segments and audit but become
 });
 
 test('dashboard serves actual BAP work within the Petugas Loket scope', function () {
+    $this->travelTo('2026-11-09 03:00:00');
+
     $currentLoket = Loket::factory()->create(['name' => 'Loket Sendiri']);
     $otherLoket = Loket::factory()->create(['name' => 'Loket Lain']);
     $petugas = bapPetugas($currentLoket);
@@ -385,14 +388,14 @@ test('dashboard serves actual BAP work within the Petugas Loket scope', function
         );
 });
 
-test('database unique constraint rejects a duplicate Loket and service date during a race', function () {
+test('database unique constraint rejects a duplicate document number during a race', function () {
     $loket = Loket::factory()->create();
     $creator = bapPetugas($loket);
-    $serviceDate = now()->toDateString();
 
     Bap::factory()->create([
+        'document_number' => 'PB/MPP/09/11/2026',
         'loket_id' => $loket->id,
-        'service_date' => $serviceDate,
+        'service_date' => '2026-11-09',
         'numerator_start' => 700_000,
         'numerator_end' => 700_009,
         'total_usage' => 10,
@@ -400,8 +403,9 @@ test('database unique constraint rejects a duplicate Loket and service date duri
     ]);
 
     expect(fn () => Bap::factory()->create([
+        'document_number' => 'PB/MPP/09/11/2026',
         'loket_id' => $loket->id,
-        'service_date' => $serviceDate,
+        'service_date' => '2026-11-10',
         'numerator_start' => 700_010,
         'numerator_end' => 700_019,
         'total_usage' => 10,
@@ -410,4 +414,30 @@ test('database unique constraint rejects a duplicate Loket and service date duri
 
     $this->assertDatabaseCount('baps', 1);
     $this->assertDatabaseCount('audit_logs', 0);
+});
+
+test('a draft BAP followed by a later Loket BAP cannot be deleted so the numerator chain has no gap', function () {
+    $loket = Loket::factory()->create();
+    $petugas = bapPetugas($loket);
+    bapAllocation($petugas, $loket);
+
+    $this->actingAs($petugas)->post(route('baps.store'), bapPayload(582_608, 582_610, 0, now()->subDay()->toDateString()));
+    $this->actingAs($petugas)->post(route('baps.store'), bapPayload(582_611, 582_615, 0));
+    [$earlierDraft, $tailDraft] = Bap::query()->orderBy('id')->get()->all();
+
+    $this->actingAs($petugas)
+        ->get(route('baps.show', $earlierDraft))
+        ->assertInertia(fn (Assert $page) => $page->where('bap.can.delete', false)->etc());
+    $this->actingAs($petugas)
+        ->get(route('baps.show', $tailDraft))
+        ->assertInertia(fn (Assert $page) => $page->where('bap.can.delete', true)->etc());
+
+    $this->actingAs($petugas)
+        ->from(route('baps.show', $earlierDraft))
+        ->delete(route('baps.destroy', $earlierDraft))
+        ->assertRedirect(route('baps.show', $earlierDraft))
+        ->assertSessionHasErrors(['bap' => 'Draft BAP tidak dapat dihapus karena sudah ada BAP Loket berikutnya. Hapus dimulai dari BAP paling akhir agar urutan Nomerator tidak berlubang.']);
+
+    $this->assertModelExists($earlierDraft);
+    $this->assertDatabaseCount('bap_usage_segments', 2);
 });

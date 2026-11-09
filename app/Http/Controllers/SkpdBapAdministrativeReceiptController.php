@@ -253,6 +253,7 @@ class SkpdBapAdministrativeReceiptController extends Controller
                     'id' => $cancellation->id,
                     'numerator' => $cancellation->numerator,
                     'reason' => $cancellation->reason->value,
+                    'reason_label' => $cancellation->reason->label(),
                     'description' => $cancellation->description,
                     'created_by' => $cancellation->creator->name,
                     'created_at' => $cancellation->created_at->toIso8601String(),

@@ -58,6 +58,13 @@ test('historical cancellation is listed read-only with its parent BAP context', 
             ->where('cancellations.data.0.id', $cancellation->id)
             ->where('cancellations.data.0.reason_label', 'Rusak')
             ->where('cancellations.data.0.bap_document_number', $bap->document_number)
+            ->where('reasons', [
+                ['value' => 'cancelled', 'label' => 'Batal'],
+                ['value' => 'damaged', 'label' => 'Rusak'],
+                ['value' => 'network_error', 'label' => 'Jaringan Error'],
+                ['value' => 'printer_error', 'label' => 'Printer Error'],
+                ['value' => 'custom', 'label' => 'Isi Sendiri'],
+            ])
             ->etc(),
         );
 

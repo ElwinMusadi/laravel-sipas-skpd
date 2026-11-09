@@ -69,6 +69,7 @@ class SkpdBapCancellationController extends Controller
                 ->withQueryString()
                 ->through(fn (BapCancellation $cancellation): array => $this->cancellationListData($cancellation)),
             'filters' => $filters,
+            'reasons' => $this->reasons(),
         ]);
     }
 

@@ -19,3 +19,9 @@ Setiap mutasi allocation atau BAP baru harus berada dalam DB::transaction(..., a
 
 ## Koreksi draft BAP non-tail
 UpdateBap pada draft yang sudah diikuti BAP Loket berikutnya menolak perubahan tanggal/range, tetapi menerima koreksi online_usage_count dan detail Batal/Rusak tanpa membangun ulang usage segment. Draft tail tetap boleh mengubah range.
+
+## BAP kedua pada tanggal pelayanan yang sama
+Tidak ada lagi unique (loket_id, service_date). Loket boleh membuat BAP berikutnya pada tanggal yang sama hanya bila BAP sebelumnya berakhir tepat di numerator_end sebuah alokasi (BapAllocationSequence::exhaustsAllocation), misalnya Box lama habis lalu lanjut Box baru. CreateBap dan UpdateBap (draft tail) menegakkan aturan ini di bawah inventory lock dengan pesan CreateBap::SAME_DATE_MESSAGE. Urutan BAP Loket selalu service_date lalu id.
+
+## Nomor dokumen BAP dari tanggal pelayanan
+GenerateBapDocumentNumber membentuk PB/<KODE>/<DD>/<MM>/<YYYY> dari service_date (bukan created_at); bila sudah terpakai ditambah akhiran -2, -3, dst. baps.document_number unik di DB. Nomor lama berbasis tanggal pembuatan tidak diubah. Draft tail yang dipindah tanggalnya mendapat nomor baru; PDF BAP memakai service_date untuk tanggal formal.

@@ -22,6 +22,7 @@ use App\Models\Loket;
 use App\Models\SkpdAllocation;
 use App\Models\User;
 use App\Support\BapSkpdDocumentData;
+use App\Support\BusinessDate;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -109,7 +110,7 @@ class SkpdBapController extends Controller
                   ->map(fn (Loket $option): array => ['id' => $option->id, 'name' => $option->name])
                   ->all()
               : [],
-            'default_service_date' => now()->toDateString(),
+            'default_service_date' => BusinessDate::today(),
             'expected_numerator_start' => $allocationSequence->expectedStart($allocations, $latestBap),
             'allocations' => $allocations
                 ->map(fn (SkpdAllocation $allocation): array => [
@@ -404,7 +405,8 @@ class SkpdBapController extends Controller
                   && $actor->can('update-bap', $bap),
                 'submit' => $bap->status === BapStatus::Draft
                   && $actor->can('submit-bap', $bap),
-                'delete' => $bap->status === BapStatus::Draft
+                'delete' => $isTail
+                  && $bap->status === BapStatus::Draft
                   && $actor->can('delete-bap', $bap)
                   && (int) $bap->cancellations_count === 0
                   && (int) $bap->verifications_count === 0

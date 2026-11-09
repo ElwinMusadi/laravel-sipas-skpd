@@ -11,6 +11,7 @@ use App\Models\Bap;
 use App\Models\BapClarificationRequest;
 use App\Models\BapVerification;
 use App\Models\User;
+use App\Support\BusinessDate;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class DashboardController extends Controller
         }
 
         $todayCount = (clone $bapQuery)
-            ->whereDate('service_date', now()->toDateString())
+            ->whereDate('service_date', BusinessDate::today())
             ->count();
 
         if ($actor->role === UserRole::PetugasPenetapan) {

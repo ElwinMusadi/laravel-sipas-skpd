@@ -21,7 +21,7 @@ type Props = {
   cancellation: {
     id: number;
     numerator: number;
-    reason: "cancelled" | "damaged";
+    reason: string;
     reason_label: string;
     description: string | null;
     created_by: string;

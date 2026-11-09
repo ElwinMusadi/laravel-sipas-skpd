@@ -28,6 +28,27 @@ class DeleteDraftBap
                 ]);
             }
 
+            $hasLaterBap = Bap::query()
+                ->where('loket_id', $lockedBap->loket_id)
+                ->whereKeyNot($lockedBap->id)
+                ->where(function ($query) use ($lockedBap): void {
+                    $query
+                        ->whereDate('service_date', '>', $lockedBap->service_date)
+                        ->orWhere(function ($query) use ($lockedBap): void {
+                            $query
+                                ->whereDate('service_date', $lockedBap->service_date)
+                                ->where('id', '>', $lockedBap->id);
+                        });
+                })
+                ->lockForUpdate()
+                ->exists();
+
+            if ($hasLaterBap) {
+                throw ValidationException::withMessages([
+                    'bap' => 'Draft BAP tidak dapat dihapus karena sudah ada BAP Loket berikutnya. Hapus dimulai dari BAP paling akhir agar urutan Nomerator tidak berlubang.',
+                ]);
+            }
+
             if ($lockedBap->cancellations()->lockForUpdate()->exists()
                 || $lockedBap->verifications()->lockForUpdate()->exists()
                 || $lockedBap->clarificationRequests()->lockForUpdate()->exists()) {

@@ -50,7 +50,7 @@ test('authorized user streams the official BAP PDF inline with a safe filename',
     expect($response->getContent())->toStartWith('%PDF');
 });
 
-test('official BAP document uses document number, created date in WITA, and seven digit numerators', function () {
+test('official BAP document uses document number, service date, and seven digit numerators', function () {
     $loket = Loket::factory()->create(['code' => 'MPP']);
     $creator = bapPdfUser(UserRole::PetugasLoket, $loket);
     $bap = printableBap($creator, $loket);
@@ -61,15 +61,17 @@ test('official BAP document uses document number, created date in WITA, and seve
 
     expect($data['documentNumber'])->toBe('PB/MPP/31/08/2026')
         ->and($data['formalDate'])->toBe([
-            'day_name' => 'Senin',
-            'date_words' => 'Tiga Puluh Satu',
-            'month_name' => 'Agustus',
+            'day_name' => 'Rabu',
+            'date_words' => 'Satu',
+            'month_name' => 'Juli',
             'year_words' => 'Dua Ribu Dua Puluh Enam',
         ])
         ->and($data['numeratorStart'])->toBe('0582608')
         ->and($data['numeratorEnd'])->toBe('0582620')
         ->and($html)->toContain('NOMOR : PB/MPP/31/08/2026')
-        ->and($html)->toContain('Tiga Puluh Satu')
+        ->and($html)->toContain('Rabu')
+        ->and($html)->toContain('Juli')
+        ->and($html)->not->toContain('Tiga Puluh Satu')
         ->and($html)->toContain('Dua Ribu Dua Puluh Enam')
         ->and($html)->toContain('0582608')
         ->and($html)->toContain('0582620')

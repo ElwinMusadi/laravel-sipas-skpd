@@ -16,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class CreateBap
 {
+    public const SAME_DATE_MESSAGE = 'Loket sudah memiliki BAP pada tanggal pelayanan ini. BAP berikutnya pada tanggal yang sama hanya dapat dibuat setelah Nomerator alokasi pada BAP sebelumnya habis.';
+
     public function __construct(
         private readonly RecordDomainAudit $audit,
         private readonly GenerateBapDocumentNumber $generateDocumentNumber,
@@ -71,14 +73,6 @@ class CreateBap
                 ->get();
 
             $serviceDateString = $serviceDate->toDateString();
-            $documentNumber = $this->generateDocumentNumber->handle($lockedLoket, now());
-
-            if ($existingBaps->contains(fn (Bap $bap): bool => $bap->service_date->toDateString() === $serviceDateString)) {
-                throw ValidationException::withMessages([
-                    'service_date' => 'Loket hanya dapat memiliki satu BAP pada satu hari pelayanan.',
-                ]);
-            }
-
             $allocations = $this->allocationSequence->receivedAllocations($lockedLoket->id, lockForUpdate: true);
 
             if ($allocations->isEmpty()) {
@@ -94,6 +88,16 @@ class CreateBap
                     'service_date' => 'Tanggal pelayanan tidak boleh lebih awal dari BAP Loket terakhir.',
                 ]);
             }
+
+            if ($latestBap !== null
+                && $latestBap->service_date->toDateString() === $serviceDateString
+                && ! $this->allocationSequence->exhaustsAllocation($allocations, $latestBap)) {
+                throw ValidationException::withMessages([
+                    'service_date' => self::SAME_DATE_MESSAGE,
+                ]);
+            }
+
+            $documentNumber = $this->generateDocumentNumber->handle($lockedLoket, $serviceDate);
 
             $expectedStart = $this->allocationSequence->expectedStart($allocations, $latestBap);
 

@@ -1,7 +1,6 @@
 <?php
 
 return [
-    'timezone' => 'Asia/Makassar',
     'institution' => [
         'government' => 'PEMERINTAH PROVINSI NUSA TENGGARA TIMUR',
         'agency' => 'BADAN PENDAPATAN DAN ASET DAERAH',

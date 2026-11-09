@@ -7,6 +7,7 @@ use App\Models\Bap;
 use App\Models\Loket;
 use App\Models\User;
 use App\SkpdLaporanPemakaianQuery;
+use App\Support\BusinessDate;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -58,7 +59,7 @@ class SkpdLaporanPemakaianController extends Controller
         return Pdf::loadView('pdf.laporan-pemakaian', [
             'appName' => (string) config('app.name', 'SIPAS-SKPD'),
             'baps' => $report->detailQuery()->get(),
-            'generatedAt' => now(),
+            'generatedAt' => BusinessDate::now(),
             'logoDataUri' => $this->logoDataUri(),
             'loket' => $report->selectedLoketName(),
             'period' => $report->periodLabel(),
@@ -133,8 +134,8 @@ class SkpdLaporanPemakaianController extends Controller
         ]);
 
         return new SkpdLaporanPemakaianQuery(
-            isset($filters['month']) ? (int) $filters['month'] : now()->month,
-            isset($filters['year']) ? (int) $filters['year'] : now()->year,
+            isset($filters['month']) ? (int) $filters['month'] : BusinessDate::now()->month,
+            isset($filters['year']) ? (int) $filters['year'] : BusinessDate::now()->year,
             isset($filters['loket']) ? (int) $filters['loket'] : null,
         );
     }

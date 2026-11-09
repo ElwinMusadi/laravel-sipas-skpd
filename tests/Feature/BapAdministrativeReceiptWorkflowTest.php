@@ -190,6 +190,7 @@ test('Bendahara Barang can view the full BAP record before administrative receip
             ->where('bap.can.receive', true)
             ->where('bap.segments.0.allocation_id', $context['allocation']->id)
             ->where('bap.cancellations.0.numerator', 611_004)
+            ->where('bap.cancellations.0.reason_label', 'Rusak')
             ->where('bap.phase_one.0.result', BapVerificationResult::Passed->value)
             ->where('bap.phase_two.0.result', BapVerificationResult::Passed->value)
             ->etc(),

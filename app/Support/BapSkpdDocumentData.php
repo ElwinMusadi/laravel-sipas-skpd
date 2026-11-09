@@ -27,8 +27,7 @@ class BapSkpdDocumentData
      */
     public function for(Bap $bap): array
     {
-        $timezone = (string) config('bap-document.timezone', 'Asia/Makassar');
-        $createdAt = CarbonImmutable::instance($bap->created_at)->setTimezone($timezone);
+        $serviceDate = CarbonImmutable::instance($bap->service_date);
 
         /** @var list<array{number: int, numerator: string, reason: string, description: string|null, statement: string}> $cancellations */
         $cancellations = $bap->cancellations
@@ -46,7 +45,7 @@ class BapSkpdDocumentData
         return [
             'documentNumber' => $bap->document_number,
             'filename' => $this->filename($bap->document_number),
-            'formalDate' => $this->formalDate->format($createdAt),
+            'formalDate' => $this->formalDate->format($serviceDate),
             'totalUsage' => $bap->total_usage,
             'numeratorStart' => $this->numerator($bap->numerator_start),
             'numeratorEnd' => $this->numerator($bap->numerator_end),

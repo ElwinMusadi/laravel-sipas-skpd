@@ -4,6 +4,7 @@ use App\Models\AuditLog;
 use App\Models\Loket;
 use App\Models\User;
 use App\UserRole;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -176,4 +177,74 @@ test('petugas loket requires a loket assignment', function () {
         ->assertSessionHasErrors('loket_id');
 
     $this->assertDatabaseMissing('users', ['username' => 'loket-tanpa-relasi']);
+});
+
+test('a session started before an admin password reset is signed out on its next request', function () {
+    $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
+    $user = User::factory()->create(['role' => UserRole::BendaharaBarang]);
+    $sessionBeforeReset = ['password_hash_web' => Auth::guard('web')->hashPasswordForCookie($user->password)];
+
+    $this->withSession($sessionBeforeReset)
+        ->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk();
+
+    $this->actingAs($superadmin)
+        ->post(route('users.reset-password', $user), [
+            'password' => 'Password-baru-123!',
+            'password_confirmation' => 'Password-baru-123!',
+        ])
+        ->assertRedirect(route('users.show', $user));
+
+    $this->withSession($sessionBeforeReset)
+        ->actingAs($user->fresh())
+        ->get(route('dashboard'))
+        ->assertRedirect(route('login'));
+
+    $this->assertGuest();
+});
+
+test('a superadmin cannot deactivate or demote their own account', function (array $changes, string $field, string $message) {
+    $superadmin = User::factory()->create(['role' => UserRole::Superadmin, 'is_active' => true]);
+
+    $this->actingAs($superadmin)
+        ->from(route('users.edit', $superadmin))
+        ->put(route('users.update', $superadmin), [
+            'username' => $superadmin->username,
+            'name' => $superadmin->name,
+            'nip' => $superadmin->nip,
+            'role' => UserRole::Superadmin->value,
+            'is_active' => true,
+            ...$changes,
+        ])
+        ->assertRedirect(route('users.edit', $superadmin))
+        ->assertSessionHasErrors([$field => $message]);
+
+    $this->assertDatabaseHas('users', [
+        'id' => $superadmin->id,
+        'role' => UserRole::Superadmin->value,
+        'is_active' => true,
+    ]);
+    $this->assertDatabaseMissing('audit_logs', ['auditable_id' => $superadmin->id, 'event' => 'user.deactivated']);
+})->with([
+    'deactivate' => [['is_active' => false], 'is_active', 'Anda tidak dapat menonaktifkan akun Anda sendiri.'],
+    'demote' => [['role' => UserRole::PetugasPenetapan->value], 'role', 'Anda tidak dapat mengubah peran akun Anda sendiri.'],
+]);
+
+test('a superadmin can still deactivate another superadmin', function () {
+    $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
+    $otherSuperadmin = User::factory()->create(['role' => UserRole::Superadmin]);
+
+    $this->actingAs($superadmin)
+        ->put(route('users.update', $otherSuperadmin), [
+            'username' => $otherSuperadmin->username,
+            'name' => $otherSuperadmin->name,
+            'nip' => $otherSuperadmin->nip,
+            'role' => UserRole::Superadmin->value,
+            'is_active' => false,
+        ])
+        ->assertRedirect(route('users.show', $otherSuperadmin))
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('users', ['id' => $otherSuperadmin->id, 'is_active' => false]);
 });

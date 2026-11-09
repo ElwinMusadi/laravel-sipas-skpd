@@ -4,6 +4,7 @@ namespace App\Http\Requests\SkpdInventory;
 
 use App\BapCancellationReason;
 use App\Models\Bap;
+use App\Support\BusinessDate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -31,7 +32,7 @@ class UpdateBapRequest extends FormRequest
 
         return [
             'loket_id' => ['prohibited'],
-            'service_date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'service_date' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.BusinessDate::today()],
             'numerator_start' => ['required', 'string', 'regex:/^\d{7}$/'],
             'numerator_end' => ['required', 'string', 'regex:/^\d{7}$/'],
             'online_usage_count' => ['required', 'integer', 'min:0'],

@@ -141,6 +141,7 @@ class UserManagementController extends Controller
             $this->ensureAssignedLoketIsActive($attributes['loket_id']);
 
             $lockedUser->fill($attributes);
+            $this->ensureSuperadminAccessIsKept($actor, $lockedUser);
             $changes = Arr::only($lockedUser->getDirty(), ['username', 'name', 'nip', 'role', 'loket_id', 'is_active']);
             $old = Arr::only($lockedUser->getRawOriginal(), array_keys($changes));
             $lockedUser->save();
@@ -184,6 +185,29 @@ class UserManagementController extends Controller
             'loket_id' => $role === UserRole::PetugasLoket->value ? (int) $attributes['loket_id'] : null,
             'is_active' => $attributes['is_active'],
         ];
+    }
+
+    /**
+     * Only an active Superadmin manages users, so forbidding self-deactivation and
+     * self-demotion guarantees at least one active Superadmin always remains.
+     */
+    private function ensureSuperadminAccessIsKept(User $actor, User $user): void
+    {
+        if (! $actor->is($user)) {
+            return;
+        }
+
+        if ($user->isDirty('is_active') && ! $user->is_active) {
+            throw ValidationException::withMessages([
+                'is_active' => 'Anda tidak dapat menonaktifkan akun Anda sendiri.',
+            ]);
+        }
+
+        if ($user->isDirty('role')) {
+            throw ValidationException::withMessages([
+                'role' => 'Anda tidak dapat mengubah peran akun Anda sendiri.',
+            ]);
+        }
     }
 
     private function ensureAssignedLoketIsActive(?int $loketId): void
