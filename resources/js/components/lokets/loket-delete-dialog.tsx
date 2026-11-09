@@ -1,6 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import LoketController from '@/actions/App/Http/Controllers/LoketController';
+import FormErrorSummary from '@/components/form-error-summary';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -34,18 +35,33 @@ export function LoketDeleteDialog({ loket }: Props) {
                         penghapusan tetap dicatat.
                     </DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">Kembali</Button>
-                    </DialogClose>
-                    <Form action={LoketController.destroy(loket.id)}>
-                        {({ processing }) => (
-                            <Button variant="destructive" disabled={processing}>
-                                Hapus Loket
-                            </Button>
-                        )}
-                    </Form>
-                </DialogFooter>
+                <Form
+                    action={LoketController.destroy(loket.id)}
+                    className="grid gap-4"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <FormErrorSummary
+                                errors={errors}
+                                title="Loket tidak dapat dihapus."
+                            />
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="outline">
+                                        Kembali
+                                    </Button>
+                                </DialogClose>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    disabled={processing}
+                                >
+                                    Hapus Loket
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
+                </Form>
             </DialogContent>
         </Dialog>
     );

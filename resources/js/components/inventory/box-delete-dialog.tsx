@@ -1,6 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import SkpdBoxController from '@/actions/App/Http/Controllers/SkpdBoxController';
+import FormErrorSummary from '@/components/form-error-summary';
 import { formatRange } from '@/components/inventory/format';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,18 +42,33 @@ export function BoxDeleteDialog({ box }: Props) {
                         riwayat pemakaian. Audit penghapusan tetap dicatat.
                     </DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">Kembali</Button>
-                    </DialogClose>
-                    <Form action={SkpdBoxController.destroy(box.id)}>
-                        {({ processing }) => (
-                            <Button variant="destructive" disabled={processing}>
-                                Hapus Box
-                            </Button>
-                        )}
-                    </Form>
-                </DialogFooter>
+                <Form
+                    action={SkpdBoxController.destroy(box.id)}
+                    className="grid gap-4"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <FormErrorSummary
+                                errors={errors}
+                                title="Box tidak dapat dihapus."
+                            />
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="outline">
+                                        Kembali
+                                    </Button>
+                                </DialogClose>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    disabled={processing}
+                                >
+                                    Hapus Box
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
+                </Form>
             </DialogContent>
         </Dialog>
     );

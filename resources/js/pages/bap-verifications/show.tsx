@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -12,6 +12,8 @@ import {
     BapStatusBadge,
     type BapStatus,
 } from '@/components/bap/bap-status-badge';
+import { BapVerificationTakeOverDialog } from '@/components/bap/bap-verification-take-over-dialog';
+import FormErrorSummary from '@/components/form-error-summary';
 import {
     formatDate,
     formatDateTime,
@@ -116,7 +118,7 @@ type Props = {
     verification: Verification | null;
     phase_one_verification: Verification | null;
     checklist: ChecklistDefinition[];
-    can: { start: boolean; complete: boolean };
+    can: { start: boolean; complete: boolean; take_over: boolean };
     verification_stage: {
         value: 'phase_1' | 'phase_2';
         label: string;
@@ -150,6 +152,7 @@ export default function ShowBapVerification({
 }: Props) {
     const routes = stage.is_phase_two ? phaseTwoRoutes : phaseOneRoutes;
     const [confirmationOpen, setConfirmationOpen] = useState(false);
+    const { errors: pageErrors } = usePage().props;
     const [discrepancyNotes, setDiscrepancyNotes] = useState<
         Partial<Record<ChecklistType, string>>
     >({});
@@ -226,7 +229,7 @@ export default function ShowBapVerification({
             })),
         }));
         form.post(routes.complete(bap.id).url, {
-            onSuccess: () => setConfirmationOpen(false),
+            onFinish: () => setConfirmationOpen(false),
         });
     };
 
@@ -271,6 +274,13 @@ export default function ShowBapVerification({
                         </Button>
                     ) : null}
                 </section>
+
+                {can.complete ? null : (
+                    <FormErrorSummary
+                        errors={pageErrors}
+                        title={`${stage.label} tidak dapat diproses.`}
+                    />
+                )}
 
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card>
@@ -488,6 +498,15 @@ export default function ShowBapVerification({
                         verification={verification}
                         stageLabel={stage.label}
                         isPhaseTwo={stage.is_phase_two}
+                    />
+                ) : null}
+
+                {can.take_over && verification ? (
+                    <BapVerificationTakeOverDialog
+                        action={routes.takeOver(bap.id)}
+                        stageLabel={stage.label}
+                        verifierName={verification.verifier}
+                        startedAt={verification.started_at}
                     />
                 ) : null}
 
@@ -713,6 +732,16 @@ export default function ShowBapVerification({
                                         </ValidationNotice>
                                     ) : null}
                                 </fieldset>
+
+                                <FormErrorSummary
+                                    errors={form.errors}
+                                    fields={[
+                                        'checklist.*',
+                                        'discrepancies',
+                                        'result',
+                                    ]}
+                                    title="Verifikasi belum dapat diselesaikan."
+                                />
 
                                 <div className="flex justify-end">
                                     <Button

@@ -9,6 +9,7 @@ use App\Actions\SkpdInventory\HardDeleteCompletedBap;
 use App\Actions\SkpdInventory\SubmitBap;
 use App\Actions\SkpdInventory\UpdateBap;
 use App\BapCancellationReason;
+use App\BapClarificationResolutionOutcome;
 use App\BapClarificationStatus;
 use App\BapStatus;
 use App\Http\Requests\SkpdInventory\HardDeleteBapRequest;
@@ -16,6 +17,7 @@ use App\Http\Requests\SkpdInventory\StoreBapRequest;
 use App\Http\Requests\SkpdInventory\UpdateBapRequest;
 use App\Models\Bap;
 use App\Models\BapCancellation;
+use App\Models\BapClarificationResolution;
 use App\Models\Loket;
 use App\Models\SkpdAllocation;
 use App\Models\User;
@@ -219,18 +221,7 @@ class SkpdBapController extends Controller
             },
         ])->loadCount(['cancellations', 'verifications', 'clarificationRequests']);
 
-        $isTail = ! Bap::query()
-            ->where('loket_id', $bap->loket_id)
-            ->where(function ($query) use ($bap): void {
-                $query
-                    ->whereDate('service_date', '>', $bap->service_date)
-                    ->orWhere(function ($query) use ($bap): void {
-                        $query
-                            ->whereDate('service_date', $bap->service_date)
-                            ->where('id', '>', $bap->id);
-                    });
-            })
-            ->exists();
+        $isTail = $this->isTailBap($bap);
 
         return Inertia::render('baps/show', [
             'bap' => [
@@ -292,6 +283,7 @@ class SkpdBapController extends Controller
                     ])
                     ->values()
                     ->all(),
+                'correction_request' => $this->correctionRequestData($bap),
             ],
         ]);
     }
@@ -308,7 +300,11 @@ class SkpdBapController extends Controller
         $bap->load(['loket:id,name', 'cancellations' => fn ($q) => $q->orderBy('numerator')]);
 
         return Inertia::render('baps/edit', [
-            'bap' => $this->bapFormData($bap),
+            'bap' => [
+                ...$this->bapFormData($bap),
+                'range_locked' => ! $this->isTailBap($bap),
+                'correction_request' => $this->correctionRequestData($bap),
+            ],
             'cancellation_reasons' => array_map(
                 fn (BapCancellationReason $r): array => ['value' => $r->value, 'label' => $r->label()],
                 BapCancellationReason::forNewEntry(),
@@ -444,6 +440,56 @@ class SkpdBapController extends Controller
         ];
     }
 
+    /**
+     * A BAP is the Loket tail when no later BAP exists by service date, then ID.
+     */
+    private function isTailBap(Bap $bap): bool
+    {
+        return ! Bap::query()
+            ->where('loket_id', $bap->loket_id)
+            ->where(function ($query) use ($bap): void {
+                $query
+                    ->whereDate('service_date', '>', $bap->service_date)
+                    ->orWhere(function ($query) use ($bap): void {
+                        $query
+                            ->whereDate('service_date', $bap->service_date)
+                            ->where('id', '>', $bap->id);
+                    });
+            })
+            ->exists();
+    }
+
+    /**
+     * The verifier decision that returned this draft for correction, if any.
+     *
+     * @return array{stage_label: string, notes: string, resolved_by: string, resolved_at: string}|null
+     */
+    private function correctionRequestData(Bap $bap): ?array
+    {
+        if ($bap->status !== BapStatus::Draft) {
+            return null;
+        }
+
+        $resolution = BapClarificationResolution::query()
+            ->whereHas('clarificationRequest', fn ($query) => $query->where('bap_id', $bap->id))
+            ->where('outcome', BapClarificationResolutionOutcome::ReturnedForCorrection)
+            ->with(['resolver:id,name', 'clarificationRequest.verification'])
+            ->latest('resolved_at')
+            ->latest('id')
+            ->first();
+
+        if ($resolution === null) {
+            return null;
+        }
+
+        return [
+            'stage_label' => $resolution->clarificationRequest->verification->stage->label(),
+            'notes' => $resolution->notes,
+            'resolved_by' => $resolution->resolver->name,
+            'resolved_at' => $resolution->resolved_at->toIso8601String(),
+        ];
+    }
+
     private function auditLabel(string $event): string
     {
         return match ($event) {
@@ -453,12 +499,14 @@ class SkpdBapController extends Controller
             'bap.hard_deleted' => 'BAP SKPD dihapus secara permanen',
             'bap.submitted' => 'BAP SKPD diajukan',
             'bap_verification.phase_1_started' => 'Verifikasi Tahap 1 dimulai',
+            'bap_verification.phase_1_taken_over' => 'Verifikasi Tahap 1 diambil alih',
             'bap_verification.phase_1_checklist_completed' => 'Checklist Verifikasi Tahap 1 selesai',
             'bap_verification.phase_1_passed' => 'Verifikasi Tahap 1 lulus',
             'bap_verification.phase_1_discrepancy_recorded' => 'Selisih Verifikasi Tahap 1 dicatat',
             'bap_verification.phase_1_sent_to_clarification' => 'BAP dikirim ke klarifikasi',
             'bap_verification.phase_1_completed' => 'Verifikasi Tahap 1 diselesaikan',
             'bap_verification.phase_2_started' => 'Verifikasi Tahap 2 dimulai',
+            'bap_verification.phase_2_taken_over' => 'Verifikasi Tahap 2 diambil alih',
             'bap_verification.phase_2_checklist_completed' => 'Checklist Verifikasi Tahap 2 selesai',
             'bap_verification.phase_2_passed' => 'Verifikasi Tahap 2 lulus',
             'bap_verification.phase_2_discrepancy_recorded' => 'Selisih Verifikasi Tahap 2 dicatat',
@@ -471,6 +519,7 @@ class SkpdBapController extends Controller
             'bap_clarification.resolved' => 'Klarifikasi diselesaikan',
             'bap_clarification.reopened' => 'Klarifikasi dibuka kembali',
             'bap_clarification.reverification_requested' => 'BAP masuk antrean verifikasi ulang',
+            'bap_clarification.returned_for_correction' => 'BAP dikembalikan untuk koreksi',
             'bap_clarification.reverification_completed' => 'Verifikasi ulang diselesaikan',
             'bap_usage_segments.created' => 'Usage segment BAP dicatat',
             'bap_usage_segments.updated' => 'Usage segment BAP diperbarui',

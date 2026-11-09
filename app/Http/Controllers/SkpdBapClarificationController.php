@@ -146,9 +146,11 @@ class SkpdBapClarificationController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => $resolution->outcome === BapClarificationResolutionOutcome::Resolved
-                ? 'Penyelesaian diterima. BAP masuk antrean verifikasi ulang sesuai tahap sumbernya.'
-                : 'Klarifikasi dibuka kembali dan menunggu tanggapan Loket.',
+            'message' => match ($resolution->outcome) {
+                BapClarificationResolutionOutcome::Resolved => 'Penyelesaian diterima. BAP masuk antrean verifikasi ulang sesuai tahap sumbernya.',
+                BapClarificationResolutionOutcome::Reopened => 'Klarifikasi dibuka kembali dan menunggu tanggapan Loket.',
+                BapClarificationResolutionOutcome::ReturnedForCorrection => 'BAP dikembalikan ke Loket sebagai draft untuk dikoreksi. Setelah diajukan ulang, BAP diverifikasi kembali mulai Tahap 1.',
+            },
         ]);
 
         return to_route('bap-clarifications.show', $clarification);
@@ -309,6 +311,7 @@ class SkpdBapClarificationController extends Controller
             'bap_clarification.resolved' => 'Klarifikasi diselesaikan',
             'bap_clarification.reopened' => 'Klarifikasi dibuka kembali',
             'bap_clarification.reverification_requested' => 'Verifikasi ulang diminta',
+            'bap_clarification.returned_for_correction' => 'BAP dikembalikan untuk koreksi',
             default => 'Aktivitas klarifikasi',
         };
     }

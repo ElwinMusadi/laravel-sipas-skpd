@@ -10,6 +10,10 @@ import {
     BapStatusBadge,
     type BapStatus,
 } from '@/components/bap/bap-status-badge';
+import {
+    BapCorrectionNotice,
+    type BapCorrectionRequest,
+} from '@/components/bap/bap-correction-notice';
 import { BapHardDeleteDialog } from '@/components/bap/bap-hard-delete-dialog';
 import { BapSubmitDialog } from '@/components/bap/bap-submit-dialog';
 import { BapDeleteDialog } from '@/components/bap/bap-delete-dialog';
@@ -109,6 +113,7 @@ type Props = {
                 can_view: boolean;
             } | null;
         }[];
+        correction_request: BapCorrectionRequest | null;
     };
 };
 
@@ -171,7 +176,9 @@ export default function ShowBap({ bap }: Props) {
                     </div>
                 </div>
 
-                {bap.status !== 'draft' ? (
+                {bap.correction_request ? (
+                    <BapCorrectionNotice correction={bap.correction_request} />
+                ) : bap.status !== 'draft' ? (
                     <p className="border-primary/25 bg-primary/8 rounded-xl border p-4 text-sm">
                         BAP ini bersifat read-only setelah diajukan. Status
                         verifikasi dan riwayat pemeriksaannya tersedia pada

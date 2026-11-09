@@ -16,3 +16,6 @@ BAP draft updates must acquire the shared inventory lock and preserve per-Loket 
 
 ## Loket aktif adalah precondition terkunci
 Setiap mutasi allocation atau BAP baru harus berada dalam DB::transaction(..., attempts: 3), mengunci skpd_inventory_locks id 1 lalu row Loket, dan menolak Loket inactive. Jangan gunakan visibilitas UI atau validasi awal sebagai satu-satunya penjagaan lifecycle Loket.
+
+## Koreksi draft BAP non-tail
+UpdateBap pada draft yang sudah diikuti BAP Loket berikutnya menolak perubahan tanggal/range, tetapi menerima koreksi online_usage_count dan detail Batal/Rusak tanpa membangun ulang usage segment. Draft tail tetap boleh mengubah range.

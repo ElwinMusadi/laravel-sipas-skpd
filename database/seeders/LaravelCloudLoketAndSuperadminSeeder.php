@@ -7,15 +7,21 @@ use App\Models\User;
 use App\UserRole;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * Seeds the approved Laravel Cloud Loket master data and Superadmin account.
  *
- * This seeder is intentionally separate from DatabaseSeeder. It is idempotent:
- * Lokets are synchronized by code and the user is synchronized by username.
+ * This seeder is intentionally separate from DatabaseSeeder. It is idempotent and
+ * create-only: missing Lokets are created by code and the Superadmin is created by
+ * username, but existing records are never modified. Production edits such as a
+ * changed password, a deactivated account, or a renamed or inactive Loket survive
+ * every rerun.
  */
 class LaravelCloudLoketAndSuperadminSeeder extends Seeder
 {
+    private const SUPERADMIN_USERNAME = 'elwinmusadi16';
+
     /**
      * Run the database seeds.
      */
@@ -24,25 +30,34 @@ class LaravelCloudLoketAndSuperadminSeeder extends Seeder
         $lokets = [];
 
         foreach ($this->loketDefinitions() as $definition) {
-            $lokets[$definition['code']] = Loket::query()->updateOrCreate(
+            $lokets[$definition['code']] = Loket::query()->firstOrCreate(
                 ['code' => $definition['code']],
                 $definition,
             );
         }
 
-        $superadmin = User::query()->firstOrNew([
-            'username' => 'elwinmusadi16',
-        ]);
+        if (User::query()->where('username', self::SUPERADMIN_USERNAME)->exists()) {
+            $this->command->info('Akun Superadmin sudah ada; data akun tidak diubah.');
 
+            return;
+        }
+
+        $initialPassword = Str::random(24);
+
+        $superadmin = new User;
         $superadmin->forceFill([
+            'username' => self::SUPERADMIN_USERNAME,
             'name' => 'Elwin Bessiesura, S.Kom',
             'nip' => '199707162025061002',
             'email' => 'elwinmusadi@gmail.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make($initialPassword),
             'role' => UserRole::Superadmin,
             'loket_id' => $lokets['MPP']->id,
             'is_active' => true,
         ])->save();
+
+        $this->command->warn("Password awal Superadmin: {$initialPassword}");
+        $this->command->warn('Simpan password ini sekarang dan segera ganti setelah login pertama.');
     }
 
     /**

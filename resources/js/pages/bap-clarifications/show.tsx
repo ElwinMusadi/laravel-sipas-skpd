@@ -1,13 +1,15 @@
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import {
   ArrowLeft,
   CheckCircle2,
+  FilePenLine,
   FileWarning,
   MessageSquareMore,
   RotateCcw,
   Send,
 } from "lucide-react";
 import { useState } from "react";
+import FormErrorSummary from "@/components/form-error-summary";
 import {
   formatDate,
   formatDateTime,
@@ -42,7 +44,7 @@ import bapClarifications, {
 } from "@/routes/bap-clarifications";
 import { show as showBap } from "@/routes/baps";
 
-type ClarificationOutcome = "resolved" | "reopened";
+type ClarificationOutcome = "resolved" | "reopened" | "returned_for_correction";
 
 type Props = {
   clarification: {
@@ -108,6 +110,7 @@ type Props = {
 };
 
 export default function ShowBapClarification({ clarification, can }: Props) {
+  const { errors: pageErrors } = usePage().props;
   const [reviewOutcome, setReviewOutcome] =
     useState<ClarificationOutcome | null>(null);
   const responseForm = useForm({ response: "" });
@@ -131,6 +134,11 @@ export default function ShowBapClarification({ clarification, can }: Props) {
     reviewForm.clearErrors();
     setReviewOutcome(outcome);
   };
+
+  const reviewCopy = reviewDialogCopy(
+    reviewOutcome,
+    clarification.verification.stage_label,
+  );
 
   const submitReview = (): void => {
     reviewForm.post(review(clarification.id).url, {
@@ -181,6 +189,12 @@ export default function ShowBapClarification({ clarification, can }: Props) {
             </Button>
           ) : null}
         </section>
+
+        <FormErrorSummary
+          errors={pageErrors}
+          fields={["response", "notes", "outcome"]}
+          title="Klarifikasi tidak dapat diproses."
+        />
 
         <section className="grid gap-4 lg:grid-cols-3">
           <Card>
@@ -368,6 +382,11 @@ export default function ShowBapClarification({ clarification, can }: Props) {
           <Card>
             <CardHeader>
               <CardTitle>Review klarifikasi</CardTitle>
+              <p className="text-muted-foreground text-sm">
+                Pilih &ldquo;Kembalikan untuk koreksi&rdquo; bila data BAP
+                memang salah input. BAP kembali menjadi draft, dikoreksi Loket,
+                lalu diverifikasi ulang mulai Tahap 1.
+              </p>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
               <Button onClick={() => openReview("resolved")}>
@@ -377,6 +396,13 @@ export default function ShowBapClarification({ clarification, can }: Props) {
               <Button variant="outline" onClick={() => openReview("reopened")}>
                 <RotateCcw data-icon="inline-start" />
                 Minta klarifikasi ulang
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => openReview("returned_for_correction")}
+              >
+                <FilePenLine data-icon="inline-start" />
+                Kembalikan untuk koreksi
               </Button>
             </CardContent>
           </Card>
@@ -474,16 +500,8 @@ export default function ShowBapClarification({ clarification, can }: Props) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {reviewOutcome === "resolved"
-                ? "Terima penyelesaian klarifikasi"
-                : "Minta klarifikasi ulang"}
-            </DialogTitle>
-            <DialogDescription>
-              {reviewOutcome === "resolved"
-                ? `BAP akan masuk antrean verifikasi ulang ${clarification.verification.stage_label}.`
-                : "Loket dapat memberikan tanggapan baru pada tiket yang sama."}
-            </DialogDescription>
+            <DialogTitle>{reviewCopy.title}</DialogTitle>
+            <DialogDescription>{reviewCopy.description}</DialogDescription>
           </DialogHeader>
           <form
             className="grid gap-4"
@@ -501,11 +519,7 @@ export default function ShowBapClarification({ clarification, can }: Props) {
                   reviewForm.setData("notes", event.target.value)
                 }
                 aria-invalid={reviewForm.errors.notes ? true : undefined}
-                placeholder={
-                  reviewOutcome === "resolved"
-                    ? "Jelaskan dasar penerimaan penyelesaian."
-                    : "Jelaskan informasi tambahan yang masih diperlukan."
-                }
+                placeholder={reviewCopy.placeholder}
                 rows={4}
               />
               {reviewForm.errors.notes ? (
@@ -514,6 +528,11 @@ export default function ShowBapClarification({ clarification, can }: Props) {
                 </p>
               ) : null}
             </div>
+            <FormErrorSummary
+              errors={reviewForm.errors}
+              fields={["notes"]}
+              title="Tinjauan klarifikasi tidak dapat disimpan."
+            />
             <DialogFooter>
               <Button
                 type="button"
@@ -525,12 +544,12 @@ export default function ShowBapClarification({ clarification, can }: Props) {
               <Button type="submit" disabled={reviewForm.processing}>
                 {reviewOutcome === "resolved" ? (
                   <CheckCircle2 data-icon="inline-start" />
+                ) : reviewOutcome === "returned_for_correction" ? (
+                  <FilePenLine data-icon="inline-start" />
                 ) : (
                   <FileWarning data-icon="inline-start" />
                 )}
-                {reviewOutcome === "resolved"
-                  ? "Terima penyelesaian"
-                  : "Kirim permintaan ulang"}
+                {reviewCopy.submitLabel}
               </Button>
             </DialogFooter>
           </form>
@@ -538,6 +557,42 @@ export default function ShowBapClarification({ clarification, can }: Props) {
       </Dialog>
     </>
   );
+}
+
+function reviewDialogCopy(
+  outcome: ClarificationOutcome | null,
+  stageLabel: string,
+): {
+  title: string;
+  description: string;
+  placeholder: string;
+  submitLabel: string;
+} {
+  switch (outcome) {
+    case "resolved":
+      return {
+        title: "Terima penyelesaian klarifikasi",
+        description: `BAP akan masuk antrean verifikasi ulang ${stageLabel}.`,
+        placeholder: "Jelaskan dasar penerimaan penyelesaian.",
+        submitLabel: "Terima penyelesaian",
+      };
+    case "returned_for_correction":
+      return {
+        title: "Kembalikan BAP untuk koreksi",
+        description:
+          "BAP kembali menjadi draft milik Loket. Setelah dikoreksi dan diajukan ulang, BAP diverifikasi kembali mulai Verifikasi Tahap 1. Riwayat verifikasi dan klarifikasi tetap tersimpan.",
+        placeholder:
+          "Jelaskan data yang harus dikoreksi, misalnya jumlah online fisik yang benar.",
+        submitLabel: "Kembalikan ke Loket",
+      };
+    default:
+      return {
+        title: "Minta klarifikasi ulang",
+        description: "Loket dapat memberikan tanggapan baru pada tiket yang sama.",
+        placeholder: "Jelaskan informasi tambahan yang masih diperlukan.",
+        submitLabel: "Kirim permintaan ulang",
+      };
+  }
 }
 
 ShowBapClarification.layout = {

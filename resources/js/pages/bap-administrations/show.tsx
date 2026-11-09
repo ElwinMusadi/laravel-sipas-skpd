@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
+import FormErrorSummary from "@/components/form-error-summary";
 import {
   formatDate,
   formatDateTime,
@@ -505,6 +506,11 @@ export default function BapAdministrationShow({ bap }: Props) {
               </p>
             ) : null}
           </div>
+          <FormErrorSummary
+            errors={form.errors}
+            fields={["receipt_notes"]}
+            title="BAP tidak dapat diterima."
+          />
           <DialogFooter showCloseButton>
             <Button onClick={submitReceipt} disabled={form.processing}>
               <CheckCircle2 />

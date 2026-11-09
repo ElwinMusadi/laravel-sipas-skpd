@@ -107,6 +107,9 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::post('{bap}/complete', [SkpdBapVerificationController::class, 'complete'])
                 ->middleware('can:complete-bap-verification-phase-1')
                 ->name('complete');
+            Route::post('{bap}/take-over', [SkpdBapVerificationController::class, 'takeOver'])
+                ->middleware('can:take-over-bap-verification-phase-1,bap')
+                ->name('take-over');
         });
 
     Route::middleware('can:view-bap-verifications-phase-2')
@@ -121,6 +124,9 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::post('{bap}/complete', [SkpdBapVerificationController::class, 'completePhase2'])
                 ->middleware('can:complete-bap-verification-phase-2')
                 ->name('complete');
+            Route::post('{bap}/take-over', [SkpdBapVerificationController::class, 'takeOverPhase2'])
+                ->middleware('can:take-over-bap-verification-phase-2,bap')
+                ->name('take-over');
         });
 });
 

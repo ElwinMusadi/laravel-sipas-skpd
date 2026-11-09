@@ -1,8 +1,21 @@
 # SIPAS-SKPD — STATUS PROYEK
 
-**Pembaruan terakhir:** 3 September 2026
+**Pembaruan terakhir:** 9 November 2026
 **Fase saat ini:** Phase 19 — Manual Testing Readiness & End-to-End Workflow Hardening
 **Status:** PARTIAL — regresi otomatis siap; validasi browser manual belum dapat dinyatakan lulus.
+
+## Hardening P0 — Audit Produksi (9 November 2026)
+
+Empat temuan P0 dari audit aplikasi produksi diperbaiki:
+
+1. **Seeder Superadmin create-only.** `LaravelCloudLoketAndSuperadminSeeder` tidak lagi menimpa password, status aktif, maupun Loket yang sudah ada. Password awal akun baru dibangkitkan acak dan ditampilkan sekali. Password produksi yang pernah di-seed dengan nilai `password` tetap harus diganti manual.
+2. **Koreksi BAP lewat klarifikasi.** Review klarifikasi memiliki outcome ketiga `returned_for_correction` (Kembalikan untuk koreksi): tiket ditutup, BAP kembali menjadi draft (`submitted_at` dikosongkan), Loket mengoreksi lalu mengajukan ulang, dan verifikasi selalu dimulai lagi dari Tahap 1 dengan attempt berikutnya. Draft yang sudah diikuti BAP Loket berikutnya mengunci tanggal dan range; hanya jumlah online dan Batal/Rusak yang dapat dikoreksi. Halaman detail dan edit BAP menampilkan catatan koreksi verifier.
+3. **Ambil alih verifikasi.** Rekan dengan peran verifier tahap yang sama (atau Superadmin) dapat mengambil alih attempt yang sedang berjalan melalui `POST bap-verifications/{bap}/take-over` dan `bap-verifications-phase-2/{bap}/take-over`; audit `bap_verification.phase_N_taken_over`.
+4. **Umpan balik UI.** Toast flash kini tampil (`FlashToaster` memanggil `useFlashToast`). Komponen `FormErrorSummary` menampilkan error aturan bisnis non-field (`bap`, `status`, `allocation`, `clarification`, `checklist`, dll.) pada dialog/halaman BAP, Box, Loket, alokasi, verifikasi, klarifikasi, dan administrasi; baris Batal/Rusak menampilkan error per nomerator/alasan/keterangan.
+
+Perbaikan terkait: relasi `clarificationRequest()` pada `BapClarificationResolution` dan `BapClarificationResponse` kini memakai FK `bap_clarification_request_id` yang benar.
+
+Verifikasi: SQLite 281 test / 2.503 assertion PASS, PHPStan 0 error, TypeScript PASS, build PASS. Suite MySQL dan uji browser belum dijalankan.
 
 ## Terminologi — Nomerator
 
@@ -63,14 +76,15 @@ Tidak diubah: database `sipak`/`sipak_testing`, folder/repository `laravel-sipak
 
 Disediakan seeder deployment khusus `LaravelCloudLoketAndSuperadminSeeder` yang **tidak** dipanggil oleh `DatabaseSeeder`, sehingga hanya berjalan saat dipanggil eksplisit pada Laravel Cloud.
 
-Seeder idempotent:
+Seeder idempotent dan **create-only** (sejak hardening P0, 9 November 2026):
 
-- menyinkronkan enam master Loket berdasarkan `code`: `SAMSAT-KANTOR`, `SAMLING-01`, `SAMSAT-CORNER`, `MPP`, `SAMLING-02`, dan `SAMLING-03`;
-- menyinkronkan akun `elwinmusadi16` berdasarkan username;
-- menetapkan `Elwin Bessiesura, S.Kom`, NIP `199707162025061002`, email `elwinmusadi@gmail.com`, role `superadmin`, password deployment `password`, dan Loket `MPP`;
-- me-resolve FK Loket dari kode `MPP`, bukan hard-code ID `4`; pada database baru dengan urutan data seed ini, `MPP` bernilai ID `4` sesuai kebutuhan.
+- membuat master Loket yang belum ada berdasarkan `code`: `SAMSAT-KANTOR`, `SAMLING-01`, `SAMSAT-CORNER`, `MPP`, `SAMLING-02`, dan `SAMLING-03`; Loket yang sudah ada (termasuk yang diganti nama atau dinonaktifkan) tidak diubah;
+- membuat akun `elwinmusadi16` hanya bila username belum ada, dengan `Elwin Bessiesura, S.Kom`, NIP `199707162025061002`, email `elwinmusadi@gmail.com`, role `superadmin`, dan Loket `MPP`;
+- password awal Superadmin dibangkitkan acak (24 karakter) dan ditampilkan sekali pada output command; tidak ada lagi password tetap `password`;
+- akun yang sudah ada tidak pernah diubah: password, status aktif, role, dan assignment Loket tetap seperti di produksi;
+- me-resolve FK Loket dari kode `MPP`, bukan hard-code ID `4`.
 
-Seeder tidak dijalankan selama development task ini. Test SQLite terisolasi memverifikasi enam Loket, akun Superadmin, password hash, relasi MPP, dan idempotensi dua kali pemanggilan.
+Test SQLite terisolasi memverifikasi enam Loket, akun Superadmin, password acak yang ditampilkan sekali, relasi MPP, serta rerun yang tidak mengubah password, status akun, maupun Loket yang telah diedit.
 
 ## Refinement — Unified BAP Pemakaian + BAP Batal/Rusak
 

@@ -32,6 +32,7 @@ enum BapStatus: string
             self::NeedsClarification => in_array($status, [
                 self::WaitingReverificationPhase1,
                 self::WaitingReverificationPhase2,
+                self::Draft,
             ], true),
             self::VerifiedPhase2 => $status === self::Completed,
             self::Completed => false,

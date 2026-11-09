@@ -1,4 +1,8 @@
 import { Head } from '@inertiajs/react';
+import {
+    BapCorrectionNotice,
+    type BapCorrectionRequest,
+} from '@/components/bap/bap-correction-notice';
 import { BapForm } from '@/components/bap/bap-form';
 import Heading from '@/components/heading';
 import { index } from '@/routes/baps';
@@ -20,6 +24,8 @@ type Props = {
             reason: string;
             description: string | null;
         }[];
+        range_locked: boolean;
+        correction_request: BapCorrectionRequest | null;
     };
     cancellation_reasons: CancellationReason[];
 };
@@ -35,10 +41,15 @@ export default function EditBap({ bap, cancellation_reasons }: Props) {
                     description="Periksa kembali range, total otomatis, dan pemakaian online sebelum BAP diajukan."
                 />
 
+                {bap.correction_request ? (
+                    <BapCorrectionNotice correction={bap.correction_request} />
+                ) : null}
+
                 <BapForm
                     mode="edit"
                     bap={bap}
                     cancellationReasons={cancellation_reasons}
+                    rangeLocked={bap.range_locked}
                 />
             </main>
         </>

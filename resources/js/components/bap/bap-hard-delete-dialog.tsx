@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import { Trash2, TriangleAlert } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import SkpdBapController from '@/actions/App/Http/Controllers/SkpdBapController';
+import FormErrorSummary from '@/components/form-error-summary';
 import InputError from '@/components/input-error';
 import { formatDate, formatRange } from '@/components/inventory/format';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -194,6 +195,12 @@ export function BapHardDeleteDialog({ bap }: Props) {
                             message={form.errors.reason}
                         />
                     </div>
+
+                    <FormErrorSummary
+                        errors={form.errors}
+                        fields={['confirmation_document_number', 'reason']}
+                        title="BAP tidak dapat dihapus permanen."
+                    />
 
                     <DialogFooter>
                         <DialogClose asChild>

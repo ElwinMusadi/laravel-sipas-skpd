@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import SkpdBapController from '@/actions/App/Http/Controllers/SkpdBapController';
+import FormErrorSummary from '@/components/form-error-summary';
 import InputError from '@/components/input-error';
 import {
     formatNomerator,
@@ -70,6 +71,11 @@ type Props = {
     expectedNumeratorStart?: number | null;
     allocations?: Allocation[];
     cancellationReasons?: CancellationReason[];
+    /**
+     * True when a later Loket BAP exists: the date and numerator range stay
+     * fixed and only the online count and Batal/Rusak details can change.
+     */
+    rangeLocked?: boolean;
 };
 
 function digitsOnly(value: string): string {
@@ -103,6 +109,7 @@ export function BapForm({
     expectedNumeratorStart,
     allocations = [],
     cancellationReasons = [],
+    rangeLocked = false,
 }: Props) {
     const formLoket = bap?.loket ?? loket;
     const initialServiceDateStr = bap?.service_date ?? defaultServiceDate ?? '';
@@ -302,6 +309,7 @@ export function BapForm({
                                             <PopoverTrigger asChild>
                                                 <Button
                                                     variant="outline"
+                                                    disabled={rangeLocked}
                                                     className={cn(
                                                         'w-full justify-start text-left font-normal',
                                                         !serviceDate &&
@@ -354,6 +362,15 @@ export function BapForm({
                                         <InputError
                                             message={errors.service_date}
                                         />
+                                        {rangeLocked ? (
+                                            <p className="text-muted-foreground text-xs">
+                                                Tanggal dan range Nomerator
+                                                terkunci karena sudah ada BAP
+                                                Loket berikutnya. Koreksi hanya
+                                                untuk jumlah online dan
+                                                Batal/Rusak.
+                                            </p>
+                                        ) : null}
                                     </div>
 
                                     <div className="grid gap-2">
@@ -375,6 +392,7 @@ export function BapForm({
                                             inputMode="numeric"
                                             maxLength={7}
                                             placeholder="0582608"
+                                            readOnly={rangeLocked}
                                             aria-invalid={Boolean(
                                                 errors.numerator_start,
                                             )}
@@ -402,6 +420,7 @@ export function BapForm({
                                             inputMode="numeric"
                                             maxLength={7}
                                             placeholder="0582620"
+                                            readOnly={rangeLocked}
                                             aria-invalid={Boolean(
                                                 errors.numerator_end,
                                             )}
@@ -468,9 +487,29 @@ export function BapForm({
                                             items={cancellationItems}
                                             reasons={cancellationReasons}
                                             formId={formId}
+                                            errors={errors}
                                             onChange={updateItem}
                                         />
                                     )}
+
+                                    <div className="sm:col-span-2">
+                                        <FormErrorSummary
+                                            errors={errors}
+                                            fields={[
+                                                ...(mode === 'create' &&
+                                                lokets.length > 0
+                                                    ? ['loket_id']
+                                                    : []),
+                                                'service_date',
+                                                'numerator_start',
+                                                'numerator_end',
+                                                'online_usage_count',
+                                                'cancellation_count',
+                                                'cancellations.*',
+                                            ]}
+                                            title="Draft BAP belum dapat disimpan."
+                                        />
+                                    </div>
 
                                     <div className="flex flex-wrap justify-end gap-3 pt-2 sm:col-span-2">
                                         <Button variant="outline" asChild>
@@ -605,11 +644,13 @@ function CancellationDetails({
     items,
     reasons,
     formId,
+    errors,
     onChange,
 }: {
     items: CancellationItem[];
     reasons: CancellationReason[];
     formId: string;
+    errors: Partial<Record<string, string>>;
     onChange: (
         index: number,
         field: keyof CancellationItem,
@@ -627,6 +668,10 @@ function CancellationDetails({
 
             {items.map((item, idx) => {
                 const isCustom = item.reason === 'custom';
+                const numeratorError = errors[`cancellations.${idx}.numerator`];
+                const reasonError = errors[`cancellations.${idx}.reason`];
+                const descriptionError =
+                    errors[`cancellations.${idx}.description`];
 
                 return (
                     <div key={idx} className="grid gap-3">
@@ -686,7 +731,9 @@ function CancellationDetails({
                                     inputMode="numeric"
                                     maxLength={7}
                                     placeholder="0582612"
+                                    aria-invalid={Boolean(numeratorError)}
                                 />
+                                <InputError message={numeratorError} />
                             </div>
 
                             <div className="grid gap-2">
@@ -701,6 +748,7 @@ function CancellationDetails({
                                 >
                                     <SelectTrigger
                                         id={`cancellations-${idx}-reason`}
+                                        aria-invalid={Boolean(reasonError)}
                                     >
                                         <SelectValue placeholder="Pilih alasan" />
                                     </SelectTrigger>
@@ -717,10 +765,11 @@ function CancellationDetails({
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
+                                <InputError message={reasonError} />
                             </div>
                         </div>
 
-                        {isCustom && (
+                        {(isCustom || descriptionError) && (
                             <div className="grid gap-2">
                                 <Label
                                     htmlFor={`cancellations-${idx}-description`}
@@ -739,7 +788,9 @@ function CancellationDetails({
                                     }
                                     maxLength={1000}
                                     placeholder="Jelaskan kondisi batal atau rusak secara singkat."
+                                    aria-invalid={Boolean(descriptionError)}
                                 />
+                                <InputError message={descriptionError} />
                             </div>
                         )}
                     </div>

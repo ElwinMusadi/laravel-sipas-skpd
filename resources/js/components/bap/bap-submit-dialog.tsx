@@ -1,6 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import SkpdBapController from '@/actions/App/Http/Controllers/SkpdBapController';
+import FormErrorSummary from '@/components/form-error-summary';
 import { formatQuantity, formatRange } from '@/components/inventory/format';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,38 +44,55 @@ export function BapSubmitDialog({ bap }: Props) {
                         verifikasi pada fase berikutnya.
                     </DialogDescription>
                 </DialogHeader>
-                <dl className="bg-muted grid gap-3 rounded-xl p-4 text-sm">
-                    <ReviewLine label="Loket" value={bap.loket.name} />
-                    <ReviewLine label="Tanggal" value={bap.service_date} />
-                    <ReviewLine
-                        label="Nomerator"
-                        value={formatRange(
-                            bap.numerator_start,
-                            bap.numerator_end,
-                        )}
-                        mono
-                    />
-                    <ReviewLine
-                        label="Total"
-                        value={`${formatQuantity(bap.total_usage)} set`}
-                    />
-                    <ReviewLine
-                        label="Online"
-                        value={`${formatQuantity(bap.online_usage_count)} set`}
-                    />
-                </dl>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">Kembali</Button>
-                    </DialogClose>
-                    <Form action={SkpdBapController.submit(bap.id)}>
-                        {({ processing }) => (
-                            <Button disabled={processing}>
-                                Konfirmasi ajukan
-                            </Button>
-                        )}
-                    </Form>
-                </DialogFooter>
+                <Form
+                    action={SkpdBapController.submit(bap.id)}
+                    className="grid gap-4"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <dl className="bg-muted grid gap-3 rounded-xl p-4 text-sm">
+                                <ReviewLine
+                                    label="Loket"
+                                    value={bap.loket.name}
+                                />
+                                <ReviewLine
+                                    label="Tanggal"
+                                    value={bap.service_date}
+                                />
+                                <ReviewLine
+                                    label="Nomerator"
+                                    value={formatRange(
+                                        bap.numerator_start,
+                                        bap.numerator_end,
+                                    )}
+                                    mono
+                                />
+                                <ReviewLine
+                                    label="Total"
+                                    value={`${formatQuantity(bap.total_usage)} set`}
+                                />
+                                <ReviewLine
+                                    label="Online"
+                                    value={`${formatQuantity(bap.online_usage_count)} set`}
+                                />
+                            </dl>
+                            <FormErrorSummary
+                                errors={errors}
+                                title="BAP tidak dapat diajukan."
+                            />
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="outline">
+                                        Kembali
+                                    </Button>
+                                </DialogClose>
+                                <Button type="submit" disabled={processing}>
+                                    Konfirmasi ajukan
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
+                </Form>
             </DialogContent>
         </Dialog>
     );

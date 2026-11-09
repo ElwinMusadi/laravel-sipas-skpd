@@ -1,6 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import SkpdBapController from '@/actions/App/Http/Controllers/SkpdBapController';
+import FormErrorSummary from '@/components/form-error-summary';
 import { formatRange } from '@/components/inventory/format';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,18 +43,33 @@ export function BapDeleteDialog({ bap }: Props) {
                         pembatalan, verifikasi, atau klarifikasi.
                     </DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">Kembali</Button>
-                    </DialogClose>
-                    <Form action={SkpdBapController.destroy(bap.id)}>
-                        {({ processing }) => (
-                            <Button variant="destructive" disabled={processing}>
-                                Hapus draft
-                            </Button>
-                        )}
-                    </Form>
-                </DialogFooter>
+                <Form
+                    action={SkpdBapController.destroy(bap.id)}
+                    className="grid gap-4"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <FormErrorSummary
+                                errors={errors}
+                                title="Draft BAP tidak dapat dihapus."
+                            />
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="outline">
+                                        Kembali
+                                    </Button>
+                                </DialogClose>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    disabled={processing}
+                                >
+                                    Hapus draft
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
+                </Form>
             </DialogContent>
         </Dialog>
     );

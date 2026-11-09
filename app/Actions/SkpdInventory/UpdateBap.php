@@ -85,9 +85,17 @@ class UpdateBap
             });
 
             if (! $isTailDraft) {
-                throw ValidationException::withMessages([
-                    'numerator_start' => 'BAP draft tidak dapat diubah setelah terdapat BAP Loket berikutnya.',
-                ]);
+                $isRangeChanged = $serviceDate->toDateString() !== $lockedBap->service_date->toDateString()
+                    || $numeratorStart !== $lockedBap->numerator_start
+                    || $numeratorEnd !== $lockedBap->numerator_end;
+
+                if ($isRangeChanged) {
+                    throw ValidationException::withMessages([
+                        'numerator_start' => 'Tanggal dan range Nomerator BAP draft tidak dapat diubah setelah terdapat BAP Loket berikutnya. Hanya jumlah online dan Batal/Rusak yang dapat dikoreksi.',
+                    ]);
+                }
+
+                return $this->correctNonTailDraft($actor, $lockedBap, $onlineUsageCount, $cancellationCount, $cancellations);
             }
 
             $allocations = $this->allocationSequence->receivedAllocations(
@@ -214,6 +222,40 @@ class UpdateBap
 
             return $lockedBap;
         }, attempts: 3);
+    }
+
+    /**
+     * A draft followed by a later Loket BAP keeps its date, range, and usage segments
+     * so the per-Loket numerator chain stays intact; only the online count and the
+     * Batal/Rusak details can be corrected.
+     *
+     * @param  list<array{numerator: int, reason: BapCancellationReason, description: string|null}>  $cancellations
+     */
+    private function correctNonTailDraft(
+        User $actor,
+        Bap $lockedBap,
+        int $onlineUsageCount,
+        int $cancellationCount,
+        array $cancellations,
+    ): Bap {
+        $oldValues = [
+            'service_date' => $lockedBap->service_date->toDateString(),
+            'numerator_start' => $lockedBap->numerator_start,
+            'numerator_end' => $lockedBap->numerator_end,
+            'total_usage' => $lockedBap->total_usage,
+            'online_usage_count' => $lockedBap->online_usage_count,
+        ];
+
+        $lockedBap->update(['online_usage_count' => $onlineUsageCount]);
+
+        $this->audit->handle($actor, $lockedBap, 'bap.updated', $oldValues, [
+            ...$oldValues,
+            'online_usage_count' => $lockedBap->online_usage_count,
+        ]);
+
+        $this->syncCancellations->handle($actor, $lockedBap, $cancellationCount, $cancellations);
+
+        return $lockedBap;
     }
 
     private function lockInventory(): void

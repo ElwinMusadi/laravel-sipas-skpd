@@ -67,9 +67,9 @@ class ReviewBapClarification
                 'resolved_at' => $resolvedAt,
             ]);
             $previousStatus = $lockedClarification->status;
-            $lockedClarification->status = $outcome === BapClarificationResolutionOutcome::Resolved
-                ? BapClarificationStatus::Resolved
-                : BapClarificationStatus::Reopened;
+            $lockedClarification->status = $outcome === BapClarificationResolutionOutcome::Reopened
+                ? BapClarificationStatus::Reopened
+                : BapClarificationStatus::Resolved;
             $lockedClarification->save();
 
             $this->audit->handle($actor, $lockedBap, 'bap_clarification.reviewed', [
@@ -90,6 +90,24 @@ class ReviewBapClarification
                     'response_id' => $response->id,
                     'resolution_id' => $resolution->id,
                     'status' => $lockedClarification->status->value,
+                ]);
+
+                return $resolution;
+            }
+
+            if ($outcome === BapClarificationResolutionOutcome::ReturnedForCorrection) {
+                $lockedBap->transitionTo(BapStatus::Draft);
+                $lockedBap->submitted_at = null;
+                $lockedBap->save();
+
+                $this->audit->handle($actor, $lockedBap, 'bap_clarification.returned_for_correction', [
+                    'status' => BapStatus::NeedsClarification->value,
+                ], [
+                    'clarification_id' => $lockedClarification->id,
+                    'response_id' => $response->id,
+                    'resolution_id' => $resolution->id,
+                    'stage' => $stage->value,
+                    'status' => $lockedBap->status->value,
                 ]);
 
                 return $resolution;

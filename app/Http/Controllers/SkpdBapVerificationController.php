@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\SkpdVerification\CompleteBapVerification;
 use App\Actions\SkpdVerification\StartBapVerification;
+use App\Actions\SkpdVerification\TakeOverBapVerification;
 use App\BapVerificationChecklistType;
 use App\BapVerificationResult;
 use App\BapVerificationStage;
@@ -51,6 +52,16 @@ class SkpdBapVerificationController extends Controller
     public function startPhase2(Bap $bap, Request $request, StartBapVerification $startVerification): RedirectResponse
     {
         return $this->startForStage($bap, $request, $startVerification, BapVerificationStage::Phase2);
+    }
+
+    public function takeOver(Bap $bap, Request $request, TakeOverBapVerification $takeOverVerification): RedirectResponse
+    {
+        return $this->takeOverForStage($bap, $request, $takeOverVerification, BapVerificationStage::Phase1);
+    }
+
+    public function takeOverPhase2(Bap $bap, Request $request, TakeOverBapVerification $takeOverVerification): RedirectResponse
+    {
+        return $this->takeOverForStage($bap, $request, $takeOverVerification, BapVerificationStage::Phase2);
     }
 
     public function complete(
@@ -210,6 +221,9 @@ class SkpdBapVerificationController extends Controller
                 'complete' => $actor->can($this->ability($stage, 'complete'))
                     && $verification?->status === BapVerificationStatus::InProgress
                     && $verification->verifier_id === $actor->id,
+                'take_over' => $actor->can($this->ability($stage, 'take-over'), $bap)
+                    && $verification?->status === BapVerificationStatus::InProgress
+                    && $verification->verifier_id !== $actor->id,
             ],
         ]);
     }
@@ -225,6 +239,22 @@ class SkpdBapVerificationController extends Controller
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => "{$stage->label()} dimulai. Catat hasil pemeriksaan fisik sebelum menyelesaikan verifikasi.",
+        ]);
+
+        return to_route($this->routeName($stage, 'show'), $bap);
+    }
+
+    private function takeOverForStage(
+        Bap $bap,
+        Request $request,
+        TakeOverBapVerification $takeOverVerification,
+        BapVerificationStage $stage,
+    ): RedirectResponse {
+        $takeOverVerification->handle($this->actor($request), $bap, $stage);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "{$stage->label()} berhasil diambil alih. Lanjutkan pemeriksaan fisik dan selesaikan verifikasi.",
         ]);
 
         return to_route($this->routeName($stage, 'show'), $bap);

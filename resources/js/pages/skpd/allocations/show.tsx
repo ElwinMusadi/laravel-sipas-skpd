@@ -1,4 +1,4 @@
-import { Form, Head, Link } from "@inertiajs/react";
+import { Form, Head, Link, usePage } from "@inertiajs/react";
 import {
   ArrowLeft,
   History,
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import SkpdAllocationController from "@/actions/App/Http/Controllers/SkpdAllocationController";
 import { AllocationStatusBadge } from "@/components/allocation/allocation-status-badge";
+import FormErrorSummary from "@/components/form-error-summary";
 import {
   formatDate,
   formatDateTime,
@@ -50,6 +51,8 @@ export default function ShowAllocation({
 }: {
   allocation: Allocation;
 }) {
+  const { errors } = usePage().props;
+
   return (
     <>
       <Head title={`Alokasi ${allocation.box.box_number}`} />
@@ -113,6 +116,11 @@ export default function ShowAllocation({
             ) : null}
           </div>
         </div>
+
+        <FormErrorSummary
+          errors={errors}
+          title="Aksi alokasi tidak dapat diproses."
+        />
 
         <section className="grid gap-4 lg:grid-cols-3">
           <Card>

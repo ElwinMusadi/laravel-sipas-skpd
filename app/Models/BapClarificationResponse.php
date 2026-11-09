@@ -31,7 +31,7 @@ class BapClarificationResponse extends Model
      */
     public function clarificationRequest(): BelongsTo
     {
-        return $this->belongsTo(BapClarificationRequest::class);
+        return $this->belongsTo(BapClarificationRequest::class, 'bap_clarification_request_id');
     }
 
     /**
