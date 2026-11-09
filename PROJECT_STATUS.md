@@ -4,6 +4,15 @@
 **Fase saat ini:** Phase 19 — Manual Testing Readiness & End-to-End Workflow Hardening
 **Status:** PARTIAL — regresi otomatis siap; validasi browser manual belum dapat dinyatakan lulus.
 
+## Perbaikan UX Operator (10 November 2026)
+
+- "Terima handover" dan "Hapus alokasi pending" kini memakai dialog konfirmasi (`ConfirmActionDialog`) yang menampilkan Box, Loket, range, dan jumlah, serta error dari server.
+- Draft BAP yang berisi detail Batal/Rusak dapat dihapus (tetap hanya draft paling akhir Loket dan tanpa riwayat verifikasi/klarifikasi); detail Batal/Rusak ikut terhapus dan tercatat pada audit `bap.deleted`.
+- Filter status daftar BAP memakai label badge yang sama dan kini memuat status "Selesai Administratif".
+- Tombol "Mulai Verifikasi", "Tandai telah dibuka", dan "Buka" klarifikasi terkunci selama request berjalan sehingga tidak bisa terklik ganda.
+- Teks era pengembangan ("Phase 09", "belum diimplementasikan", "read-only", "ledger domain") dan label Inggris ("Usage segment", "Allocation", "Quantity", "Attempt", "Expected/Actual") diganti bahasa operasional.
+- Menu sidebar tetap tersorot di halaman detail/create, tanpa salah menyorot Verifikasi Tahap 1 saat berada di Tahap 2. Breadcrumb Verifikasi Tahap 2 mengarah ke antrean Tahap 2.
+
 ## Integritas Data P1 + Revisi BAP Ganda per Hari (10 November 2026)
 
 Bagian ini menggantikan aturan lama "satu BAP per Loket per hari" dan "nomor dokumen dari tanggal pembuatan" yang masih disebut pada bagian-bagian historis di bawah.

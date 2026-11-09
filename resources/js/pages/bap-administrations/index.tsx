@@ -132,7 +132,7 @@ export default function BapAdministrationIndex({
             </div>
             <p className="text-muted-foreground max-w-3xl text-sm">
               {isCompletedQueue
-                ? "Riwayat read-only BAP yang telah diterima dan dicatat secara administratif."
+                ? "Riwayat BAP yang telah diterima dan dicatat secara administratif. Data hanya dapat dibaca."
                 : "BAP yang telah lulus Verifikasi Tahap 1, Verifikasi Tahap 2, dan seluruh klarifikasi."}
             </p>
           </div>
@@ -352,7 +352,7 @@ function VerifierCell({
   return (
     <div className="flex flex-col gap-1">
       <span>{verifier}</span>
-      <span className="text-muted-foreground text-xs">Attempt #{attempt}</span>
+      <span className="text-muted-foreground text-xs">Pemeriksaan ke-{attempt}</span>
     </div>
   );
 }

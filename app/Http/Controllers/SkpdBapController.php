@@ -408,7 +408,6 @@ class SkpdBapController extends Controller
                 'delete' => $isTail
                   && $bap->status === BapStatus::Draft
                   && $actor->can('delete-bap', $bap)
-                  && (int) $bap->cancellations_count === 0
                   && (int) $bap->verifications_count === 0
                   && (int) $bap->clarification_requests_count === 0,
                 'hard_delete' => $isTail

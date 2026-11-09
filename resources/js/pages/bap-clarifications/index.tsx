@@ -1,4 +1,4 @@
-import { Head, Link } from "@inertiajs/react";
+import { Form, Head, Link } from "@inertiajs/react";
 import { Eye, MessageSquareMore } from "lucide-react";
 import { EmptyState } from "@/components/app/empty-state";
 import { formatDate, formatDateTime } from "@/components/inventory/format";
@@ -135,23 +135,28 @@ export default function BapClarificationIndex({
                           {waitingDuration(clarification.waiting_since)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" asChild>
-                            {queue.opens_for_loket ? (
-                              <Link
-                                href={open(clarification.id)}
-                                method="post"
-                                as="button"
-                              >
-                                <MessageSquareMore data-icon="inline-start" />
-                                Buka
-                              </Link>
-                            ) : (
+                          {queue.opens_for_loket ? (
+                            <Form action={open(clarification.id)}>
+                              {({ processing }) => (
+                                <Button
+                                  type="submit"
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={processing}
+                                >
+                                  <MessageSquareMore data-icon="inline-start" />
+                                  Buka
+                                </Button>
+                              )}
+                            </Form>
+                          ) : (
+                            <Button variant="ghost" size="sm" asChild>
                               <Link href={show(clarification.id)}>
                                 <Eye data-icon="inline-start" />
                                 Review
                               </Link>
-                            )}
-                          </Button>
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

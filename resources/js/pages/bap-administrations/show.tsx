@@ -290,7 +290,7 @@ export default function BapAdministrationShow({ bap }: Props) {
                   </dl>
 
                   <div className="grid gap-3">
-                    <h2 className="font-medium">Segment penggunaan</h2>
+                    <h2 className="font-medium">Rincian pemakaian per Box</h2>
                     <Table>
                       <TableHeader>
                         <TableRow>

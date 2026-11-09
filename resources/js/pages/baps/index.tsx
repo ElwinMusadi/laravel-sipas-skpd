@@ -3,6 +3,7 @@ import { Eye, Pencil, Plus, Search, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import {
   BapStatusBadge,
+  bapStatusOptions,
   type BapStatus,
 } from "@/components/bap/bap-status-badge";
 import { EmptyState } from "@/components/app/empty-state";
@@ -138,29 +139,11 @@ export default function BapIndex({ baps, filters, can }: Props) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua status</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="under_verification">
-                    Sedang diverifikasi Tahap 1
-                  </SelectItem>
-                  <SelectItem value="needs_clarification">
-                    Perlu klarifikasi
-                  </SelectItem>
-                  <SelectItem value="waiting_reverification_phase_1">
-                    Menunggu re-verifikasi Tahap 1
-                  </SelectItem>
-                  <SelectItem value="waiting_verification_phase_2">
-                    Menunggu verifikasi Tahap 2
-                  </SelectItem>
-                  <SelectItem value="under_verification_phase_2">
-                    Sedang diverifikasi Tahap 2
-                  </SelectItem>
-                  <SelectItem value="waiting_reverification_phase_2">
-                    Menunggu re-verifikasi Tahap 2
-                  </SelectItem>
-                  <SelectItem value="verified_phase_2">
-                    Lulus Verifikasi Tahap 2
-                  </SelectItem>
+                  {bapStatusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <div className="flex gap-2">

@@ -43,8 +43,14 @@ export function useCurrentUrl(): UseCurrentUrlReturn {
         const urlToCompare = currentUrl ?? currentUrlPath;
         const urlString = toUrl(urlToCheck);
 
+        // A parent match must end on a path segment so that
+        // `/bap-verifications` does not also match `/bap-verifications-phase-2`.
         const comparePath = (path: string): boolean =>
-            startsWith ? urlToCompare.startsWith(path) : path === urlToCompare;
+            path === urlToCompare ||
+            (startsWith &&
+                urlToCompare.startsWith(
+                    path.endsWith('/') ? path : `${path}/`,
+                ));
 
         if (!urlString.startsWith('http')) {
             return comparePath(urlString);

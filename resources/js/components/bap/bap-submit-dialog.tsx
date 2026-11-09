@@ -2,7 +2,11 @@ import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import SkpdBapController from '@/actions/App/Http/Controllers/SkpdBapController';
 import FormErrorSummary from '@/components/form-error-summary';
-import { formatQuantity, formatRange } from '@/components/inventory/format';
+import {
+    formatDate,
+    formatQuantity,
+    formatRange,
+} from '@/components/inventory/format';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -39,9 +43,9 @@ export function BapSubmitDialog({ bap }: Props) {
                 <DialogHeader>
                     <DialogTitle>Ajukan BAP SKPD?</DialogTitle>
                     <DialogDescription>
-                        Setelah diajukan, data Loket, tanggal, nomerator, total,
-                        dan pemakaian online menjadi read-only hingga workflow
-                        verifikasi pada fase berikutnya.
+                        Setelah diajukan, data BAP tidak dapat diubah dan BAP
+                        masuk antrean Verifikasi Tahap 1. Perubahan hanya dapat
+                        dilakukan bila verifier mengembalikannya untuk koreksi.
                     </DialogDescription>
                 </DialogHeader>
                 <Form
@@ -56,8 +60,8 @@ export function BapSubmitDialog({ bap }: Props) {
                                     value={bap.loket.name}
                                 />
                                 <ReviewLine
-                                    label="Tanggal"
-                                    value={bap.service_date}
+                                    label="Tanggal pelayanan"
+                                    value={formatDate(bap.service_date)}
                                 />
                                 <ReviewLine
                                     label="Nomerator"

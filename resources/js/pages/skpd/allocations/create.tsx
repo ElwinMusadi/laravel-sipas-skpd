@@ -63,14 +63,14 @@ export default function CreateAllocation({ boxes, lokets }: Props) {
       <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
         <Heading
           title="Buat Alokasi SKPD"
-          description="Pilih Box, tentukan Loket penerima, lalu masukkan rentang. Quantity dihitung otomatis dan validasi akhir dilakukan oleh ledger domain."
+          description="Pilih Box, tentukan Loket penerima, lalu masukkan range Nomerator. Jumlah set dihitung otomatis dan diperiksa kembali oleh sistem saat disimpan."
         />
 
         {boxes.length === 0 ? (
           <Card className="max-w-3xl">
             <EmptyState
               title="Tidak ada Box yang tersedia."
-              description="Daftarkan Box baru atau selesaikan allocation pending sebelum membuat alokasi berikutnya."
+              description="Daftarkan Box baru atau selesaikan alokasi yang masih menunggu sebelum membuat alokasi berikutnya."
               action={
                 <Button variant="outline" asChild>
                   <Link href={index()}>Kembali</Link>

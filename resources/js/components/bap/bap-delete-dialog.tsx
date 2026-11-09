@@ -39,8 +39,8 @@ export function BapDeleteDialog({ bap }: Props) {
                     <DialogDescription>
                         {bap.document_number} dari {bap.loket.name} dengan range{' '}
                         {formatRange(bap.numerator_start, bap.numerator_end)}{' '}
-                        akan dihapus. Tindakan ini hanya tersedia sebelum ada
-                        pembatalan, verifikasi, atau klarifikasi.
+                        akan dihapus beserta detail Batal/Rusak-nya. Nomerator
+                        kembali tersedia untuk BAP berikutnya.
                     </DialogDescription>
                 </DialogHeader>
                 <Form

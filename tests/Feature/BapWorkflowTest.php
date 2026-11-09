@@ -441,3 +441,36 @@ test('a draft BAP followed by a later Loket BAP cannot be deleted so the numerat
     $this->assertModelExists($earlierDraft);
     $this->assertDatabaseCount('bap_usage_segments', 2);
 });
+
+test('a draft BAP with Batal/Rusak details can be deleted and its numerators can be reused', function () {
+    $loket = Loket::factory()->create();
+    $petugas = bapPetugas($loket);
+    bapAllocation($petugas, $loket);
+    $payload = [
+        ...bapPayload(582_608, 582_610, 0, cancellationCount: 1),
+        'cancellations' => [
+            ['numerator' => '0582609', 'reason' => 'printer_error', 'description' => null],
+        ],
+    ];
+
+    $this->actingAs($petugas)->post(route('baps.store'), $payload)->assertSessionHasNoErrors();
+    $bap = Bap::query()->sole();
+
+    $this->actingAs($petugas)
+        ->get(route('baps.show', $bap))
+        ->assertInertia(fn (Assert $page) => $page->where('bap.can.delete', true)->etc());
+
+    $this->actingAs($petugas)
+        ->delete(route('baps.destroy', $bap))
+        ->assertRedirect(route('baps.index'))
+        ->assertSessionHasNoErrors();
+
+    $this->assertModelMissing($bap);
+    $this->assertDatabaseCount('bap_cancellations', 0);
+    expect($bap->auditLogs()->where('event', 'bap.deleted')->sole()->old_values['cancellations'])
+        ->toEqual([['numerator' => 582_609, 'reason' => 'printer_error', 'description' => null]]);
+
+    $this->actingAs($petugas)->post(route('baps.store'), $payload)->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('bap_cancellations', ['numerator' => 582_609]);
+});

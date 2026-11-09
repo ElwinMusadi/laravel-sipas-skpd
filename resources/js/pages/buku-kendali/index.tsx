@@ -234,8 +234,8 @@ export default function BukuKendaliIndex({
                     <CardHeader>
                         <CardTitle>Rekap BAP selesai administratif</CardTitle>
                         <CardDescription>
-                            Setiap baris merujuk langsung ke BAP sumber yang
-                            bersifat read-only.
+                            Setiap baris merujuk langsung ke BAP sumbernya. Data
+                            hanya dapat dibaca.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>

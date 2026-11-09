@@ -19,7 +19,7 @@ type Props = {
 };
 
 export function ApplicationNavigation({ groups, permissions }: Props) {
-    const { isCurrentUrl } = useCurrentUrl();
+    const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return groups.map((group) => {
         const items = group.items.filter(
@@ -43,7 +43,9 @@ export function ApplicationNavigation({ groups, permissions }: Props) {
                                 {item.href ? (
                                     <SidebarMenuButton
                                         asChild
-                                        isActive={isCurrentUrl(item.href)}
+                                        isActive={isCurrentOrParentUrl(
+                                            item.href,
+                                        )}
                                         tooltip={item.title}
                                     >
                                         <Link href={item.href} prefetch>

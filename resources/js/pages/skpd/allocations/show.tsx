@@ -1,4 +1,4 @@
-import { Form, Head, Link, usePage } from "@inertiajs/react";
+import { Head, Link, usePage } from "@inertiajs/react";
 import {
   ArrowLeft,
   History,
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import SkpdAllocationController from "@/actions/App/Http/Controllers/SkpdAllocationController";
 import { AllocationStatusBadge } from "@/components/allocation/allocation-status-badge";
+import { ConfirmActionDialog } from "@/components/confirm-action-dialog";
 import FormErrorSummary from "@/components/form-error-summary";
 import {
   formatDate,
@@ -77,12 +78,9 @@ export default function ShowAllocation({
               </h1>
               <AllocationStatusBadge status={allocation.status} />
             </div>
-            {/* <p className="text-muted-foreground font-mono text-sm">
-              {formatRange(
-                allocation.numerator_start,
-                allocation.numerator_end,
-              )}
-            </p> */}
+            <p className="text-muted-foreground font-mono text-sm">
+              {formatRange(allocation.numerator_start, allocation.numerator_end)}
+            </p>
           </div>
 
           <div className="flex flex-wrap lg:flex-nowrap gap-2">
@@ -95,24 +93,39 @@ export default function ShowAllocation({
               </Button>
             ) : null}
             {allocation.can.accept ? (
-              <Form {...SkpdAllocationController.accept.form(allocation.id)}>
-                {({ processing }) => (
-                  <Button disabled={processing}>
+              <ConfirmActionDialog
+                action={SkpdAllocationController.accept(allocation.id)}
+                trigger={
+                  <Button>
                     <PackageCheck />
                     Terima handover
                   </Button>
-                )}
-              </Form>
+                }
+                title="Terima handover alokasi?"
+                description="Setelah diterima, alokasi menjadi milik Loket dan tidak dapat diubah atau dibatalkan. Pastikan Box dan range Nomerator fisik sudah sesuai."
+                confirmLabel="Ya, terima handover"
+                errorTitle="Handover tidak dapat diterima."
+              >
+                <AllocationSummary allocation={allocation} />
+              </ConfirmActionDialog>
             ) : null}
             {allocation.can.cancel ? (
-              <Form {...SkpdAllocationController.cancel.form(allocation.id)}>
-                {({ processing }) => (
-                  <Button variant="destructive" disabled={processing}>
+              <ConfirmActionDialog
+                action={SkpdAllocationController.cancel(allocation.id)}
+                trigger={
+                  <Button variant="destructive">
                     <XCircle />
                     Hapus alokasi pending
                   </Button>
-                )}
-              </Form>
+                }
+                title="Hapus alokasi pending?"
+                description="Range Nomerator alokasi ini kembali tersedia di Box dan dapat dialokasikan ulang. Riwayat audit tetap disimpan."
+                confirmLabel="Ya, hapus alokasi"
+                errorTitle="Alokasi tidak dapat dihapus."
+                destructive
+              >
+                <AllocationSummary allocation={allocation} />
+              </ConfirmActionDialog>
             ) : null}
           </div>
         </div>
@@ -201,9 +214,8 @@ export default function ShowAllocation({
 
         {allocation.status === "accepted" ? (
           <p className="text-muted-foreground rounded-xl border p-4 text-sm">
-            Alokasi accepted bersifat immutable pada fase ini. Workflow
-            penarikan kembali belum tersedia karena belum memiliki keputusan
-            bisnis.
+            Alokasi yang sudah diterima Loket tidak dapat diubah atau ditarik
+            kembali.
           </p>
         ) : null}
 
@@ -234,6 +246,27 @@ export default function ShowAllocation({
         </Card>
       </main>
     </>
+  );
+}
+
+function AllocationSummary({ allocation }: { allocation: Allocation }) {
+  return (
+    <div className="bg-muted grid gap-3 rounded-xl p-4 text-sm">
+      <DetailRow label="Box" value={allocation.box.box_number} />
+      <DetailRow label="Loket" value={allocation.loket.name} />
+      <DetailRow
+        label="Range Nomerator"
+        value={
+          <span className="font-mono">
+            {formatRange(allocation.numerator_start, allocation.numerator_end)}
+          </span>
+        }
+      />
+      <DetailRow
+        label="Jumlah"
+        value={`${formatQuantity(allocation.quantity)} set`}
+      />
+    </div>
   );
 }
 

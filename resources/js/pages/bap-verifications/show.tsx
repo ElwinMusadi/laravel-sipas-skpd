@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Form, Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -262,16 +262,16 @@ export default function ShowBapVerification({
                         </p>
                     </div>
                     {can.start ? (
-                        <Button asChild>
-                            <Link
-                                href={routes.start(bap.id)}
-                                method="post"
-                                as="button"
-                            >
-                                <Play />
-                                Mulai {stage.label}
-                            </Link>
-                        </Button>
+                        <Form action={routes.start(bap.id)}>
+                            {({ processing }) => (
+                                <Button type="submit" disabled={processing}>
+                                    <Play />
+                                    {processing
+                                        ? 'Memulai...'
+                                        : `Mulai ${stage.label}`}
+                                </Button>
+                            )}
+                        </Form>
                     ) : null}
                 </section>
 
@@ -367,7 +367,7 @@ export default function ShowBapVerification({
                 <section className="grid gap-4 xl:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Usage segment</CardTitle>
+                            <CardTitle>Rincian pemakaian per Box</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">
@@ -940,9 +940,9 @@ function VerificationResult({
                 <p className="text-sm">
                     {passed
                         ? isPhaseTwo
-                            ? 'BAP siap menjadi input proses Bendahara Barang berikutnya. Finalisasi dan pelaporan belum diimplementasikan.'
+                            ? 'BAP diteruskan ke Bendahara Barang untuk penerimaan administratif.'
                             : 'BAP telah diteruskan ke antrean Verifikasi Tahap 2.'
-                        : 'BAP tetap perlu klarifikasi. Tidak ada alur klarifikasi dua arah atau verifikasi ulang pada Phase 09.'}
+                        : 'Selisih dikirim ke Loket melalui tiket klarifikasi. Setelah tanggapan ditinjau, BAP diverifikasi ulang atau dikembalikan untuk koreksi.'}
                 </p>
                 {verification.notes ? (
                     <p className="text-muted-foreground bg-background/60 rounded-lg border p-3 text-sm whitespace-pre-wrap">
@@ -1128,9 +1128,20 @@ function matchResult(
     }
 }
 
-ShowBapVerification.layout = {
-    breadcrumbs: [
-        { title: 'Antrean Verifikasi', href: phaseOneRoutes.index() },
-        { title: 'Detail Verifikasi', href: phaseOneRoutes.index() },
-    ],
+ShowBapVerification.layout = (props: Props) => {
+    const isPhaseTwo = props.verification_stage.is_phase_two;
+    const stageRoutes = isPhaseTwo ? phaseTwoRoutes : phaseOneRoutes;
+
+    return {
+        breadcrumbs: [
+            {
+                title: `Antrean ${props.verification_stage.label}`,
+                href: stageRoutes.index(),
+            },
+            {
+                title: props.bap.document_number,
+                href: stageRoutes.show(props.bap.id),
+            },
+        ],
+    };
 };

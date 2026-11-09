@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from "@inertiajs/react";
+import { Form, Head, Link, useForm, usePage } from "@inertiajs/react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -181,12 +181,14 @@ export default function ShowBapClarification({ clarification, can }: Props) {
             </p>
           </div>
           {can.open && clarification.request.opened_at === null ? (
-            <Button asChild>
-              <Link href={open(clarification.id)} method="post" as="button">
-                <MessageSquareMore />
-                Tandai telah dibuka
-              </Link>
-            </Button>
+            <Form action={open(clarification.id)}>
+              {({ processing }) => (
+                <Button type="submit" disabled={processing}>
+                  <MessageSquareMore />
+                  Tandai telah dibuka
+                </Button>
+              )}
+            </Form>
           ) : null}
         </section>
 
@@ -232,8 +234,8 @@ export default function ShowBapClarification({ clarification, can }: Props) {
                 value={clarification.verification.stage_label}
               />
               <DetailRow
-                label="Attempt"
-                value={`#${clarification.verification.attempt}`}
+                label="Pemeriksaan ke"
+                value={`${clarification.verification.attempt}`}
               />
               <DetailRow
                 label="Verifier"
@@ -280,7 +282,7 @@ export default function ShowBapClarification({ clarification, can }: Props) {
           </CardHeader>
           <CardContent className="grid gap-4">
             <p className="text-muted-foreground text-sm">
-              Expected dan actual adalah bukti pemeriksaan historis; keduanya
+              Nilai sistem dan nilai fisik adalah bukti pemeriksaan; keduanya
               tidak dapat diubah dari proses klarifikasi.
             </p>
             <div className="overflow-x-auto">
@@ -288,8 +290,8 @@ export default function ShowBapClarification({ clarification, can }: Props) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Jenis</TableHead>
-                    <TableHead>Expected</TableHead>
-                    <TableHead>Actual</TableHead>
+                    <TableHead>Nilai sistem</TableHead>
+                    <TableHead>Nilai fisik</TableHead>
                     <TableHead>Selisih</TableHead>
                     <TableHead>Catatan verifier</TableHead>
                   </TableRow>

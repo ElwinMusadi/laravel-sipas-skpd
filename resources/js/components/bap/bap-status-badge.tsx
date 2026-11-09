@@ -62,6 +62,13 @@ const statusPresentation: Record<
   },
 };
 
+/**
+ * Status filter options in lifecycle order, using the same labels as the badge.
+ */
+export const bapStatusOptions: { value: BapStatus; label: string }[] = (
+  Object.keys(statusPresentation) as BapStatus[]
+).map((value) => ({ value, label: statusPresentation[value].label }));
+
 export function BapStatusBadge({
   status,
   className,

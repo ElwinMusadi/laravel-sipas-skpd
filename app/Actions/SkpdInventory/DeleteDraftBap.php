@@ -4,10 +4,12 @@ namespace App\Actions\SkpdInventory;
 
 use App\BapStatus;
 use App\Models\Bap;
+use App\Models\BapCancellation;
 use App\Models\BapUsageSegment;
 use App\Models\SkpdAllocation;
 use App\Models\User;
 use App\SkpdAllocationStatus;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -49,13 +51,19 @@ class DeleteDraftBap
                 ]);
             }
 
-            if ($lockedBap->cancellations()->lockForUpdate()->exists()
-                || $lockedBap->verifications()->lockForUpdate()->exists()
+            if ($lockedBap->verifications()->lockForUpdate()->exists()
                 || $lockedBap->clarificationRequests()->lockForUpdate()->exists()) {
                 throw ValidationException::withMessages([
-                    'bap' => 'BAP yang sudah memiliki catatan pembatalan, verifikasi, atau klarifikasi tidak dapat dihapus.',
+                    'bap' => 'BAP yang sudah memiliki riwayat verifikasi atau klarifikasi tidak dapat dihapus.',
                 ]);
             }
+
+            /** @var Collection<int, BapCancellation> $cancellations */
+            $cancellations = BapCancellation::query()
+                ->where('bap_id', $lockedBap->id)
+                ->orderBy('numerator')
+                ->lockForUpdate()
+                ->get();
 
             $segments = BapUsageSegment::query()
                 ->where('bap_id', $lockedBap->id)
@@ -83,8 +91,14 @@ class DeleteDraftBap
                     'numerator_end' => $segment->numerator_end,
                     'quantity' => $segment->quantity,
                 ])->all(),
+                'cancellations' => $cancellations->map(fn (BapCancellation $cancellation): array => [
+                    'numerator' => $cancellation->numerator,
+                    'reason' => $cancellation->reason->value,
+                    'description' => $cancellation->description,
+                ])->all(),
             ];
 
+            BapCancellation::query()->where('bap_id', $lockedBap->id)->delete();
             BapUsageSegment::query()->where('bap_id', $lockedBap->id)->delete();
 
             foreach ($allocations as $allocation) {

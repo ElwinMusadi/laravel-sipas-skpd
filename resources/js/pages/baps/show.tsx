@@ -180,9 +180,9 @@ export default function ShowBap({ bap }: Props) {
                     <BapCorrectionNotice correction={bap.correction_request} />
                 ) : bap.status !== 'draft' ? (
                     <p className="border-primary/25 bg-primary/8 rounded-xl border p-4 text-sm">
-                        BAP ini bersifat read-only setelah diajukan. Status
-                        verifikasi dan riwayat pemeriksaannya tersedia pada
-                        lifecycle BAP.
+                        BAP yang sudah diajukan tidak dapat diubah. Status
+                        verifikasi dan riwayat pemeriksaannya tersedia di
+                        halaman ini.
                     </p>
                 ) : (
                     <p className="text-muted-foreground rounded-xl border p-4 text-sm">
@@ -274,8 +274,8 @@ export default function ShowBap({ bap }: Props) {
                                 Riwayat verifikasi dan klarifikasi
                             </CardTitle>
                             <p className="text-muted-foreground text-sm">
-                                Attempt pemeriksaan dan klarifikasi tersimpan
-                                terpisah dari data sumber BAP.
+                                Setiap pemeriksaan dan klarifikasi tersimpan
+                                terpisah dari data BAP.
                             </p>
                         </div>
                     </CardHeader>
@@ -295,7 +295,7 @@ export default function ShowBap({ bap }: Props) {
                                             <div className="grid gap-1 text-sm">
                                                 <p className="font-medium">
                                                     {verification.stage_label} ·
-                                                    Attempt #
+                                                    Pemeriksaan ke-
                                                     {verification.attempt}
                                                 </p>
                                                 <p className="text-muted-foreground">
@@ -455,7 +455,7 @@ export default function ShowBap({ bap }: Props) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Usage segment</CardTitle>
+                        <CardTitle>Rincian pemakaian per Box</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -463,7 +463,7 @@ export default function ShowBap({ bap }: Props) {
                                 <TableHeader className="text-muted-foreground border-b text-left">
                                     <TableRow>
                                         <TableHead className="px-2 py-3 font-medium">
-                                            Allocation
+                                            Alokasi
                                         </TableHead>
                                         <TableHead className="px-2 py-3 font-medium">
                                             Box
@@ -472,7 +472,7 @@ export default function ShowBap({ bap }: Props) {
                                             Nomerator
                                         </TableHead>
                                         <TableHead className="px-2 py-3 text-right font-medium">
-                                            Quantity
+                                            Jumlah
                                         </TableHead>
                                     </TableRow>
                                 </TableHeader>

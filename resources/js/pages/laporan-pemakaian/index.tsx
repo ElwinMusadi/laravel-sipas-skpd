@@ -156,7 +156,7 @@ export default function LaporanPemakaianIndex({
                                 Laporan Pemakaian SKPD
                             </h1>
                             <Badge data-print-hidden variant="outline">
-                                Read-only
+                                Hanya baca
                             </Badge>
                         </div>
                         <p className="text-muted-foreground max-w-3xl text-sm">
@@ -306,8 +306,8 @@ export default function LaporanPemakaianIndex({
                     <CardHeader>
                         <CardTitle>Rekap per Loket</CardTitle>
                         <CardDescription>
-                            Tampilan operasional provisional; belum merupakan
-                            format administrasi resmi.
+                            Laporan sistem untuk pemantauan; bukan format
+                            administrasi resmi.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
