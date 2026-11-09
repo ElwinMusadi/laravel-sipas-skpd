@@ -40,7 +40,7 @@ type LoketAllocation = {
     numerator_start: number;
     numerator_end: number;
     quantity: number;
-    status: 'pending' | 'accepted' | 'completed' | 'cancelled';
+    status: 'pending' | 'accepted' | 'completed' | 'cancelled' | 'returned';
     allocation_date: string | null;
 };
 

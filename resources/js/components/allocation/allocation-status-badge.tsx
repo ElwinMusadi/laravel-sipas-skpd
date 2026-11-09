@@ -1,6 +1,11 @@
 import { Badge } from '@/components/ui/badge';
 
-type AllocationStatus = 'pending' | 'accepted' | 'completed' | 'cancelled';
+export type AllocationStatus =
+    | 'pending'
+    | 'accepted'
+    | 'completed'
+    | 'cancelled'
+    | 'returned';
 
 const statusPresentation: Record<
     AllocationStatus,
@@ -21,6 +26,10 @@ const statusPresentation: Record<
     cancelled: {
         label: 'Dibatalkan',
         className: 'border-destructive/30 bg-destructive/10 text-destructive',
+    },
+    returned: {
+        label: 'Dikembalikan ke pusat',
+        className: 'border-border bg-muted text-muted-foreground',
     },
 };
 

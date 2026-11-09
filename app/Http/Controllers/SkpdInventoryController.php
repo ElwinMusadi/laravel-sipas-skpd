@@ -9,6 +9,8 @@ use App\Models\SkpdBox;
 use App\Models\User;
 use App\SkpdAllocationStatus;
 use App\SkpdBoxStatus;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -39,10 +41,21 @@ class SkpdInventoryController extends Controller
         $usedQuantity = (int) BapUsageSegment::query()->sum('quantity');
 
         $boxes = SkpdBox::query()
-            ->with(['allocations.loket', 'allocations.usageSegments'])
+            ->withSum(['allocations as pending_quantity' => fn (Builder $query): Builder => $query
+                ->where('status', SkpdAllocationStatus::Pending)], 'quantity')
+            ->withSum(['allocations as allocated_quantity' => fn (Builder $query): Builder => $query
+                ->whereIn('status', [SkpdAllocationStatus::Accepted, SkpdAllocationStatus::Completed])], 'quantity')
+            ->addSelect(['used_quantity' => BapUsageSegment::query()
+                ->selectRaw('COALESCE(SUM(bap_usage_segments.quantity), 0)')
+                ->join('skpd_allocations', 'skpd_allocations.id', '=', 'bap_usage_segments.skpd_allocation_id')
+                ->whereColumn('skpd_allocations.skpd_box_id', 'skpd_boxes.id')])
             ->orderByDesc('received_at')
             ->orderByDesc('id')
             ->get();
+        $boxes->take(5)->load(['allocations' => fn (Relation $query): Relation => $query
+            ->whereIn('status', [SkpdAllocationStatus::Pending, SkpdAllocationStatus::Accepted, SkpdAllocationStatus::Completed])
+            ->with('loket:id,name')
+            ->orderBy('numerator_start')]);
 
         $boxData = $boxes
             ->map(fn (SkpdBox $box): array => $this->boxData($box));
@@ -90,14 +103,15 @@ class SkpdInventoryController extends Controller
 
         $allocations = SkpdAllocation::query()
             ->whereBelongsTo($loket)
-            ->with(['skpdBox:id,box_number', 'usageSegments'])
+            ->with('skpdBox:id,box_number')
+            ->withSum('usageSegments as used_quantity', 'quantity')
             ->orderByDesc('allocation_date')
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
         $heldAllocations = $allocations->filter(fn (SkpdAllocation $allocation): bool => $allocation->status->isHeldByLoket());
         $usedQuantity = (int) $heldAllocations
-            ->sum(fn (SkpdAllocation $allocation): int => (int) $allocation->usageSegments->sum('quantity'));
+            ->sum(fn (SkpdAllocation $allocation): int => (int) $allocation->getAttribute('used_quantity'));
         $receivedQuantity = (int) $heldAllocations->sum('quantity');
 
         return Inertia::render('skpd/inventory', [
@@ -132,24 +146,16 @@ class SkpdInventoryController extends Controller
      */
     private function boxData(SkpdBox $box): array
     {
-        $allocations = $box->allocations;
-        $pendingQuantity = (int) $allocations
-            ->where('status', SkpdAllocationStatus::Pending)
-            ->sum('quantity');
-        $allocatedQuantity = (int) $allocations
-            ->whereIn('status', [SkpdAllocationStatus::Accepted, SkpdAllocationStatus::Completed])
-            ->sum('quantity');
-        $usedQuantity = (int) $allocations
-            ->sum(fn (SkpdAllocation $allocation): int => (int) $allocation->usageSegments->sum('quantity'));
+        $pendingQuantity = (int) $box->getAttribute('pending_quantity');
+        $allocatedQuantity = (int) $box->getAttribute('allocated_quantity');
+        $usedQuantity = (int) $box->getAttribute('used_quantity');
         $activeAllocationQuantity = $pendingQuantity + $allocatedQuantity;
         $status = $activeAllocationQuantity === 0
             ? SkpdBoxStatus::Available
             : ($activeAllocationQuantity < $box->total_sets
                 ? SkpdBoxStatus::PartiallyAllocated
                 : ($usedQuantity === $box->total_sets ? SkpdBoxStatus::Depleted : SkpdBoxStatus::FullyAllocated));
-        $loket = $allocations
-            ->whereIn('status', [SkpdAllocationStatus::Pending, SkpdAllocationStatus::Accepted, SkpdAllocationStatus::Completed])
-            ->first()?->loket;
+        $loket = $box->relationLoaded('allocations') ? $box->allocations->first()?->loket : null;
 
         return [
             'id' => $box->id,
@@ -165,14 +171,5 @@ class SkpdInventoryController extends Controller
             'loket' => $loket === null ? null : ['id' => $loket->id, 'name' => $loket->name],
             'received_at' => $box->received_at->toIso8601String(),
         ];
-    }
-
-    private function actor(Request $request): User
-    {
-        $actor = $request->user();
-
-        abort_unless($actor instanceof User, 403);
-
-        return $actor;
     }
 }

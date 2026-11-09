@@ -4,6 +4,7 @@ import {
   History,
   PackageCheck,
   Pencil,
+  Undo2,
   XCircle,
 } from "lucide-react";
 import SkpdAllocationController from "@/actions/App/Http/Controllers/SkpdAllocationController";
@@ -19,7 +20,9 @@ import {
 } from "@/components/inventory/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { edit, index } from "@/routes/skpd/allocations";
 import { show as boxShow } from "@/routes/skpd/boxes";
 
@@ -33,12 +36,17 @@ type Allocation = {
   quantity: number;
   used_quantity: number;
   remaining_quantity: number;
-  status: "pending" | "accepted" | "completed" | "cancelled";
+  status: "pending" | "accepted" | "completed" | "cancelled" | "returned";
   created_by: string;
   created_at: string;
   accepted_by: string | null;
   accepted_at: string | null;
-  can: { accept: boolean; edit: boolean; cancel: boolean };
+  can: {
+    accept: boolean;
+    edit: boolean;
+    cancel: boolean;
+    return_remainder: boolean;
+  };
   timeline: {
     id: number;
     event: string;
@@ -125,6 +133,36 @@ export default function ShowAllocation({
                 destructive
               >
                 <AllocationSummary allocation={allocation} />
+              </ConfirmActionDialog>
+            ) : null}
+            {allocation.can.return_remainder ? (
+              <ConfirmActionDialog
+                action={SkpdAllocationController.returnRemainder(allocation.id)}
+                trigger={
+                  <Button variant="outline">
+                    <Undo2 />
+                    Kembalikan sisa ke pusat
+                  </Button>
+                }
+                title="Kembalikan sisa Nomerator ke pusat?"
+                description={`Sisa ${formatQuantity(allocation.remaining_quantity)} set yang belum dipakai Loket akan ditarik ke Box dan dapat dialokasikan ulang. Nomerator yang sudah tercatat di BAP (termasuk draft) tetap milik Loket.`}
+                confirmLabel="Ya, kembalikan sisa"
+                errorTitle="Sisa alokasi tidak dapat dikembalikan."
+              >
+                <AllocationSummary allocation={allocation} />
+                <div className="grid gap-2">
+                  <Label htmlFor="return-remainder-reason">
+                    Alasan pengembalian
+                  </Label>
+                  <Textarea
+                    id="return-remainder-reason"
+                    name="reason"
+                    rows={3}
+                    maxLength={1000}
+                    required
+                    placeholder="Contoh: Loket ditutup sementara, sisa Bukti SKPD ditarik ke gudang."
+                  />
+                </div>
               </ConfirmActionDialog>
             ) : null}
           </div>
@@ -265,6 +303,10 @@ function AllocationSummary({ allocation }: { allocation: Allocation }) {
       <DetailRow
         label="Jumlah"
         value={`${formatQuantity(allocation.quantity)} set`}
+      />
+      <DetailRow
+        label="Sudah dipakai"
+        value={`${formatQuantity(allocation.used_quantity)} set`}
       />
     </div>
   );

@@ -11,7 +11,6 @@ use App\Models\BapUsageSegment;
 use App\Models\Loket;
 use App\Models\SkpdAllocation;
 use App\Models\SkpdBox;
-use App\Models\User;
 use App\SkpdAllocationStatus;
 use App\SkpdBoxStatus;
 use Carbon\CarbonImmutable;
@@ -353,14 +352,5 @@ class SkpdBoxController extends Controller
             'skpd_allocation.cancelled' => 'Alokasi pending dibatalkan',
             default => 'Perubahan inventaris',
         };
-    }
-
-    private function actor(Request $request): User
-    {
-        $actor = $request->user();
-
-        abort_unless($actor instanceof User, 403);
-
-        return $actor;
     }
 }

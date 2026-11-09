@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import { create, index, show } from "@/routes/skpd/allocations";
 
-type AllocationStatus = "pending" | "accepted" | "completed" | "cancelled";
+type AllocationStatus = "pending" | "accepted" | "completed" | "cancelled" | "returned";
 
 type Allocation = {
   id: number;
@@ -135,6 +135,9 @@ export default function AllocationIndex({ allocations, filters, can }: Props) {
                   <SelectItem value="accepted">Diterima</SelectItem>
                   <SelectItem value="completed">Selesai digunakan</SelectItem>
                   <SelectItem value="cancelled">Dibatalkan</SelectItem>
+                  <SelectItem value="returned">
+                    Dikembalikan ke pusat
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <div className="flex gap-2">

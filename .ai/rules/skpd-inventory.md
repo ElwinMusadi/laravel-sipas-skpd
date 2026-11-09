@@ -8,8 +8,11 @@ paths:
 ## Range-ledger integrity and transaction lock
 Registering boxes, creating or accepting allocations, creating BAP, recording cancellations, and submitting BAP must occur in a database transaction after locking skpd_inventory_locks id=1. Range overlaps and per-Loket sequential usage are application rules guarded by this lock; do not replace them with a mutable stock column.
 
-## Pending allocation cancellation
-Only the creator may cancel a pending allocation. Accepted allocations remain immutable in this phase; a future withdrawal workflow requires its own authorization, audit, and state-transition design.
+## Pending allocation cancellation and remainder return
+Only the creator may cancel a pending allocation. An accepted allocation is otherwise immutable; the only change allowed is ReturnSkpdAllocationRemainder (Bendahara Barang, reason required, inventory lock, audit `skpd_allocation.remainder_returned`). It returns everything after the last numerator used by any BAP (drafts included): a partly used allocation shrinks to its used range and becomes completed, an unused one keeps its range and becomes `returned`. One Box may be split across several Lokets as long as allocation ranges never overlap.
+
+## Draft BAP ownership
+Any Petugas Loket assigned to the BAP's Loket (or Superadmin) may update, delete, and submit its draft; the creator is not special. Audit logs record who changed it.
 
 ## Draft BAP sequence preservation
 BAP draft updates must acquire the shared inventory lock and preserve per-Loket numerator continuity. Once a later BAP exists, reject range changes to the earlier draft; usage segments remain the ledger source of truth and total usage stays derived.

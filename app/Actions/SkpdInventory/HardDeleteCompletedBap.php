@@ -3,6 +3,7 @@
 namespace App\Actions\SkpdInventory;
 
 use App\BapStatus;
+use App\Concerns\LocksSkpdInventory;
 use App\Models\Bap;
 use App\Models\BapClarificationRequest;
 use App\Models\BapClarificationResolution;
@@ -22,6 +23,8 @@ use Illuminate\Validation\ValidationException;
 
 class HardDeleteCompletedBap
 {
+    use LocksSkpdInventory;
+
     public function __construct(private readonly RecordDomainAudit $audit) {}
 
     public function handle(User $actor, Bap $bap, string $reason): void
@@ -211,17 +214,5 @@ class HardDeleteCompletedBap
             $this->audit->handle($actor, $lockedBap, 'bap.hard_deleted', $oldValues);
             $lockedBap->delete();
         }, attempts: 3);
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 }

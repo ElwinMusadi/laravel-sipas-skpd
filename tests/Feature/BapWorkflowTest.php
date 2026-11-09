@@ -474,3 +474,39 @@ test('a draft BAP with Batal/Rusak details can be deleted and its numerators can
 
     $this->assertDatabaseHas('bap_cancellations', ['numerator' => 582_609]);
 });
+
+test('another Petugas Loket of the same Loket can continue and delete a draft started on an earlier shift', function () {
+    $loket = Loket::factory()->create();
+    $morningShift = bapPetugas($loket, 'Petugas Pagi');
+    $afternoonShift = bapPetugas($loket, 'Petugas Siang');
+    bapAllocation($morningShift, $loket);
+
+    $this->actingAs($morningShift)->post(route('baps.store'), bapPayload(582_608, 582_610, 0));
+    $bap = Bap::query()->sole();
+
+    $this->actingAs($afternoonShift)
+        ->get(route('baps.show', $bap))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('bap.can.edit', true)
+            ->where('bap.can.delete', true)
+            ->etc());
+
+    $this->actingAs($afternoonShift)
+        ->put(route('baps.update', $bap), bapPayload(582_608, 582_615, 2))
+        ->assertRedirect(route('baps.show', $bap))
+        ->assertSessionHasNoErrors();
+
+    expect($bap->refresh()->numerator_end)->toBe(582_615)
+        ->and($bap->created_by)->toBe($morningShift->id);
+    $this->assertDatabaseHas('audit_logs', [
+        'auditable_id' => $bap->id,
+        'actor_id' => $afternoonShift->id,
+        'event' => 'bap.updated',
+    ]);
+
+    $this->actingAs($afternoonShift)
+        ->delete(route('baps.destroy', $bap))
+        ->assertRedirect(route('baps.index'));
+
+    $this->assertModelMissing($bap);
+});

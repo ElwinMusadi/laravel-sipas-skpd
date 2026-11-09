@@ -2,6 +2,7 @@
 
 namespace App\Actions\SkpdInventory;
 
+use App\Concerns\LocksSkpdInventory;
 use App\Models\Loket;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -9,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 class UpdateLoket
 {
+    use LocksSkpdInventory;
+
     public function __construct(private readonly RecordDomainAudit $audit) {}
 
     public function handle(User $actor, Loket $loket, string $code, string $name, ?string $description, bool $isActive): Loket
@@ -55,18 +58,6 @@ class UpdateLoket
 
             return $lockedLoket;
         }, attempts: 3);
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 
     /**

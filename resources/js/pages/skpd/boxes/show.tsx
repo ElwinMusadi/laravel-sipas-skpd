@@ -35,7 +35,7 @@ type Allocation = {
   quantity: number;
   used_quantity: number;
   remaining_quantity: number;
-  status: "pending" | "accepted" | "completed" | "cancelled";
+  status: "pending" | "accepted" | "completed" | "cancelled" | "returned";
   loket: { id: number; name: string };
   allocation_date: string | null;
   created_by: string;

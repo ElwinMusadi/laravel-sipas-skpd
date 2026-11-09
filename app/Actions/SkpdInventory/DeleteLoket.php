@@ -2,6 +2,7 @@
 
 namespace App\Actions\SkpdInventory;
 
+use App\Concerns\LocksSkpdInventory;
 use App\Models\Bap;
 use App\Models\Loket;
 use App\Models\SkpdAllocation;
@@ -11,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 
 class DeleteLoket
 {
+    use LocksSkpdInventory;
+
     public function __construct(private readonly RecordDomainAudit $audit) {}
 
     public function handle(User $actor, Loket $loket): void
@@ -40,17 +43,5 @@ class DeleteLoket
             $this->audit->handle($actor, $lockedLoket, 'loket.deleted', $values);
             $lockedLoket->delete();
         }, attempts: 3);
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 }

@@ -15,17 +15,21 @@ import {
     MessagesSquare,
     MapPinned,
     Package,
+    Signature,
     Users,
 } from 'lucide-react';
 import { dashboard } from '@/routes';
-import { index as bapCancellationsIndex } from '@/routes/bap-cancellations';
 import { index as bapVerificationsIndex } from '@/routes/bap-verifications';
 import { index as bapVerificationsPhaseTwoIndex } from '@/routes/bap-verifications-phase-2';
 import { index as bapClarificationsIndex } from '@/routes/bap-clarifications';
 import { index as bapAdministrationsIndex } from '@/routes/bap-administrations';
 import { index as bapsIndex } from '@/routes/baps';
 import { index as bukuKendaliIndex } from '@/routes/buku-kendali';
+import { index as documentOfficialsIndex } from '@/routes/document-officials';
+import { index as laporanBatalRusakIndex } from '@/routes/laporan-batal-rusak';
+import { index as laporanDistribusiIndex } from '@/routes/laporan-distribusi';
 import { index as laporanPemakaianIndex } from '@/routes/laporan-pemakaian';
+import { index as laporanPersediaanIndex } from '@/routes/laporan-persediaan';
 import { index as loketsIndex } from '@/routes/lokets';
 import { index as skpdAllocationIndex } from '@/routes/skpd/allocations';
 import { index as skpdBoxIndex } from '@/routes/skpd/boxes';
@@ -37,6 +41,7 @@ type NavigationHref = NonNullable<InertiaLinkProps['href']>;
 export type ApplicationPermission =
     | 'manageUsers'
     | 'manageLokets'
+    | 'manageDocumentOfficials'
     | 'viewSkpdInventory'
     | 'viewCentralSkpdInventory'
     | 'viewBaps'
@@ -167,17 +172,23 @@ export const applicationNavigation: readonly ApplicationNavigationGroup[] = [
             {
                 title: 'Batal/Rusak',
                 icon: CircleX,
-                availability: 'planned',
+                href: laporanBatalRusakIndex(),
+                availability: 'available',
+                requiredPermission: 'viewLaporanPemakaian',
             },
             {
                 title: 'Distribusi',
                 icon: ArrowLeftRight,
-                availability: 'planned',
+                href: laporanDistribusiIndex(),
+                availability: 'available',
+                requiredPermission: 'viewLaporanPemakaian',
             },
             {
                 title: 'Persediaan',
                 icon: Package,
-                availability: 'planned',
+                href: laporanPersediaanIndex(),
+                availability: 'available',
+                requiredPermission: 'viewLaporanPemakaian',
             },
         ],
     },
@@ -204,6 +215,13 @@ export const applicationNavigation: readonly ApplicationNavigationGroup[] = [
                 href: loketsIndex(),
                 availability: 'available',
                 requiredPermission: 'manageLokets',
+            },
+            {
+                title: 'Pejabat Penandatangan',
+                icon: Signature,
+                href: documentOfficialsIndex(),
+                availability: 'available',
+                requiredPermission: 'manageDocumentOfficials',
             },
         ],
     },

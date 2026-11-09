@@ -2,6 +2,7 @@
 
 namespace App\Actions\SkpdInventory;
 
+use App\Concerns\LocksSkpdInventory;
 use App\Models\SkpdAllocation;
 use App\Models\User;
 use App\SkpdAllocationStatus;
@@ -10,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 class AcceptSkpdAllocation
 {
+    use LocksSkpdInventory;
+
     public function __construct(private readonly RecordDomainAudit $audit) {}
 
     public function handle(User $actor, SkpdAllocation $allocation): SkpdAllocation
@@ -49,17 +52,5 @@ class AcceptSkpdAllocation
 
             return $lockedAllocation;
         }, attempts: 3);
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 }

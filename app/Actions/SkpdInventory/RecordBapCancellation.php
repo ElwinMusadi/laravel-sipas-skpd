@@ -4,6 +4,7 @@ namespace App\Actions\SkpdInventory;
 
 use App\BapCancellationReason;
 use App\BapStatus;
+use App\Concerns\LocksSkpdInventory;
 use App\Models\Bap;
 use App\Models\BapCancellation;
 use App\Models\BapUsageSegment;
@@ -13,6 +14,8 @@ use Illuminate\Validation\ValidationException;
 
 class RecordBapCancellation
 {
+    use LocksSkpdInventory;
+
     public function __construct(private readonly RecordDomainAudit $audit) {}
 
     public function handle(
@@ -76,17 +79,5 @@ class RecordBapCancellation
 
             return $cancellation;
         }, attempts: 3);
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 }

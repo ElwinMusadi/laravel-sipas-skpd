@@ -11,7 +11,11 @@ use App\Http\Controllers\SkpdBapVerificationController;
 use App\Http\Controllers\SkpdBoxController;
 use App\Http\Controllers\SkpdBukuKendaliController;
 use App\Http\Controllers\SkpdInventoryController;
+use App\Http\Controllers\SkpdLaporanBatalRusakController;
+use App\Http\Controllers\SkpdLaporanDistribusiController;
 use App\Http\Controllers\SkpdLaporanPemakaianController;
+use App\Http\Controllers\SkpdLaporanPersediaanController;
+use App\Http\Controllers\DocumentOfficialController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -50,6 +54,33 @@ Route::middleware(['auth', 'auth.session', 'active'])->group(function () {
             Route::get('/', [SkpdLaporanPemakaianController::class, 'index'])->name('index');
             Route::get('pdf', [SkpdLaporanPemakaianController::class, 'pdf'])->name('pdf');
             Route::get('excel', [SkpdLaporanPemakaianController::class, 'excel'])->name('excel');
+        });
+
+    Route::middleware('can:view-laporan-pemakaian')
+        ->prefix('laporan-batal-rusak')
+        ->name('laporan-batal-rusak.')
+        ->group(function (): void {
+            Route::get('/', [SkpdLaporanBatalRusakController::class, 'index'])->name('index');
+            Route::get('pdf', [SkpdLaporanBatalRusakController::class, 'pdf'])->name('pdf');
+            Route::get('xlsx', [SkpdLaporanBatalRusakController::class, 'xlsx'])->name('xlsx');
+        });
+
+    Route::middleware('can:view-laporan-pemakaian')
+        ->prefix('laporan-distribusi')
+        ->name('laporan-distribusi.')
+        ->group(function (): void {
+            Route::get('/', [SkpdLaporanDistribusiController::class, 'index'])->name('index');
+            Route::get('pdf', [SkpdLaporanDistribusiController::class, 'pdf'])->name('pdf');
+            Route::get('xlsx', [SkpdLaporanDistribusiController::class, 'xlsx'])->name('xlsx');
+        });
+
+    Route::middleware('can:view-laporan-pemakaian')
+        ->prefix('laporan-persediaan')
+        ->name('laporan-persediaan.')
+        ->group(function (): void {
+            Route::get('/', [SkpdLaporanPersediaanController::class, 'index'])->name('index');
+            Route::get('pdf', [SkpdLaporanPersediaanController::class, 'pdf'])->name('pdf');
+            Route::get('xlsx', [SkpdLaporanPersediaanController::class, 'xlsx'])->name('xlsx');
         });
 
     Route::middleware('can:view-bap-clarifications')
@@ -166,9 +197,16 @@ Route::middleware(['auth', 'auth.session', 'active', 'can:view-skpd-inventory'])
         Route::get('allocations/{skpdAllocation}', [SkpdAllocationController::class, 'show'])->name('allocations.show');
         Route::post('allocations/{skpdAllocation}/accept', [SkpdAllocationController::class, 'accept'])->name('allocations.accept');
         Route::post('allocations/{skpdAllocation}/cancel', [SkpdAllocationController::class, 'cancel'])->name('allocations.cancel');
+        Route::post('allocations/{skpdAllocation}/return-remainder', [SkpdAllocationController::class, 'returnRemainder'])
+            ->middleware('can:return-skpd-allocation-remainder,skpdAllocation')
+            ->name('allocations.return-remainder');
     });
 
 Route::middleware(['auth', 'auth.session', 'active', 'can:manage-lokets'])
     ->resource('lokets', LoketController::class);
+
+Route::middleware(['auth', 'auth.session', 'active', 'can:manage-document-officials'])
+    ->resource('document-officials', DocumentOfficialController::class)
+    ->only(['index', 'create', 'store', 'edit', 'update']);
 
 require __DIR__.'/settings.php';

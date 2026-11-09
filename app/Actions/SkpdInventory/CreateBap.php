@@ -4,18 +4,20 @@ namespace App\Actions\SkpdInventory;
 
 use App\BapCancellationReason;
 use App\BapStatus;
+use App\Concerns\LocksSkpdInventory;
 use App\Models\Bap;
 use App\Models\BapUsageSegment;
 use App\Models\Loket;
 use App\Models\User;
 use App\SkpdAllocationStatus;
 use Carbon\CarbonInterface;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CreateBap
 {
+    use LocksSkpdInventory;
+
     public const SAME_DATE_MESSAGE = 'Loket sudah memiliki BAP pada tanggal pelayanan ini. BAP berikutnya pada tanggal yang sama hanya dapat dibuat setelah Nomerator alokasi pada BAP sebelumnya habis.';
 
     public function __construct(
@@ -64,13 +66,12 @@ class CreateBap
                 ]);
             }
 
-            /** @var Collection<int, Bap> $existingBaps */
-            $existingBaps = Bap::query()
+            $latestBap = Bap::query()
                 ->where('loket_id', $lockedLoket->id)
-                ->orderBy('service_date')
-                ->orderBy('id')
+                ->orderByDesc('service_date')
+                ->orderByDesc('id')
                 ->lockForUpdate()
-                ->get();
+                ->first();
 
             $serviceDateString = $serviceDate->toDateString();
             $allocations = $this->allocationSequence->receivedAllocations($lockedLoket->id, lockForUpdate: true);
@@ -80,8 +81,6 @@ class CreateBap
                     'numerator_start' => 'Loket belum memiliki alokasi SKPD yang telah diterima.',
                 ]);
             }
-
-            $latestBap = $existingBaps->last();
 
             if ($latestBap !== null && $serviceDate->lessThan($latestBap->service_date)) {
                 throw ValidationException::withMessages([
@@ -168,18 +167,6 @@ class CreateBap
 
             return $bap;
         }, attempts: 3);
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 
     private function validateRange(int $numeratorStart, int $numeratorEnd): void

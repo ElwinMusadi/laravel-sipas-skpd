@@ -2,6 +2,7 @@
 
 namespace App\Actions\SkpdInventory;
 
+use App\Concerns\LocksSkpdInventory;
 use App\Models\Loket;
 use App\Models\SkpdAllocation;
 use App\Models\SkpdBox;
@@ -13,6 +14,8 @@ use Illuminate\Validation\ValidationException;
 
 class CreateSkpdAllocation
 {
+    use LocksSkpdInventory;
+
     public function __construct(private readonly RecordDomainAudit $audit) {}
 
     public function handle(
@@ -48,19 +51,6 @@ class CreateSkpdAllocation
                 SkpdAllocationStatus::Accepted->value,
                 SkpdAllocationStatus::Completed->value,
             ];
-
-            $differentLoketExists = SkpdAllocation::query()
-                ->where('skpd_box_id', $lockedBox->id)
-                ->whereIn('status', $activeStatuses)
-                ->where('loket_id', '!=', $lockedLoket->id)
-                ->lockForUpdate()
-                ->exists();
-
-            if ($differentLoketExists) {
-                throw ValidationException::withMessages([
-                    'loket_id' => 'Satu box hanya dapat dialokasikan kepada satu Loket.',
-                ]);
-            }
 
             $hasOverlap = SkpdAllocation::query()
                 ->where('skpd_box_id', $lockedBox->id)
@@ -99,18 +89,6 @@ class CreateSkpdAllocation
 
             return $allocation;
         }, attempts: 3);
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 
     private function validateRange(int $numeratorStart, int $numeratorEnd): void

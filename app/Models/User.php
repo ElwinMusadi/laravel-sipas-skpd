@@ -58,12 +58,12 @@ class User extends Authenticatable
     }
 
     /**
-     * Determine whether the user may manage a draft BAP.
+     * Determine whether the user may manage a draft BAP. Any Petugas Loket assigned
+     * to the BAP's Loket may continue a draft, so shift changes do not block it.
      */
     public function canManageDraftBap(Bap $bap): bool
     {
-        return $this->isGlobalAdministrator()
-            || ($this->canOperateAtLoket($bap->loket_id) && $this->id === $bap->created_by);
+        return $this->canOperateAtLoket($bap->loket_id);
     }
 
     /**

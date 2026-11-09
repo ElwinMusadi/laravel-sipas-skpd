@@ -3,8 +3,10 @@
 namespace App\Support;
 
 use App\BapCancellationReason;
+use App\DocumentOfficialRole;
 use App\Models\Bap;
 use App\Models\BapCancellation;
+use App\Models\DocumentOfficial;
 use Carbon\CarbonImmutable;
 
 class BapSkpdDocumentData
@@ -22,7 +24,7 @@ class BapSkpdDocumentData
      *     cancellationCount: int,
      *     cancellations: list<array{number: int, numerator: string, reason: string, description: string|null, statement: string}>,
      *     institution: array<string, mixed>,
-     *     officials: array<string, mixed>
+     *     officials: array<string, array{name: string, nip: string|null, rank: string|null, position: string}>
      * }
      */
     public function for(Bap $bap): array
@@ -52,8 +54,33 @@ class BapSkpdDocumentData
             'cancellationCount' => count($cancellations),
             'cancellations' => $cancellations,
             'institution' => (array) config('bap-document.institution', []),
-            'officials' => (array) config('bap-document.officials', []),
+            'officials' => $this->officials($serviceDate),
         ];
+    }
+
+    /**
+     * Signatories in office on the service date, so a reprinted BAP keeps the
+     * officials who were responsible at that time.
+     *
+     * @return array<string, array{name: string, nip: string|null, rank: string|null, position: string}>
+     */
+    private function officials(CarbonImmutable $serviceDate): array
+    {
+        $effectiveOfficials = DocumentOfficial::effectiveOn($serviceDate);
+        $officials = [];
+
+        foreach (DocumentOfficialRole::cases() as $role) {
+            $official = $effectiveOfficials[$role->value] ?? null;
+
+            $officials[$role->value] = [
+                'name' => $official->name ?? '',
+                'nip' => $official?->nip,
+                'rank' => $official?->rank,
+                'position' => $official->position ?? '',
+            ];
+        }
+
+        return $officials;
     }
 
     private function numerator(int $value): string

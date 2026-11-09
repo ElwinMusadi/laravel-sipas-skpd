@@ -4,6 +4,7 @@ namespace App\Actions\SkpdInventory;
 
 use App\BapCancellationReason;
 use App\BapStatus;
+use App\Concerns\LocksSkpdInventory;
 use App\Models\Bap;
 use App\Models\BapUsageSegment;
 use App\Models\User;
@@ -15,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class UpdateBap
 {
+    use LocksSkpdInventory;
+
     public function __construct(
         private readonly RecordDomainAudit $audit,
         private readonly SynchronizeBapCancellations $syncCancellations,
@@ -52,7 +55,7 @@ class UpdateBap
 
             if (! $actor->canManageDraftBap($lockedBap)) {
                 throw ValidationException::withMessages([
-                    'loket_id' => 'Hanya pembuat BAP pada Loket yang sama yang dapat memperbarui draft.',
+                    'loket_id' => 'Hanya Petugas Loket pada Loket BAP ini yang dapat memperbarui draft.',
                 ]);
             }
 
@@ -265,18 +268,6 @@ class UpdateBap
         $this->syncCancellations->handle($actor, $lockedBap, $cancellationCount, $cancellations);
 
         return $lockedBap;
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 
     private function validateRange(int $numeratorStart, int $numeratorEnd): void

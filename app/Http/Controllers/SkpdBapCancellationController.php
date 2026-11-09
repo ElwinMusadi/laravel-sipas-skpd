@@ -2,15 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\SkpdInventory\RecordBapCancellation;
 use App\BapCancellationReason;
-use App\BapStatus;
-use App\Http\Requests\SkpdInventory\StoreBapCancellationRequest;
 use App\Models\Bap;
 use App\Models\BapCancellation;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -71,87 +66,6 @@ class SkpdBapCancellationController extends Controller
             'filters' => $filters,
             'reasons' => $this->reasons(),
         ]);
-    }
-
-    /**
-     * Select an eligible draft BAP before opening the immutable cancellation form.
-     */
-    public function createEntry(Request $request): Response
-    {
-        $actor = $this->actor($request);
-
-        Gate::authorize('create-bap-cancellations');
-
-        $query = Bap::query()
-            ->with(['loket:id,name', 'creator:id,name'])
-            ->where('status', BapStatus::Draft);
-
-        if (! $actor->isGlobalAdministrator()) {
-            $query
-                ->where('loket_id', $actor->loket_id)
-                ->where('created_by', $actor->id);
-        }
-
-        return Inertia::render('bap-cancellations/create-entry', [
-            'baps' => $query
-                ->orderByDesc('service_date')
-                ->orderByDesc('id')
-                ->get()
-                ->map(fn (Bap $bap): array => [
-                    'id' => $bap->id,
-                    'document_number' => $bap->document_number,
-                    'service_date' => $bap->service_date->toDateString(),
-                    'loket' => $bap->loket->name,
-                    'numerator_start' => $bap->numerator_start,
-                    'numerator_end' => $bap->numerator_end,
-                    'created_by' => $bap->creator->name,
-                ])
-                ->values()
-                ->all(),
-        ]);
-    }
-
-    /**
-     * Show the form for recording a cancellation against one draft BAP.
-     */
-    public function create(Bap $bap, Request $request): Response
-    {
-        $this->actor($request);
-
-        Gate::authorize('create-bap-cancellation', $bap);
-
-        $bap->load([
-            'loket:id,name',
-            'creator:id,name',
-        ]);
-        $cancellationQuantity = $bap->cancellations()->count();
-
-        return Inertia::render('bap-cancellations/create', [
-            'bap' => $this->bapData($bap, $cancellationQuantity),
-            'reasons' => $this->reasons(),
-        ]);
-    }
-
-    /**
-     * Record an individual cancelled or damaged numerator through the locked domain action.
-     */
-    public function store(
-        StoreBapCancellationRequest $request,
-        Bap $bap,
-        RecordBapCancellation $recordCancellation,
-    ): RedirectResponse {
-        $attributes = $request->validated();
-        $cancellation = $recordCancellation->handle(
-            $this->actor($request),
-            $bap,
-            (int) $attributes['numerator'],
-            BapCancellationReason::from($attributes['reason']),
-            $attributes['description'] ?? null,
-        );
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Nomerator batal/rusak berhasil dicatat.']);
-
-        return to_route('bap-cancellations.show', $cancellation);
     }
 
     /**
@@ -234,14 +148,5 @@ class SkpdBapCancellationController extends Controller
             'value' => $reason->value,
             'label' => $reason->label(),
         ], BapCancellationReason::cases());
-    }
-
-    private function actor(Request $request): User
-    {
-        $actor = $request->user();
-
-        abort_unless($actor instanceof User, 403);
-
-        return $actor;
     }
 }

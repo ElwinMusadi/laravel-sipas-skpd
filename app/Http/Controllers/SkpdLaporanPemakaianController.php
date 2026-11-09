@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Exports\SkpdLaporanPemakaianExport;
 use App\Models\Bap;
 use App\Models\Loket;
-use App\Models\User;
 use App\SkpdLaporanPemakaianQuery;
 use App\Support\BusinessDate;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -138,14 +137,5 @@ class SkpdLaporanPemakaianController extends Controller
             isset($filters['year']) ? (int) $filters['year'] : BusinessDate::now()->year,
             isset($filters['loket']) ? (int) $filters['loket'] : null,
         );
-    }
-
-    private function actor(Request $request): User
-    {
-        $actor = $request->user();
-
-        abort_unless($actor instanceof User, 403);
-
-        return $actor;
     }
 }

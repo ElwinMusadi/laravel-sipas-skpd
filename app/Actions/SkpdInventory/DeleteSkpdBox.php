@@ -2,6 +2,7 @@
 
 namespace App\Actions\SkpdInventory;
 
+use App\Concerns\LocksSkpdInventory;
 use App\Models\SkpdAllocation;
 use App\Models\SkpdBox;
 use App\Models\User;
@@ -10,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 class DeleteSkpdBox
 {
+    use LocksSkpdInventory;
+
     public function __construct(private readonly RecordDomainAudit $audit) {}
 
     public function handle(User $actor, SkpdBox $box): void
@@ -37,17 +40,5 @@ class DeleteSkpdBox
             $this->audit->handle($actor, $lockedBox, 'skpd_box.deleted', $values);
             $lockedBox->delete();
         }, attempts: 3);
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 }

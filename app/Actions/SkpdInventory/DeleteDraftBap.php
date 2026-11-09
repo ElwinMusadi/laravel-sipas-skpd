@@ -3,6 +3,7 @@
 namespace App\Actions\SkpdInventory;
 
 use App\BapStatus;
+use App\Concerns\LocksSkpdInventory;
 use App\Models\Bap;
 use App\Models\BapCancellation;
 use App\Models\BapUsageSegment;
@@ -15,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class DeleteDraftBap
 {
+    use LocksSkpdInventory;
+
     public function __construct(private readonly RecordDomainAudit $audit) {}
 
     public function handle(User $actor, Bap $bap): void
@@ -26,7 +29,7 @@ class DeleteDraftBap
 
             if (! $actor->canManageDraftBap($lockedBap) || $lockedBap->status !== BapStatus::Draft) {
                 throw ValidationException::withMessages([
-                    'bap' => 'Hanya BAP draft milik petugas yang berwenang yang dapat dihapus.',
+                    'bap' => 'Hanya draft BAP pada Loket Anda yang dapat dihapus.',
                 ]);
             }
 
@@ -116,17 +119,5 @@ class DeleteDraftBap
             $this->audit->handle($actor, $lockedBap, 'bap.deleted', $oldValues);
             $lockedBap->delete();
         }, attempts: 3);
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 }

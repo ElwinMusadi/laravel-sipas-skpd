@@ -6,7 +6,6 @@ use App\BapStatus;
 use App\Models\Bap;
 use App\Models\BapCancellation;
 use App\Models\Loket;
-use App\Models\User;
 use App\Support\BusinessDate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -158,14 +157,5 @@ class SkpdBukuKendaliController extends Controller
             'received_at' => $bap->received_at?->toIso8601String(),
             'status' => $bap->status->value,
         ];
-    }
-
-    private function actor(Request $request): User
-    {
-        $actor = $request->user();
-
-        abort_unless($actor instanceof User, 403);
-
-        return $actor;
     }
 }

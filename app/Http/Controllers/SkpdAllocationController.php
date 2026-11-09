@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Actions\SkpdInventory\AcceptSkpdAllocation;
 use App\Actions\SkpdInventory\CancelSkpdAllocation;
 use App\Actions\SkpdInventory\CreateSkpdAllocation;
+use App\Actions\SkpdInventory\ReturnSkpdAllocationRemainder;
 use App\Actions\SkpdInventory\UpdateSkpdAllocation;
+use App\Http\Requests\SkpdInventory\ReturnSkpdAllocationRemainderRequest;
 use App\Http\Requests\SkpdInventory\StoreSkpdAllocationRequest;
 use App\Http\Requests\SkpdInventory\UpdateSkpdAllocationRequest;
 use App\Models\Loket;
@@ -81,9 +83,11 @@ class SkpdAllocationController extends Controller
         Gate::authorize('manage-skpd-inventory');
 
         $boxes = SkpdBox::query()
-            ->with(['allocations' => function (Relation $query): void {
-                $query->with('usageSegments:id,skpd_allocation_id,quantity');
-            }])
+            ->withSum(['allocations as reserved_quantity' => fn (Builder $query): Builder => $query->whereIn('status', [
+                SkpdAllocationStatus::Pending,
+                SkpdAllocationStatus::Accepted,
+                SkpdAllocationStatus::Completed,
+            ])], 'quantity')
             ->orderByDesc('received_at')
             ->orderByDesc('id')
             ->get()
@@ -95,6 +99,7 @@ class SkpdAllocationController extends Controller
         return Inertia::render('skpd/allocations/create', [
             'boxes' => $boxes,
             'lokets' => Loket::query()
+                ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'name'])
                 ->map(fn (Loket $loket): array => ['id' => $loket->id, 'name' => $loket->name])
@@ -125,6 +130,9 @@ class SkpdAllocationController extends Controller
                 'numerator_end' => $skpdAllocation->numerator_end,
             ],
             'lokets' => Loket::query()
+                ->where(fn (Builder $query): Builder => $query
+                    ->where('is_active', true)
+                    ->orWhereKey($skpdAllocation->loket_id))
                 ->orderBy('name')
                 ->get(['id', 'name'])
                 ->map(fn (Loket $loket): array => ['id' => $loket->id, 'name' => $loket->name])
@@ -232,6 +240,21 @@ class SkpdAllocationController extends Controller
     }
 
     /**
+     * Withdraw the unused tail of an accepted allocation back to central storage.
+     */
+    public function returnRemainder(
+        ReturnSkpdAllocationRemainderRequest $request,
+        SkpdAllocation $skpdAllocation,
+        ReturnSkpdAllocationRemainder $returnRemainder,
+    ): RedirectResponse {
+        $returnRemainder->handle($this->actor($request), $skpdAllocation, (string) $request->validated('reason'));
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Sisa Nomerator alokasi berhasil dikembalikan ke pusat.']);
+
+        return to_route('skpd.allocations.show', $skpdAllocation);
+    }
+
+    /**
      * Cancel a pending allocation only when the current Bendahara created it.
      */
     public function cancel(SkpdAllocation $skpdAllocation, Request $request, CancelSkpdAllocation $cancelSkpdAllocation): RedirectResponse
@@ -250,13 +273,7 @@ class SkpdAllocationController extends Controller
      */
     private function boxOption(SkpdBox $box): array
     {
-        $reservedQuantity = (int) $box->allocations
-            ->whereIn('status', [
-                SkpdAllocationStatus::Pending,
-                SkpdAllocationStatus::Accepted,
-                SkpdAllocationStatus::Completed,
-            ])
-            ->sum('quantity');
+        $reservedQuantity = (int) $box->getAttribute('reserved_quantity');
 
         return [
             'id' => $box->id,
@@ -269,7 +286,7 @@ class SkpdAllocationController extends Controller
     }
 
     /**
-     * @return array{id: int, box: array{id: int, box_number: string}, loket: array{id: int, name: string}, allocation_date: string|null, numerator_start: int, numerator_end: int, quantity: int, used_quantity: int, remaining_quantity: int, status: string, created_by: string, created_at: string, accepted_by: string|null, accepted_at: string|null, can: array{accept: bool, edit: bool, cancel: bool}}
+     * @return array{id: int, box: array{id: int, box_number: string}, loket: array{id: int, name: string}, allocation_date: string|null, numerator_start: int, numerator_end: int, quantity: int, used_quantity: int, remaining_quantity: int, status: string, created_by: string, created_at: string, accepted_by: string|null, accepted_at: string|null, can: array{accept: bool, edit: bool, cancel: bool, return_remainder: bool}}
      */
     private function allocationData(User $actor, SkpdAllocation $allocation): array
     {
@@ -294,6 +311,8 @@ class SkpdAllocationController extends Controller
                 'accept' => $actor->can('accept-skpd-allocation', $allocation),
                 'edit' => $actor->can('update-skpd-allocation', $allocation),
                 'cancel' => $actor->can('cancel-skpd-allocation', $allocation),
+                'return_remainder' => $actor->can('return-skpd-allocation-remainder', $allocation)
+                    && $allocation->quantity > $usedQuantity,
             ],
         ];
     }
@@ -305,16 +324,8 @@ class SkpdAllocationController extends Controller
             'skpd_allocation.accepted' => 'Handover alokasi diterima',
             'skpd_allocation.updated' => 'Alokasi pending diperbarui',
             'skpd_allocation.cancelled' => 'Alokasi pending dibatalkan',
+            'skpd_allocation.remainder_returned' => 'Sisa Nomerator dikembalikan ke pusat',
             default => 'Perubahan alokasi',
         };
-    }
-
-    private function actor(Request $request): User
-    {
-        $actor = $request->user();
-
-        abort_unless($actor instanceof User, 403);
-
-        return $actor;
     }
 }

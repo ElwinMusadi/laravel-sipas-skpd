@@ -225,7 +225,7 @@ test('allocation endpoint rejects a range outside its Box', function () {
     ]);
 });
 
-test('a Box cannot be allocated to another Loket through direct HTTP requests', function () {
+test('a Box can be allocated to a second Loket through the HTTP endpoint', function () {
     $bendahara = phaseFiveBendahara();
     $firstLoket = Loket::factory()->create();
     $secondLoket = Loket::factory()->create();
@@ -242,10 +242,15 @@ test('a Box cannot be allocated to another Loket through direct HTTP requests', 
             'numerator_start' => '5000500',
             'numerator_end' => '5000999',
         ])
-        ->assertRedirect(route('skpd.allocations.create'))
-        ->assertSessionHasErrors('loket_id');
+        ->assertSessionHasNoErrors();
 
-    $this->assertDatabaseMissing('skpd_allocations', ['loket_id' => $secondLoket->id]);
+    $this->assertDatabaseHas('skpd_allocations', [
+        'skpd_box_id' => $box->id,
+        'loket_id' => $secondLoket->id,
+        'numerator_start' => 5_000_500,
+        'numerator_end' => 5_000_999,
+        'status' => 'pending',
+    ]);
 });
 
 test('Box list exposes ledger-derived status and range data for bendahara barang', function () {

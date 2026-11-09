@@ -2,6 +2,7 @@
 
 namespace App\Actions\SkpdInventory;
 
+use App\Concerns\LocksSkpdInventory;
 use App\Models\SkpdBox;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -10,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 class UpdateSkpdBox
 {
+    use LocksSkpdInventory;
+
     public function __construct(private readonly RecordDomainAudit $audit) {}
 
     public function handle(User $actor, SkpdBox $box, string $boxNumber, string $centralStorageLocation, CarbonImmutable $receivedAt): SkpdBox
@@ -44,18 +47,6 @@ class UpdateSkpdBox
 
             return $lockedBox;
         }, attempts: 3);
-    }
-
-    private function lockInventory(): void
-    {
-        $lock = DB::table('skpd_inventory_locks')
-            ->where('id', 1)
-            ->lockForUpdate()
-            ->first();
-
-        if ($lock === null) {
-            throw new \LogicException('Kunci transaksi inventaris SKPD tidak tersedia.');
-        }
     }
 
     /**

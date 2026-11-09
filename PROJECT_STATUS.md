@@ -4,6 +4,19 @@
 **Fase saat ini:** Phase 19 — Manual Testing Readiness & End-to-End Workflow Hardening
 **Status:** PARTIAL — regresi otomatis siap; validasi browser manual belum dapat dinyatakan lulus.
 
+## Aturan Lapangan, Pejabat PDF, Laporan Tambahan, dan P2 (10 November 2026)
+
+Keputusan bisnis: Box boleh dibagi ke beberapa Loket; sisa alokasi yang sudah diterima dapat dikembalikan ke pusat; draft BAP dapat dikerjakan semua Petugas Loket pada Loket yang sama; Approval Kasie dan Pengesahan Kepala UPTD **ditunda**.
+
+- **Box ke beberapa Loket.** Aturan "satu Box satu Loket" dihapus dari `CreateSkpdAllocation`/`UpdateSkpdAllocation`; range alokasi tetap tidak boleh tumpang tindih.
+- **Draft untuk semua petugas Loket.** Gate `update-bap`/`delete-bap` dan `User::canManageDraftBap` tidak lagi mensyaratkan pembuat draft; audit tetap mencatat pelaku.
+- **Kembalikan sisa ke pusat.** `ReturnSkpdAllocationRemainder` (Bendahara Barang, alasan wajib, lock inventaris, audit `skpd_allocation.remainder_returned`) menarik Nomerator setelah pemakaian terakhir (termasuk draft). Alokasi terpakai sebagian dipersempit ke range terpakai dan menjadi `completed`; alokasi yang belum terpakai menjadi status baru `returned` ("Dikembalikan ke pusat", migration CHECK MySQL `add_returned_status_to_skpd_allocations`).
+- **Pejabat penandatangan.** Tabel `document_officials` (migration `create_document_officials_table`, berisi empat pejabat awal berlaku 1 Januari 2026) dikelola Superadmin di menu Administrasi → Pejabat Penandatangan. PDF BAP memakai pejabat yang berlaku pada tanggal pelayanan; data pejabat dihapus dari `config/bap-document.php`.
+- **Laporan Batal/Rusak, Distribusi, Persediaan.** Masing-masing punya halaman, PDF, dan XLSX dengan filter bulan/tahun/Loket dan otorisasi `view-laporan-pemakaian`. Batal/Rusak hanya dari BAP `completed`; Distribusi berdasarkan tanggal alokasi; Persediaan adalah posisi per akhir bulan (alokasi yang pernah dikembalikan direkonstruksi dengan kuantitas saat ini).
+- **P2.** Dashboard Persediaan dan form alokasi memakai agregasi SQL (tidak lagi memuat semua segment); form alokasi hanya menawarkan Loket aktif; `CreateBap` hanya mengunci BAP terakhir Loket; `lockInventory()` dipindah ke trait `App\Concerns\LocksSkpdInventory`; `actor()` dipindah ke base `Controller`; endpoint Batal/Rusak standalone yang sudah tanpa route, request, gate, dan halamannya dihapus.
+
+Verifikasi: SQLite dan MySQL masing-masing 344 test / 3.193 assertion PASS, PHPStan 0 error, TypeScript PASS, build PASS. Uji browser belum dijalankan karena database lokal belum di-migrate.
+
 ## Perbaikan UX Operator (10 November 2026)
 
 - "Terima handover" dan "Hapus alokasi pending" kini memakai dialog konfirmasi (`ConfirmActionDialog`) yang menampilkan Box, Loket, range, dan jumlah, serta error dari server.

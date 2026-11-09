@@ -200,17 +200,19 @@ test('creates partial allocations for the same loket without moving pending stoc
         ->and($box->fresh()->status())->toBe(SkpdBoxStatus::PartiallyAllocated);
 });
 
-test('rejects an allocation to a different loket from the same box', function () {
+test('one box can be split across Lokets while their ranges stay disjoint', function () {
     $firstLoket = Loket::factory()->create();
     $secondLoket = Loket::factory()->create();
     $actor = petugasLoket($firstLoket);
     $box = registerBox($actor);
     allocate($actor, $box, $firstLoket, 5_000_000, 5_000_499);
 
-    expect(fn () => allocate($actor, $box, $secondLoket, 5_000_500, 5_000_999))
-        ->toThrow(ValidationException::class);
+    $secondAllocation = allocate($actor, $box, $secondLoket, 5_000_500, 5_000_999);
 
-    $this->assertDatabaseMissing('skpd_allocations', ['loket_id' => $secondLoket->id]);
+    expect($secondAllocation->loket_id)->toBe($secondLoket->id)
+        ->and($secondAllocation->skpd_box_id)->toBe($box->id);
+    expect(fn () => allocate($actor, $box, $secondLoket, 5_000_400, 5_000_450))
+        ->toThrow(ValidationException::class);
 });
 
 test('rejects allocation ranges outside their source box or overlapping an existing allocation', function () {

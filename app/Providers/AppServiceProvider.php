@@ -77,6 +77,8 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('manage-lokets', fn (User $user): bool => $user->role === UserRole::Superadmin);
 
+        Gate::define('manage-document-officials', fn (User $user): bool => $user->role === UserRole::Superadmin);
+
         Gate::define('view-skpd-inventory', fn (User $user): bool => in_array($user->role, [
             UserRole::Superadmin,
             UserRole::BendaharaBarang,
@@ -106,6 +108,9 @@ class AppServiceProvider extends ServiceProvider
           && $user->id === $allocation->created_by
           && $allocation->status === SkpdAllocationStatus::Pending);
 
+        Gate::define('return-skpd-allocation-remainder', fn (User $user, SkpdAllocation $allocation): bool => $user->role === UserRole::BendaharaBarang
+          && $allocation->status === SkpdAllocationStatus::Accepted);
+
         Gate::define('view-baps', fn (User $user): bool => $user->role === UserRole::PetugasLoket
           || $this->canViewAllBaps($user));
 
@@ -118,12 +123,10 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('update-bap', fn (User $user, Bap $bap): bool => $user->role === UserRole::PetugasLoket
           && $user->loket_id === $bap->loket_id
-          && $user->id === $bap->created_by
           && $bap->status === BapStatus::Draft);
 
         Gate::define('delete-bap', fn (User $user, Bap $bap): bool => $user->role === UserRole::PetugasLoket
           && $user->loket_id === $bap->loket_id
-          && $user->id === $bap->created_by
           && $bap->status === BapStatus::Draft);
 
         Gate::define('submit-bap', fn (User $user, Bap $bap): bool => $user->role === UserRole::PetugasLoket
@@ -133,14 +136,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('view-bap-cancellations', fn (User $user): bool => $user->can('view-baps'));
 
         Gate::define('view-bap-cancellation', fn (User $user, BapCancellation $cancellation): bool => $this->canViewBap($user, $cancellation->bap));
-
-        Gate::define('create-bap-cancellation', fn (User $user, Bap $bap): bool => $user->role === UserRole::PetugasLoket
-          && $user->loket_id === $bap->loket_id
-          && $user->id === $bap->created_by
-          && $bap->status === BapStatus::Draft);
-
-        Gate::define('create-bap-cancellations', fn (User $user): bool => $user->role === UserRole::PetugasLoket
-          && $user->loket_id !== null);
 
         Gate::define('view-bap-verifications-phase-1', fn (User $user): bool => $user->role === UserRole::PetugasPenetapan);
 

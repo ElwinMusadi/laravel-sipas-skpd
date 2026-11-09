@@ -20,6 +20,7 @@ export type Auth = {
     permissions: {
         manageUsers: boolean;
         manageLokets: boolean;
+        manageDocumentOfficials: boolean;
         viewSkpdInventory: boolean;
         viewCentralSkpdInventory: boolean;
         manageSkpdInventory: boolean;

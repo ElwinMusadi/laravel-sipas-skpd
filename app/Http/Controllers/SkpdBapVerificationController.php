@@ -14,7 +14,6 @@ use App\Models\Bap;
 use App\Models\BapVerification;
 use App\Models\BapVerificationChecklistItem;
 use App\Models\BapVerificationDiscrepancy;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -422,14 +421,5 @@ class SkpdBapVerificationController extends Controller
             BapVerificationStage::Phase1 => "bap-verifications.{$action}",
             BapVerificationStage::Phase2 => "bap-verifications-phase-2.{$action}",
         };
-    }
-
-    private function actor(Request $request): User
-    {
-        $actor = $request->user();
-
-        abort_unless($actor instanceof User, 403);
-
-        return $actor;
     }
 }
