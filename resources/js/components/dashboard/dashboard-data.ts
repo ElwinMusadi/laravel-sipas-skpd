@@ -1,3 +1,8 @@
+import type { BapStatus } from '@/components/bap/bap-status-badge';
+
+/**
+ * Work-item urgency category; BAP rows use the real BapStatus instead.
+ */
 export type DashboardStatus =
     | 'draft'
     | 'waiting'
@@ -27,14 +32,7 @@ export type RecentBap = {
     loket: string;
     serviceDate: string;
     submittedAt: string | null;
-    status: DashboardStatus;
-};
-
-export type DashboardActivity = {
-    id: string;
-    actor: string;
-    description: string;
-    occurredAt: string;
+    status: BapStatus;
 };
 
 export type DashboardPresentationData = {

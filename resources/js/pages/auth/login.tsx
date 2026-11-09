@@ -18,7 +18,7 @@ type Props = {
 
 export default function Login({ status }: Props) {
     return (
-        <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
+        <main className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
             <Head title="Masuk" />
 
             <div className="w-full max-w-sm md:max-w-3xl">
@@ -44,7 +44,10 @@ export default function Login({ status }: Props) {
                                         </div>
 
                                         {status && (
-                                            <div className="text-center text-sm font-medium text-green-600">
+                                            <div
+                                                role="status"
+                                                className="text-success text-center text-sm font-medium"
+                                            >
                                                 {status}
                                             </div>
                                         )}
@@ -59,7 +62,6 @@ export default function Login({ status }: Props) {
                                                     name="username"
                                                     required
                                                     autoFocus
-                                                    tabIndex={1}
                                                     autoComplete="username"
                                                     placeholder="Username"
                                                 />
@@ -76,7 +78,6 @@ export default function Login({ status }: Props) {
                                                     id="password"
                                                     name="password"
                                                     required
-                                                    tabIndex={2}
                                                     autoComplete="current-password"
                                                     placeholder="Masukkan password"
                                                 />
@@ -89,7 +90,6 @@ export default function Login({ status }: Props) {
                                                 <Checkbox
                                                     id="remember"
                                                     name="remember"
-                                                    tabIndex={3}
                                                 />
                                                 <Label htmlFor="remember">
                                                     Ingat saya
@@ -99,7 +99,6 @@ export default function Login({ status }: Props) {
                                             <Button
                                                 type="submit"
                                                 className="w-full"
-                                                tabIndex={4}
                                                 disabled={processing}
                                                 data-test="login-button"
                                             >
@@ -127,6 +126,6 @@ export default function Login({ status }: Props) {
                     </Card>
                 </div>
             </div>
-        </div>
+        </main>
     );
 }

@@ -15,6 +15,7 @@ use App\Models\SkpdAllocation;
 use App\Models\SkpdBox;
 use App\Models\User;
 use App\SkpdAllocationStatus;
+use App\Support\BusinessDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -76,9 +77,10 @@ class SkpdAllocationController extends Controller
     }
 
     /**
-     * Show a form for creating a pending allocation.
+     * Show a form for creating a pending allocation, preselecting the Box given
+     * by the optional `box` query parameter when it still has free sets.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
         Gate::authorize('manage-skpd-inventory');
 
@@ -93,17 +95,21 @@ class SkpdAllocationController extends Controller
             ->get()
             ->map(fn (SkpdBox $box): array => $this->boxOption($box))
             ->filter(fn (array $box): bool => $box['available_quantity'] > 0)
-            ->values()
-            ->all();
+            ->values();
+        $requestedBoxId = $request->integer('box');
 
         return Inertia::render('skpd/allocations/create', [
-            'boxes' => $boxes,
+            'boxes' => $boxes->all(),
             'lokets' => Loket::query()
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'name'])
                 ->map(fn (Loket $loket): array => ['id' => $loket->id, 'name' => $loket->name])
                 ->all(),
+            'defaults' => [
+                'skpd_box_id' => $boxes->contains('id', $requestedBoxId) ? $requestedBoxId : null,
+                'allocation_date' => BusinessDate::today(),
+            ],
         ]);
     }
 

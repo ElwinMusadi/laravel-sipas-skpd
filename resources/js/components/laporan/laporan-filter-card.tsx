@@ -1,19 +1,14 @@
-import { router } from '@inertiajs/react';
-import { X } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
-import { Button } from '@/components/ui/button';
+import { router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+    FilterBar,
+    FilterField,
+    FilterSelect,
+} from '@/components/app/filter-bar';
 import { Input } from '@/components/ui/input';
 import {
     Select,
     SelectContent,
-    SelectGroup,
     SelectItem,
     SelectTrigger,
     SelectValue,
@@ -28,105 +23,104 @@ type Props = {
     indexUrl: string;
     filters: LaporanFilters;
     lokets: LaporanLoketOption[];
-    description: string;
 };
 
-export function LaporanFilterCard({
+/**
+ * Period and Loket filter shared by every Laporan Sistem page. The form is
+ * keyed by the page URL, so after any visit (apply, reset, or pagination) it
+ * shows exactly the filters the server applied.
+ */
+export function LaporanFilterCard(props: Props) {
+    const { url } = usePage();
+
+    return <LaporanFilterForm key={url} url={url} {...props} />;
+}
+
+function LaporanFilterForm({
+    url,
     indexUrl,
     filters,
     lokets,
-    description,
-}: Props) {
+}: Props & { url: string }) {
     const [month, setMonth] = useState(filters.month.toString());
     const [year, setYear] = useState(filters.year.toString());
-    const [loket, setLoket] = useState(filters.loket?.toString() ?? 'all');
+    const [loket, setLoket] = useState(filters.loket?.toString() ?? '');
 
-    function applyFilters(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        router.get(
-            indexUrl,
-            {
-                month: Number(month),
-                year: Number(year),
-                loket: loket === 'all' ? undefined : Number(loket),
-            },
-            { preserveState: true, replace: true },
-        );
+    function visit(query: Record<string, number>): void {
+        router.get(indexUrl, query, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     }
 
-    function resetFilters() {
-        router.get(indexUrl, {}, { preserveState: false, replace: true });
+    function applyFilters(): void {
+        visit({
+            month: Number(month),
+            year: Number(year),
+            ...(loket === '' ? {} : { loket: Number(loket) }),
+        });
     }
 
     return (
-        <Card data-print-hidden>
-            <CardHeader>
-                <CardTitle>Filter laporan</CardTitle>
-                <CardDescription>{description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form
-                    onSubmit={applyFilters}
-                    className="grid gap-3 md:grid-cols-[minmax(0,1fr)_9rem_13rem_auto]"
-                >
-                    <Select value={month} onValueChange={setMonth}>
-                        <SelectTrigger aria-label="Pilih bulan">
-                            <SelectValue placeholder="Pilih bulan" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                {laporanMonthOptions.map((option) => (
-                                    <SelectItem
-                                        key={option.value}
-                                        value={option.value.toString()}
-                                    >
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                    <Input
-                        type="number"
-                        min="2000"
-                        max="9999"
-                        value={year}
-                        onChange={(event) => setYear(event.target.value)}
-                        aria-label="Pilih tahun"
-                    />
-                    <Select value={loket} onValueChange={setLoket}>
-                        <SelectTrigger aria-label="Filter Loket">
-                            <SelectValue placeholder="Semua Loket" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                <SelectItem value="all">Semua Loket</SelectItem>
-                                {lokets.map((option) => (
-                                    <SelectItem
-                                        key={option.id}
-                                        value={option.id.toString()}
-                                    >
-                                        {option.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                    <div className="flex gap-2">
-                        <Button type="submit">Tampilkan</Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={resetFilters}
-                            aria-label="Reset filter laporan"
-                        >
-                            <X />
-                        </Button>
-                    </div>
-                </form>
-            </CardContent>
-        </Card>
+        <FilterBar
+            onSubmit={applyFilters}
+            onReset={() => visit({})}
+            activeCount={appliedFilterCount(url)}
+        >
+            <FilterField id="laporan-month" label="Bulan">
+                <Select value={month} onValueChange={setMonth}>
+                    <SelectTrigger id="laporan-month" className="w-full">
+                        <SelectValue placeholder="Pilih bulan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {laporanMonthOptions.map((option) => (
+                            <SelectItem
+                                key={option.value}
+                                value={option.value.toString()}
+                            >
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </FilterField>
+            <FilterField id="laporan-year" label="Tahun">
+                <Input
+                    id="laporan-year"
+                    type="number"
+                    inputMode="numeric"
+                    min={2000}
+                    max={9999}
+                    required
+                    value={year}
+                    onChange={(event) => setYear(event.target.value)}
+                    className="tabular-nums"
+                />
+            </FilterField>
+            <FilterSelect
+                id="laporan-loket"
+                label="Loket"
+                value={loket}
+                onChange={setLoket}
+                options={lokets.map((option) => ({
+                    value: option.id.toString(),
+                    label: option.name,
+                }))}
+                allLabel="Semua Loket"
+            />
+        </FilterBar>
     );
+}
+
+/**
+ * Filters the user chose explicitly: the period (month and/or year) counts
+ * once and the Loket once. Without them the server shows the current month.
+ */
+function appliedFilterCount(url: string): number {
+    const query = new URLSearchParams(url.split('?')[1] ?? '');
+    const hasPeriod = query.has('month') || query.has('year');
+    const hasLoket = (query.get('loket') ?? '') !== '';
+
+    return Number(hasPeriod) + Number(hasLoket);
 }

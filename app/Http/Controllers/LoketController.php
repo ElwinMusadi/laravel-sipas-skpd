@@ -111,6 +111,7 @@ class LoketController extends Controller
                         'name' => $user->name,
                         'nip' => $user->nip,
                         'role' => $user->role->value,
+                        'role_label' => $user->role->label(),
                         'is_active' => $user->is_active,
                     ])
                     ->values()

@@ -197,7 +197,7 @@ test('Laporan Batal/Rusak PDF and Excel exports share the completed-BAP totals a
 
     $pdfResponse
         ->assertOk()
-        ->assertDownload('laporan-batal-rusak-skpd-agustus-2026.pdf')
+        ->assertHeader('content-disposition', 'inline; filename=laporan-batal-rusak-skpd-agustus-2026.pdf')
         ->assertHeader('content-type', 'application/pdf');
     expect($pdfResponse->getContent())->toStartWith('%PDF');
 

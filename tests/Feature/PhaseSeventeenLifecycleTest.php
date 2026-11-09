@@ -134,6 +134,26 @@ test('superadmin manages Loket master data and inactive Loket is excluded from n
     $this->assertDatabaseHas('lokets', ['id' => $loket->id]);
 });
 
+test('Loket detail lists assigned users with readable role labels', function () {
+    $superadmin = phaseSeventeenSuperadmin();
+    $loket = Loket::factory()->create();
+    $petugas = User::factory()->create([
+        'role' => UserRole::PetugasLoket,
+        'loket_id' => $loket->id,
+    ]);
+
+    $this->actingAs($superadmin)
+        ->get(route('lokets.show', $loket))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('lokets/show')
+            ->where('loket.users.0.id', $petugas->id)
+            ->where('loket.users.0.role', UserRole::PetugasLoket->value)
+            ->where('loket.users.0.role_label', 'Petugas Loket')
+            ->etc(),
+        );
+});
+
 test('NIP is mandatory unique and exactly eighteen digits for managed users', function () {
     $superadmin = phaseSeventeenSuperadmin();
 

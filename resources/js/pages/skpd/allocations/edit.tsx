@@ -1,198 +1,217 @@
-import { Form, Head, Link } from "@inertiajs/react";
-import { useState } from "react";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
-import SkpdAllocationController from "@/actions/App/Http/Controllers/SkpdAllocationController";
-import InputError from "@/components/input-error";
-import { formatRange } from "@/components/inventory/format";
-import { RangeInputFields } from "@/components/inventory/range-input-fields";
-import type { LoketOption } from "@/components/inventory/types";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Form, Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
+import SkpdAllocationController from '@/actions/App/Http/Controllers/SkpdAllocationController';
+import { DetailList, DetailRow } from '@/components/app/detail-list';
+import { PageHeader } from '@/components/app/page-header';
+import FormErrorSummary from '@/components/form-error-summary';
+import InputError from '@/components/input-error';
+import { formatNomerator, formatRange } from '@/components/inventory/format';
+import { RangeInputFields } from '@/components/inventory/range-input-fields';
+import type { LoketOption } from '@/components/inventory/types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Label } from '@/components/ui/label';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import Heading from "@/components/heading";
-import { cn } from "@/lib/utils";
-import { index, show } from "@/routes/skpd/allocations";
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { edit, index, show } from '@/routes/skpd/allocations';
 
 type Props = {
-  allocation: {
-    id: number;
-    box: {
-      box_number: string;
-      numerator_start: number;
-      numerator_end: number;
+    allocation: {
+        id: number;
+        box: {
+            box_number: string;
+            numerator_start: number;
+            numerator_end: number;
+        };
+        loket_id: number;
+        allocation_date: string | null;
+        numerator_start: number;
+        numerator_end: number;
     };
-    loket_id: number;
-    allocation_date: string | null;
-    numerator_start: number;
-    numerator_end: number;
-  };
-  lokets: LoketOption[];
+    lokets: LoketOption[];
 };
 
 export default function EditAllocation({ allocation, lokets }: Props) {
-  const [loketId, setLoketId] = useState(allocation.loket_id.toString());
-  const [allocationDate, setAllocationDate] = useState<Date | undefined>(
-    allocation.allocation_date
-      ? new Date(`${allocation.allocation_date}T00:00:00`)
-      : new Date(),
-  );
-  const [numeratorStart, setNumeratorStart] = useState(
-    allocation.numerator_start.toString().padStart(7, "0"),
-  );
-  const [numeratorEnd, setNumeratorEnd] = useState(
-    allocation.numerator_end.toString().padStart(7, "0"),
-  );
+    const [loketId, setLoketId] = useState(allocation.loket_id.toString());
+    const [allocationDate, setAllocationDate] = useState(
+        allocation.allocation_date ?? '',
+    );
+    const [numeratorStart, setNumeratorStart] = useState(
+        formatNomerator(allocation.numerator_start),
+    );
+    const [numeratorEnd, setNumeratorEnd] = useState(
+        formatNomerator(allocation.numerator_end),
+    );
 
-  return (
-    <>
-      <Head title={`Edit Alokasi ${allocation.box.box_number}`} />
+    return (
+        <>
+            <Head title={`Ubah Alokasi ${allocation.box.box_number}`} />
 
-      <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
-        <Heading
-          title="Edit Alokasi SKPD"
-          description="Ubah Loket penerima atau rentang alokasi yang masih pending. Box asal tidak dapat diganti."
-        />
+            <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
+                <PageHeader
+                    back={{
+                        href: show(allocation.id),
+                        label: 'Kembali ke detail alokasi',
+                    }}
+                    title="Ubah Alokasi SKPD"
+                    description="Loket penerima, tanggal, dan rentang dapat diubah selama alokasi masih menunggu handover. Box asal tidak dapat diganti."
+                />
 
-        <Card className="max-w-3xl">
-          <CardContent>
-            <Form
-              {...SkpdAllocationController.update.form(allocation.id)}
-              className="space-y-6"
-            >
-              {({ errors, processing }) => (
-                <>
-                  <Card size="sm" className="bg-muted/50 shadow-none">
-                    <CardHeader>
-                      <CardTitle>Box asal</CardTitle>
-                    </CardHeader>
-                    <CardContent className="font-mono text-sm">
-                      <p>{allocation.box.box_number}</p>
-                      <p className="text-muted-foreground">
-                        {formatRange(
-                          allocation.box.numerator_start,
-                          allocation.box.numerator_end,
-                        )}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="loket_id">Loket penerima</Label>
-                    <Select
-                      name="loket_id"
-                      value={loketId}
-                      onValueChange={setLoketId}
-                    >
-                      <SelectTrigger
-                        id="loket_id"
-                        aria-invalid={Boolean(errors.loket_id)}
-                      >
-                        <SelectValue placeholder="Pilih Loket" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {lokets.map((loket) => (
-                          <SelectItem
-                            key={loket.id}
-                            value={loket.id.toString()}
-                          >
-                            {loket.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <InputError message={errors.loket_id} />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="allocation_date">Tanggal alokasi</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !allocationDate && "text-muted-foreground",
-                            errors.allocation_date &&
-                              "border-destructive text-destructive",
-                          )}
+                <Card className="max-w-3xl">
+                    <CardContent>
+                        <Form
+                            {...SkpdAllocationController.update.form(
+                                allocation.id,
+                            )}
+                            className="space-y-6"
                         >
-                          <CalendarIcon className="mr-2 size-4" />
-                          {allocationDate ? (
-                            format(allocationDate, "PPP", { locale: id })
-                          ) : (
-                            <span>Pilih tanggal</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={allocationDate}
-                          onSelect={setAllocationDate}
-                          locale={id}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <input
-                      type="hidden"
-                      name="allocation_date"
-                      value={
-                        allocationDate
-                          ? format(allocationDate, "yyyy-MM-dd")
-                          : ""
-                      }
-                    />
-                    <InputError message={errors.allocation_date} />
-                  </div>
+                            {({ errors, processing }) => (
+                                <>
+                                    <FormErrorSummary
+                                        errors={errors}
+                                        fields={[
+                                            'loket_id',
+                                            'allocation_date',
+                                            'numerator_start',
+                                            'numerator_end',
+                                        ]}
+                                        title="Perubahan alokasi belum dapat disimpan."
+                                    />
 
-                  <RangeInputFields
-                    numeratorStart={numeratorStart}
-                    numeratorEnd={numeratorEnd}
-                    onNumeratorStartChange={setNumeratorStart}
-                    onNumeratorEndChange={setNumeratorEnd}
-                    errors={errors}
-                  />
+                                    <DetailList className="bg-muted rounded-xl p-4">
+                                        <DetailRow
+                                            label="Box asal"
+                                            value={allocation.box.box_number}
+                                        />
+                                        <DetailRow
+                                            label="Rentang Box"
+                                            value={formatRange(
+                                                allocation.box.numerator_start,
+                                                allocation.box.numerator_end,
+                                            )}
+                                            mono
+                                        />
+                                    </DetailList>
 
-                  <p className="text-muted-foreground rounded-xl border p-4 text-sm">
-                    Perubahan hanya dapat dilakukan sebelum handover diterima.
-                    Range tetap harus berada di dalam Box asal dan tidak boleh
-                    bertumpang tindih dengan alokasi aktif lain.
-                  </p>
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="loket_id">
+                                                Loket penerima
+                                            </Label>
+                                            <input
+                                                type="hidden"
+                                                name="loket_id"
+                                                value={loketId}
+                                            />
+                                            <Select
+                                                value={loketId}
+                                                onValueChange={setLoketId}
+                                            >
+                                                <SelectTrigger
+                                                    id="loket_id"
+                                                    className="w-full"
+                                                    aria-invalid={Boolean(
+                                                        errors.loket_id,
+                                                    )}
+                                                >
+                                                    <SelectValue placeholder="Pilih Loket" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {lokets.map((loket) => (
+                                                        <SelectItem
+                                                            key={loket.id}
+                                                            value={loket.id.toString()}
+                                                        >
+                                                            {loket.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError
+                                                message={errors.loket_id}
+                                            />
+                                        </div>
 
-                  <div className="flex flex-wrap justify-end gap-3">
-                    <Button variant="outline" asChild>
-                      <Link href={show(allocation.id)}>Batal</Link>
-                    </Button>
-                    <Button disabled={processing}>Simpan perubahan</Button>
-                  </div>
-                </>
-              )}
-            </Form>
-          </CardContent>
-        </Card>
-      </main>
-    </>
-  );
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="allocation_date">
+                                                Tanggal alokasi
+                                            </Label>
+                                            <DatePicker
+                                                id="allocation_date"
+                                                name="allocation_date"
+                                                value={allocationDate}
+                                                onChange={setAllocationDate}
+                                                placeholder="Pilih tanggal"
+                                                invalid={Boolean(
+                                                    errors.allocation_date,
+                                                )}
+                                                clearable={false}
+                                            />
+                                            <InputError
+                                                message={errors.allocation_date}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <RangeInputFields
+                                        numeratorStart={numeratorStart}
+                                        numeratorEnd={numeratorEnd}
+                                        onNumeratorStartChange={
+                                            setNumeratorStart
+                                        }
+                                        onNumeratorEndChange={setNumeratorEnd}
+                                        errors={errors}
+                                        bounds={{
+                                            start: allocation.box
+                                                .numerator_start,
+                                            end: allocation.box.numerator_end,
+                                        }}
+                                    />
+
+                                    <p className="text-muted-foreground rounded-xl border p-4 text-sm">
+                                        Rentang tetap harus berada di dalam Box
+                                        asal dan tidak boleh tumpang tindih
+                                        dengan alokasi lain yang masih aktif.
+                                    </p>
+
+                                    <div className="flex flex-wrap justify-end gap-3">
+                                        <Button variant="outline" asChild>
+                                            <Link href={show(allocation.id)}>
+                                                Kembali
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            {processing
+                                                ? 'Menyimpan...'
+                                                : 'Simpan perubahan'}
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </Form>
+                    </CardContent>
+                </Card>
+            </div>
+        </>
+    );
 }
 
-EditAllocation.layout = {
-  breadcrumbs: [
-    { title: "Distribusi / Alokasi", href: index() },
-    { title: "Edit alokasi", href: index() },
-  ],
-};
+EditAllocation.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Distribusi / Alokasi', href: index() },
+        {
+            title: `Alokasi ${props.allocation.box.box_number}`,
+            href: show(props.allocation.id),
+        },
+        { title: 'Ubah', href: edit(props.allocation.id) },
+    ],
+});

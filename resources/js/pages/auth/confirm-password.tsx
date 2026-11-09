@@ -9,7 +9,7 @@ import { store } from '@/routes/password/confirm';
 export default function ConfirmPassword() {
     return (
         <>
-            <Head title="Confirm password" />
+            <Head title="Konfirmasi password" />
             <Form {...store.form()} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
                     <div className="space-y-6">
@@ -18,9 +18,12 @@ export default function ConfirmPassword() {
                             <PasswordInput
                                 id="password"
                                 name="password"
-                                placeholder="Password"
                                 autoComplete="current-password"
+                                required
                                 autoFocus
+                                aria-invalid={
+                                    errors.password ? true : undefined
+                                }
                             />
 
                             <InputError message={errors.password} />
@@ -33,7 +36,7 @@ export default function ConfirmPassword() {
                                 data-test="confirm-password-button"
                             >
                                 {processing && <Spinner />}
-                                Confirm password
+                                Konfirmasi
                             </Button>
                         </div>
                     </div>
@@ -44,7 +47,7 @@ export default function ConfirmPassword() {
 }
 
 ConfirmPassword.layout = {
-    title: 'Confirm password',
+    title: 'Konfirmasi password',
     description:
-        'This is a secure area of the application. Please confirm your password before continuing.',
+        'Halaman ini berisi pengaturan keamanan. Masukkan password Anda untuk melanjutkan.',
 };

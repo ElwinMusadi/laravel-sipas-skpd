@@ -18,15 +18,18 @@ type Props = {
     permissions: Record<ApplicationPermission, boolean>;
 };
 
+/**
+ * Sidebar groups showing only the links the signed-in user may open; a group
+ * without any permitted link is left out entirely.
+ */
 export function ApplicationNavigation({ groups, permissions }: Props) {
-    const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
 
     return groups.map((group) => {
         const items = group.items.filter(
             (item) =>
-                item.availability === 'available' &&
-                (!item.requiredPermission ||
-                    permissions[item.requiredPermission]),
+                !item.requiredPermission ||
+                permissions[item.requiredPermission],
         );
 
         if (items.length === 0) {
@@ -38,33 +41,34 @@ export function ApplicationNavigation({ groups, permissions }: Props) {
                 <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
                 <SidebarGroupContent>
                     <SidebarMenu>
-                        {items.map((item) => (
-                            <SidebarMenuItem key={item.title}>
-                                {item.href ? (
+                        {items.map((item) => {
+                            const isActive = isCurrentOrParentUrl(item.href);
+
+                            return (
+                                <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton
                                         asChild
-                                        isActive={isCurrentOrParentUrl(
-                                            item.href,
-                                        )}
+                                        isActive={isActive}
                                         tooltip={item.title}
                                     >
-                                        <Link href={item.href} prefetch>
+                                        <Link
+                                            href={item.href}
+                                            prefetch
+                                            aria-current={
+                                                isCurrentUrl(item.href)
+                                                    ? 'page'
+                                                    : isActive
+                                                      ? 'true'
+                                                      : undefined
+                                            }
+                                        >
                                             <item.icon />
                                             <span>{item.title}</span>
                                         </Link>
                                     </SidebarMenuButton>
-                                ) : (
-                                    <SidebarMenuButton
-                                        disabled
-                                        aria-label={`${item.title} belum tersedia`}
-                                        title={`${item.title} belum tersedia`}
-                                    >
-                                        <item.icon />
-                                        <span>{item.title}</span>
-                                    </SidebarMenuButton>
-                                )}
-                            </SidebarMenuItem>
-                        ))}
+                                </SidebarMenuItem>
+                            );
+                        })}
                     </SidebarMenu>
                 </SidebarGroupContent>
             </SidebarGroup>

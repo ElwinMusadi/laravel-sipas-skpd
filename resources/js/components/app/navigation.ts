@@ -4,25 +4,27 @@ import {
     Archive,
     ArrowLeftRight,
     BarChart3,
-    BadgeCheck,
     BookOpenCheck,
-    CircleCheckBig,
     CircleX,
     ClipboardCheck,
     FileText,
+    FileX2,
     Hash,
     LayoutDashboard,
+    ListChecks,
     MessagesSquare,
     MapPinned,
     Package,
+    ShieldCheck,
     Signature,
     Users,
 } from 'lucide-react';
 import { dashboard } from '@/routes';
+import { index as bapAdministrationsIndex } from '@/routes/bap-administrations';
+import { index as bapCancellationsIndex } from '@/routes/bap-cancellations';
+import { index as bapClarificationsIndex } from '@/routes/bap-clarifications';
 import { index as bapVerificationsIndex } from '@/routes/bap-verifications';
 import { index as bapVerificationsPhaseTwoIndex } from '@/routes/bap-verifications-phase-2';
-import { index as bapClarificationsIndex } from '@/routes/bap-clarifications';
-import { index as bapAdministrationsIndex } from '@/routes/bap-administrations';
 import { index as bapsIndex } from '@/routes/baps';
 import { index as bukuKendaliIndex } from '@/routes/buku-kendali';
 import { index as documentOfficialsIndex } from '@/routes/document-officials';
@@ -53,11 +55,13 @@ export type ApplicationPermission =
     | 'viewBukuKendali'
     | 'viewLaporanPemakaian';
 
+/**
+ * A sidebar link. Its title matches the page heading it opens.
+ */
 export type ApplicationNavigationItem = {
     title: string;
     icon: LucideIcon;
-    href?: NavigationHref;
-    availability: 'available' | 'planned';
+    href: NavigationHref;
     requiredPermission?: ApplicationPermission;
 };
 
@@ -74,7 +78,6 @@ export const applicationNavigation: readonly ApplicationNavigationGroup[] = [
                 title: 'Dashboard',
                 icon: LayoutDashboard,
                 href: dashboard(),
-                availability: 'available',
             },
         ],
     },
@@ -85,14 +88,18 @@ export const applicationNavigation: readonly ApplicationNavigationGroup[] = [
                 title: 'BAP SKPD',
                 icon: FileText,
                 href: bapsIndex(),
-                availability: 'available',
                 requiredPermission: 'viewBaps',
+            },
+            {
+                title: 'Riwayat Batal/Rusak',
+                icon: FileX2,
+                href: bapCancellationsIndex(),
+                requiredPermission: 'viewBapCancellations',
             },
             {
                 title: 'Klarifikasi',
                 icon: MessagesSquare,
                 href: bapClarificationsIndex(),
-                availability: 'available',
                 requiredPermission: 'viewBapClarifications',
             },
         ],
@@ -101,61 +108,47 @@ export const applicationNavigation: readonly ApplicationNavigationGroup[] = [
         title: 'SKPD',
         items: [
             {
-                title: 'Persediaan Nomerator',
+                title: 'Persediaan SKPD',
                 icon: Hash,
                 href: skpdInventoryIndex(),
-                availability: 'available',
                 requiredPermission: 'viewSkpdInventory',
             },
             {
                 title: 'Box SKPD',
                 icon: Archive,
                 href: skpdBoxIndex(),
-                availability: 'available',
                 requiredPermission: 'viewCentralSkpdInventory',
             },
             {
                 title: 'Distribusi / Alokasi',
                 icon: ArrowLeftRight,
                 href: skpdAllocationIndex(),
-                availability: 'available',
                 requiredPermission: 'viewSkpdInventory',
             },
             {
                 title: 'Buku Kendali',
                 icon: BookOpenCheck,
                 href: bukuKendaliIndex(),
-                availability: 'available',
                 requiredPermission: 'viewBukuKendali',
             },
         ],
     },
     {
+        // Approval Kasie per tahap is deferred, not cancelled; add its
+        // items here once the pages exist.
         title: 'Verifikasi',
         items: [
             {
                 title: 'Verifikasi Tahap 1',
-                icon: BadgeCheck,
+                icon: ListChecks,
                 href: bapVerificationsIndex(),
-                availability: 'available',
                 requiredPermission: 'viewBapVerificationsPhase1',
             },
             {
-                title: 'Approval Tahap 1',
-                icon: CircleCheckBig,
-                availability: 'planned',
-            },
-            {
                 title: 'Verifikasi Tahap 2',
-                icon: BadgeCheck,
+                icon: ShieldCheck,
                 href: bapVerificationsPhaseTwoIndex(),
-                availability: 'available',
                 requiredPermission: 'viewBapVerificationsPhase2',
-            },
-            {
-                title: 'Approval Tahap 2',
-                icon: CircleCheckBig,
-                availability: 'planned',
             },
         ],
     },
@@ -166,28 +159,24 @@ export const applicationNavigation: readonly ApplicationNavigationGroup[] = [
                 title: 'Pemakaian',
                 icon: BarChart3,
                 href: laporanPemakaianIndex(),
-                availability: 'available',
                 requiredPermission: 'viewLaporanPemakaian',
             },
             {
                 title: 'Batal/Rusak',
                 icon: CircleX,
                 href: laporanBatalRusakIndex(),
-                availability: 'available',
                 requiredPermission: 'viewLaporanPemakaian',
             },
             {
                 title: 'Distribusi',
                 icon: ArrowLeftRight,
                 href: laporanDistribusiIndex(),
-                availability: 'available',
                 requiredPermission: 'viewLaporanPemakaian',
             },
             {
                 title: 'Persediaan',
                 icon: Package,
                 href: laporanPersediaanIndex(),
-                availability: 'available',
                 requiredPermission: 'viewLaporanPemakaian',
             },
         ],
@@ -199,28 +188,24 @@ export const applicationNavigation: readonly ApplicationNavigationGroup[] = [
                 title: 'Administrasi BAP',
                 icon: ClipboardCheck,
                 href: bapAdministrationsIndex(),
-                availability: 'available',
                 requiredPermission: 'viewBapAdministrations',
             },
             {
                 title: 'Pengguna',
                 icon: Users,
                 href: usersIndex(),
-                availability: 'available',
                 requiredPermission: 'manageUsers',
             },
             {
                 title: 'Master Loket',
                 icon: MapPinned,
                 href: loketsIndex(),
-                availability: 'available',
                 requiredPermission: 'manageLokets',
             },
             {
                 title: 'Pejabat Penandatangan',
                 icon: Signature,
                 href: documentOfficialsIndex(),
-                availability: 'available',
                 requiredPermission: 'manageDocumentOfficials',
             },
         ],

@@ -1,41 +1,29 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Eye, Search, X } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { Eye, FileText, FileX } from 'lucide-react';
+import { DataTable, type DataTableColumn } from '@/components/app/data-table';
+import { EmptyState } from '@/components/app/empty-state';
+import {
+    FilterBar,
+    FilterSearch,
+    FilterSelect,
+} from '@/components/app/filter-bar';
+import { ListFooter, type Paginator } from '@/components/app/list-footer';
+import { PageHeader } from '@/components/app/page-header';
+import { StatusBadge } from '@/components/app/status-badge';
 import {
     BapStatusBadge,
     type BapStatus,
 } from '@/components/bap/bap-status-badge';
-import { EmptyState } from '@/components/app/empty-state';
 import {
     formatDate,
     formatDateTime,
     formatNomerator,
 } from '@/components/inventory/format';
-import { Pagination } from '@/components/inventory/pagination';
-import type { PaginationLink } from '@/components/inventory/types';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+import { useIndexFilters } from '@/hooks/use-index-filters';
 import { index, show } from '@/routes/bap-cancellations';
-
-type CancellationReason = string;
+import { show as showBap } from '@/routes/baps';
 
 type Cancellation = {
     id: number;
@@ -44,7 +32,7 @@ type Cancellation = {
     service_date: string;
     loket: string;
     numerator: number;
-    reason: CancellationReason;
+    reason: string;
     reason_label: string;
     description: string | null;
     created_by: string;
@@ -53,244 +41,177 @@ type Cancellation = {
 };
 
 type Props = {
-    cancellations: {
-        data: Cancellation[];
-        links: PaginationLink[];
-        from: number | null;
-        to: number | null;
-        total: number;
-    };
-    filters: { search?: string; reason?: CancellationReason };
-    reasons: { value: CancellationReason; label: string }[];
+    cancellations: Paginator & { data: Cancellation[] };
+    filters: { search?: string; reason?: string };
+    reasons: { value: string; label: string }[];
 };
+
+const columns: DataTableColumn<Cancellation>[] = [
+    {
+        id: 'numerator',
+        header: 'Nomerator',
+        cell: (cancellation) => (
+            <span className="font-mono">
+                {formatNomerator(cancellation.numerator)}
+            </span>
+        ),
+        mono: true,
+        mobile: 'title',
+    },
+    {
+        id: 'bap',
+        header: 'BAP',
+        cell: (cancellation) => cancellation.bap_document_number,
+        className: 'font-medium whitespace-nowrap',
+        mobile: 'subtitle',
+    },
+    {
+        id: 'reason',
+        header: 'Klasifikasi',
+        cell: (cancellation) => (
+            <StatusBadge label={cancellation.reason_label} tone="neutral" />
+        ),
+        mobile: 'badge',
+    },
+    {
+        id: 'service_date',
+        header: 'Tanggal pelayanan',
+        cell: (cancellation) => formatDate(cancellation.service_date),
+        className: 'whitespace-nowrap',
+    },
+    {
+        id: 'loket',
+        header: 'Loket',
+        cell: (cancellation) => cancellation.loket,
+    },
+    {
+        id: 'description',
+        header: 'Keterangan singkat',
+        cell: (cancellation) => (
+            <span className="line-clamp-2">
+                {cancellation.description ?? '—'}
+            </span>
+        ),
+        className: 'max-w-xs',
+    },
+    {
+        id: 'created_by',
+        header: 'Dicatat oleh',
+        cell: (cancellation) => cancellation.created_by,
+    },
+    {
+        id: 'bap_status',
+        header: 'Status BAP',
+        cell: (cancellation) => (
+            <BapStatusBadge status={cancellation.bap_status} />
+        ),
+        className: 'min-w-44',
+    },
+    {
+        id: 'created_at',
+        header: 'Dicatat pada',
+        cell: (cancellation) => formatDateTime(cancellation.created_at),
+        className: 'text-muted-foreground whitespace-nowrap',
+    },
+];
 
 export default function BapCancellationIndex({
     cancellations,
     filters,
     reasons,
 }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [reason, setReason] = useState<CancellationReason | ''>(
-        filters.reason ?? '',
-    );
-
-    const applyFilters = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        router.get(
-            index.url(),
-            { search: search || undefined, reason: reason || undefined },
-            { preserveState: true, replace: true },
-        );
-    };
-
-    const resetFilters = () => {
-        setSearch('');
-        setReason('');
-        router.get(index.url(), {}, { preserveState: true, replace: true });
-    };
+    const filterForm = useIndexFilters(index.url(), {
+        search: filters.search ?? '',
+        reason: filters.reason ?? '',
+    });
 
     return (
         <>
-            <Head title="BAP Batal/Rusak" />
+            <Head title="Riwayat Batal/Rusak" />
 
-            <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                    <div className="grid gap-1.5">
-                        <h1 className="text-2xl font-semibold tracking-tight">
-                            BAP Batal/Rusak
-                        </h1>
-                        <p className="text-muted-foreground max-w-2xl text-sm">
-                            Riwayat nomerator yang telah dipakai tetapi
-                            diklasifikasikan sebagai batal atau rusak.
-                        </p>
-                    </div>
-                </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
+                <PageHeader
+                    title="Riwayat SKPD Batal/Rusak"
+                    description="Nomerator yang sudah dipakai pada BAP SKPD tetapi diklasifikasikan sebagai batal atau rusak."
+                />
 
-                <Card>
-                    <CardContent>
-                        <form
-                            onSubmit={applyFilters}
-                            className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_11rem_auto]"
-                        >
-                            <div className="relative">
-                                <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                                <Input
-                                    value={search}
-                                    onChange={(event) =>
-                                        setSearch(event.target.value)
-                                    }
-                                    className="pl-9"
-                                    placeholder="Cari nomerator, BAP, Loket, atau keterangan"
-                                />
-                            </div>
-                            <Select
-                                value={reason || 'all'}
-                                onValueChange={(value) =>
-                                    setReason(
-                                        value === 'all'
-                                            ? ''
-                                            : (value as CancellationReason),
-                                    )
-                                }
-                            >
-                                <SelectTrigger
-                                    className="w-full"
-                                    aria-label="Filter klasifikasi"
-                                >
-                                    <SelectValue placeholder="Semua klasifikasi" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectItem value="all">
-                                            Semua klasifikasi
-                                        </SelectItem>
-                                        {reasons.map((option) => (
-                                            <SelectItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                            <div className="flex gap-2">
-                                <Button type="submit">Terapkan</Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={resetFilters}
-                                    aria-label="Reset filter"
-                                >
-                                    <X />
-                                </Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+                <FilterBar
+                    onSubmit={filterForm.apply}
+                    onReset={filterForm.reset}
+                    activeCount={filterForm.activeCount}
+                >
+                    <FilterSearch
+                        id="cancellation-search"
+                        label="Cari"
+                        value={filterForm.values.search}
+                        onChange={(value) => filterForm.set('search', value)}
+                        placeholder="Nomerator, nomor BAP, Loket, pencatat, atau keterangan"
+                    />
+                    <FilterSelect
+                        id="cancellation-reason"
+                        label="Klasifikasi"
+                        value={filterForm.values.reason}
+                        onChange={(value) => filterForm.set('reason', value)}
+                        options={reasons}
+                        allLabel="Semua klasifikasi"
+                    />
+                </FilterBar>
 
                 <Card>
                     <CardContent>
-                        {cancellations.data.length === 0 ? (
-                            <EmptyState
-                                title="Belum ada BAP Batal/Rusak."
-                                description="Nomerator yang dicatat dari BAP SKPD akan muncul di sini."
-                            />
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <Table className="min-w-300">
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>BAP</TableHead>
-                                            <TableHead>Tanggal</TableHead>
-                                            <TableHead>Loket</TableHead>
-                                            <TableHead>Nomerator</TableHead>
-                                            <TableHead>Alasan</TableHead>
-                                            <TableHead>
-                                                Keterangan singkat
-                                            </TableHead>
-                                            <TableHead>Dibuat oleh</TableHead>
-                                            <TableHead>Status BAP</TableHead>
-                                            <TableHead>Dibuat pada</TableHead>
-                                            <TableHead className="text-right">
-                                                Aksi
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {cancellations.data.map(
-                                            (cancellation) => (
-                                                <TableRow key={cancellation.id}>
-                                                    <TableCell className="font-medium whitespace-nowrap">
-                                                        {
-                                                            cancellation.bap_document_number
-                                                        }
-                                                    </TableCell>
-                                                    <TableCell className="whitespace-nowrap">
-                                                        {formatDate(
-                                                            cancellation.service_date,
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {cancellation.loket}
-                                                    </TableCell>
-                                                    <TableCell className="font-mono text-xs whitespace-nowrap">
-                                                        {formatNomerator(
-                                                            cancellation.numerator,
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline">
-                                                            {
-                                                                cancellation.reason_label
-                                                            }
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="max-w-xs">
-                                                        <span className="line-clamp-2">
-                                                            {cancellation.description ??
-                                                                '—'}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {
-                                                            cancellation.created_by
-                                                        }
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <BapStatusBadge
-                                                            status={
-                                                                cancellation.bap_status
-                                                            }
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell className="text-muted-foreground whitespace-nowrap">
-                                                        {formatDateTime(
-                                                            cancellation.created_at,
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            asChild
-                                                        >
-                                                            <Link
-                                                                href={show(
-                                                                    cancellation.id,
-                                                                )}
-                                                                aria-label={`Detail BAP Batal/Rusak ${formatNomerator(cancellation.numerator)}`}
-                                                            >
-                                                                <Eye />
-                                                            </Link>
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ),
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
+                        <DataTable
+                            rows={cancellations.data}
+                            columns={columns}
+                            getRowKey={(cancellation) => cancellation.id}
+                            rowHref={(cancellation) => show(cancellation.id)}
+                            minWidthClassName="min-w-300"
+                            caption="Riwayat SKPD Batal/Rusak"
+                            actions={(cancellation) => (
+                                <>
+                                    <Button variant="ghost" size="icon" asChild>
+                                        <Link
+                                            href={showBap(cancellation.bap_id)}
+                                            aria-label={`Lihat BAP ${cancellation.bap_document_number}`}
+                                            title="Lihat BAP"
+                                        >
+                                            <FileText />
+                                        </Link>
+                                    </Button>
+                                    <Button variant="ghost" size="icon" asChild>
+                                        <Link
+                                            href={show(cancellation.id)}
+                                            aria-label={`Lihat detail Batal/Rusak ${formatNomerator(cancellation.numerator)}`}
+                                            title="Lihat detail"
+                                        >
+                                            <Eye />
+                                        </Link>
+                                    </Button>
+                                </>
+                            )}
+                            empty={
+                                filterForm.activeCount > 0 ? (
+                                    <EmptyState
+                                        title="Tidak ada Batal/Rusak yang cocok."
+                                        description="Ubah kata kunci atau klasifikasi, atau reset filter untuk melihat semua catatan."
+                                    />
+                                ) : (
+                                    <EmptyState
+                                        icon={FileX}
+                                        title="Belum ada SKPD Batal/Rusak."
+                                        description="Nomerator Batal/Rusak yang dicatat pada BAP SKPD akan muncul di sini."
+                                    />
+                                )
+                            }
+                        />
                     </CardContent>
                 </Card>
 
-                <div className="flex flex-col justify-between gap-3 text-sm sm:flex-row sm:items-center">
-                    <p className="text-muted-foreground">
-                        Menampilkan {cancellations.from ?? 0}–
-                        {cancellations.to ?? 0} dari {cancellations.total}{' '}
-                        record
-                    </p>
-                    <Pagination links={cancellations.links} />
-                </div>
-            </main>
+                <ListFooter paginator={cancellations} noun="catatan" />
+            </div>
         </>
     );
 }
 
 BapCancellationIndex.layout = {
-    breadcrumbs: [{ title: 'BAP Batal/Rusak', href: index() }],
+    breadcrumbs: [{ title: 'Riwayat Batal/Rusak', href: index() }],
 };

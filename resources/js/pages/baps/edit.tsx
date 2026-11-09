@@ -1,13 +1,13 @@
 import { Head } from '@inertiajs/react';
+import { PageHeader } from '@/components/app/page-header';
+import type { CancellationReason } from '@/components/bap/bap-cancellation-fields';
 import {
     BapCorrectionNotice,
     type BapCorrectionRequest,
 } from '@/components/bap/bap-correction-notice';
 import { BapForm } from '@/components/bap/bap-form';
-import Heading from '@/components/heading';
-import { index } from '@/routes/baps';
-
-type CancellationReason = { value: string; label: string };
+import { BapStatusBadge } from '@/components/bap/bap-status-badge';
+import { edit, index, show } from '@/routes/baps';
 
 type Props = {
     bap: {
@@ -35,9 +35,14 @@ export default function EditBap({ bap, cancellation_reasons }: Props) {
         <>
             <Head title={`Ubah draft ${bap.document_number}`} />
 
-            <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
-                <Heading
+            <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
+                <PageHeader
+                    back={{
+                        href: show(bap.id),
+                        label: `Kembali ke ${bap.document_number}`,
+                    }}
                     title={`Ubah draft ${bap.document_number}`}
+                    badges={<BapStatusBadge status="draft" />}
                     description="Periksa kembali range, total otomatis, dan pemakaian online sebelum BAP diajukan."
                 />
 
@@ -51,15 +56,15 @@ export default function EditBap({ bap, cancellation_reasons }: Props) {
                     cancellationReasons={cancellation_reasons}
                     rangeLocked={bap.range_locked}
                 />
-            </main>
+            </div>
         </>
     );
 }
 
-EditBap.layout = {
+EditBap.layout = (props: Props) => ({
     breadcrumbs: [
         { title: 'BAP SKPD', href: index() },
-        { title: 'Detail BAP', href: index() },
-        { title: 'Ubah draft', href: index() },
+        { title: props.bap.document_number, href: show(props.bap.id) },
+        { title: 'Ubah draft', href: edit(props.bap.id) },
     ],
-};
+});

@@ -1,4 +1,5 @@
 import { Form } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import SkpdBoxController from '@/actions/App/Http/Controllers/SkpdBoxController';
 import FormErrorSummary from '@/components/form-error-summary';
@@ -30,7 +31,10 @@ export function BoxDeleteDialog({ box }: Props) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="destructive">Hapus Box</Button>
+                <Button variant="destructive">
+                    <Trash2 />
+                    Hapus Box
+                </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
@@ -39,7 +43,8 @@ export function BoxDeleteDialog({ box }: Props) {
                         {box.box_number} (
                         {formatRange(box.numerator_start, box.numerator_end)})
                         hanya dapat dihapus bila belum memiliki alokasi atau
-                        riwayat pemakaian. Audit penghapusan tetap dicatat.
+                        riwayat pemakaian. Penghapusan tetap tercatat di riwayat
+                        audit.
                     </DialogDescription>
                 </DialogHeader>
                 <Form
@@ -63,7 +68,7 @@ export function BoxDeleteDialog({ box }: Props) {
                                     variant="destructive"
                                     disabled={processing}
                                 >
-                                    Hapus Box
+                                    {processing ? 'Menghapus...' : 'Hapus Box'}
                                 </Button>
                             </DialogFooter>
                         </>

@@ -33,16 +33,16 @@ export default function Welcome() {
                     <section className="grid flex-1 items-center gap-8 py-12 lg:grid-cols-[1.2fr_0.8fr] lg:py-20">
                         <div className="max-w-3xl space-y-6">
                             <p className="text-primary text-sm font-semibold tracking-wide uppercase">
-                                SAMSAT Kota Kupang
+                                UPTD Pendapatan Daerah Wilayah Kota Kupang
                             </p>
                             <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
                                 Sistem Informasi Pengelolaan Administrasi SKPD
                             </h1>
                             <p className="text-muted-foreground max-w-2xl text-lg leading-8 text-pretty">
                                 SIPAS-SKPD mendukung pengelolaan administrasi
-                                SKPD yang tertib, terarah, dan dapat ditelusuri
-                                untuk UPTD Pendapatan Daerah Wilayah Kota
-                                Kupang.
+                                Bukti SKPD yang tertib, terarah, dan dapat
+                                ditelusuri, dari penerimaan Box sampai BAP
+                                selesai administratif.
                             </p>
                             <div className="flex flex-wrap gap-3 pt-2">
                                 {auth.user ? (
@@ -70,7 +70,7 @@ export default function Welcome() {
                                     Tertib dan akuntabel
                                 </h2>
                                 <p className="text-muted-foreground mt-2 text-sm leading-6">
-                                    Fondasi pengelolaan bukti SKPD yang siap
+                                    Fondasi pengelolaan Bukti SKPD yang siap
                                     mendukung proses kerja berjenjang.
                                 </p>
                             </article>

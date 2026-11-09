@@ -1,9 +1,8 @@
 import { Head } from '@inertiajs/react';
+import { PageHeader } from '@/components/app/page-header';
+import type { CancellationReason } from '@/components/bap/bap-cancellation-fields';
 import { BapForm } from '@/components/bap/bap-form';
-import Heading from '@/components/heading';
 import { create, index } from '@/routes/baps';
-
-type CancellationReason = { value: string; label: string };
 
 type Props = {
     loket: { id: number; name: string } | null;
@@ -31,10 +30,11 @@ export default function CreateBap({
         <>
             <Head title="Buat BAP SKPD" />
 
-            <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
-                <Heading
+            <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
+                <PageHeader
+                    back={{ href: index(), label: 'Kembali ke BAP SKPD' }}
                     title="Buat BAP SKPD"
-                    description="Catat pemakaian aktual setelah pelayanan Loket selesai. Total selalu dihitung dari range nomerator."
+                    description="Catat pemakaian aktual setelah pelayanan Loket selesai. Total selalu dihitung dari range Nomerator."
                 />
 
                 <BapForm
@@ -46,7 +46,7 @@ export default function CreateBap({
                     allocations={allocations}
                     cancellationReasons={cancellation_reasons}
                 />
-            </main>
+            </div>
         </>
     );
 }

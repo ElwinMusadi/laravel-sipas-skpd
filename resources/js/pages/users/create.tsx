@@ -1,8 +1,10 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import UserManagementController from '@/actions/App/Http/Controllers/UserManagementController';
-import Heading from '@/components/heading';
+import { PageHeader } from '@/components/app/page-header';
+import FormErrorSummary from '@/components/form-error-summary';
 import {
     UserFormFields,
+    userFormFieldNames,
     type LoketOption,
     type RoleOption,
 } from '@/components/users/user-form-fields';
@@ -20,14 +22,15 @@ export default function CreateUser({ roles, lokets }: Props) {
         <>
             <Head title="Tambah Pengguna" />
 
-            <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
-                <Heading
+            <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
+                <PageHeader
+                    back={{ href: index(), label: 'Kembali ke Pengguna' }}
                     title="Tambah Pengguna"
-                    description="Hanya Superadmin yang dapat membuat akun SIPAS-SKPD. Email bukan credential login."
+                    description="Hanya Superadmin yang dapat membuat akun SIPAS-SKPD. Pengguna masuk dengan username, bukan email."
                 />
 
                 <Card className="max-w-3xl">
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <Form
                             {...UserManagementController.store.form()}
                             resetOnError={['password', 'password_confirmation']}
@@ -35,6 +38,11 @@ export default function CreateUser({ roles, lokets }: Props) {
                         >
                             {({ errors, processing }) => (
                                 <>
+                                    <FormErrorSummary
+                                        errors={errors}
+                                        fields={userFormFieldNames}
+                                        title="Pengguna belum dapat dibuat."
+                                    />
                                     <UserFormFields
                                         errors={errors}
                                         roles={roles}
@@ -43,10 +51,15 @@ export default function CreateUser({ roles, lokets }: Props) {
                                     />
                                     <div className="flex flex-wrap justify-end gap-3">
                                         <Button variant="outline" asChild>
-                                            <Link href={index()}>Batal</Link>
+                                            <Link href={index()}>Kembali</Link>
                                         </Button>
-                                        <Button disabled={processing}>
-                                            Buat pengguna
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            {processing
+                                                ? 'Menyimpan...'
+                                                : 'Buat pengguna'}
                                         </Button>
                                     </div>
                                 </>
@@ -54,7 +67,7 @@ export default function CreateUser({ roles, lokets }: Props) {
                         </Form>
                     </CardContent>
                 </Card>
-            </main>
+            </div>
         </>
     );
 }

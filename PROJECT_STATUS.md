@@ -4,6 +4,33 @@
 **Fase saat ini:** Phase 19 — Manual Testing Readiness & End-to-End Workflow Hardening
 **Status:** PARTIAL — regresi otomatis siap; validasi browser manual belum dapat dinyatakan lulus.
 
+## Audit dan Perbaikan UI/UX Menyeluruh (10 November 2026)
+
+Audit statis seluruh halaman dan audit visual di browser (ponsel 390px dan desktop 1366px) menghasilkan fondasi UI bersama yang kini dipakai semua menu:
+
+- **Komponen bersama** (`resources/js/components/app/`): `PageHeader` (h1, tombol kembali, aksi), `DataTable` (tabel di layar lebar, kartu di ponsel, kolom aksi menempel di kanan), `FilterBar`/`FilterSearch`/`FilterSelect`/`FilterField` + hook `useIndexFilters` (filter berlabel, Reset dengan jumlah filter aktif), `ListFooter` (paginasi berbahasa Indonesia), `DetailList`/`DetailRow`, `StatusBadge` dengan peta status bersama (BAP, alokasi, Box, aktif/tidak aktif), `NomeratorInput`, dan `DatePicker` yang mendukung `id`/`name`/batas tanggal. Token warna baru `--info` dan `--warning` (terang/gelap); dialog panjang kini bisa di-scroll.
+- **Perbaikan utama:**
+  - dashboard tidak lagi salah menampilkan "Tahap 1 lulus" untuk BAP yang sudah selesai, dan kini punya aksi cepat sesuai peran;
+  - semua daftar tampil sebagai kartu di ponsel, dan kolom aksi tidak lagi tersembunyi di desktop;
+  - nomor BAP menjadi kolom utama dan bisa dicari;
+  - breadcrumb menyebut record yang benar;
+  - label status, tombol "Kembali", Pengaturan, dan teks lain berbahasa Indonesia;
+  - "Cetak PDF" laporan membuka PDF lengkap, tidak lagi mencetak 15 baris di layar;
+  - form BAP membatasi jumlah Batal/Rusak sesuai total dan memberi peringatan lebih awal;
+  - form verifikasi menampilkan progres checklist, pilihan hasil berupa radio, dan selisih bertanda;
+  - riwayat klarifikasi tampil sebelum form tanggapan;
+  - "Buat alokasi" dari Box langsung memilih Box tersebut;
+  - menu "Riwayat Batal/Rusak" ditambahkan;
+  - header ponsel lebih ringkas.
+- **Backend pendukung:**
+  - pencarian BAP dan Riwayat Batal/Rusak berdasarkan nomor dokumen;
+  - dashboard mengirim status BAP asli;
+  - `?box=` pada form alokasi;
+  - PDF laporan dibuka inline;
+  - label "Menunggu Tinjauan".
+
+Verifikasi: SQLite dan MySQL masing-masing 350 test / 3.288 assertion PASS, PHPStan 0 error, TypeScript dan lint PASS, build PASS. Pemeriksaan otomatis di browser pada 24 halaman: tidak ada geser horizontal di ponsel, satu landmark `main`, setiap halaman memiliki `h1`, dan input berlabel.
+
 ## Aturan Lapangan, Pejabat PDF, Laporan Tambahan, dan P2 (10 November 2026)
 
 Keputusan bisnis: Box boleh dibagi ke beberapa Loket; sisa alokasi yang sudah diterima dapat dikembalikan ke pusat; draft BAP dapat dikerjakan semua Petugas Loket pada Loket yang sama; Approval Kasie dan Pengesahan Kepala UPTD **ditunda**.

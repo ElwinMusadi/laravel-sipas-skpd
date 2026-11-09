@@ -1,20 +1,36 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, History, Pencil, Users } from 'lucide-react';
-import { LoketDeleteDialog } from '@/components/lokets/loket-delete-dialog';
-import { formatDateTime } from '@/components/inventory/format';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Eye, Pencil, Users } from 'lucide-react';
+import { DataTable, type DataTableColumn } from '@/components/app/data-table';
+import { DetailList, DetailRow } from '@/components/app/detail-list';
+import { EmptyState } from '@/components/app/empty-state';
+import { PageHeader } from '@/components/app/page-header';
+import { ActiveStatusBadge } from '@/components/app/status-badge';
+import { formatDateTime, formatQuantity } from '@/components/inventory/format';
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { edit, index } from '@/routes/lokets';
+    RecentActivityCard,
+    type ActivityEntry,
+} from '@/components/inventory/recent-activity-card';
+import { LoketDeleteDialog } from '@/components/lokets/loket-delete-dialog';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import { edit, index, show } from '@/routes/lokets';
+import { edit as userEdit, show as userShow } from '@/routes/users';
+
+type AssignedUser = {
+    id: number;
+    username: string;
+    name: string;
+    nip: string | null;
+    role: string;
+    role_label: string;
+    is_active: boolean;
+};
 
 type Props = {
     loket: {
@@ -28,260 +44,199 @@ type Props = {
         baps_count: number;
         created_at: string;
         can: { delete: boolean };
-        users: {
-            id: number;
-            username: string;
-            name: string;
-            nip: string | null;
-            role: string;
-            is_active: boolean;
-        }[];
-        timeline: {
-            id: number;
-            event: string;
-            actor: string;
-            created_at: string;
-        }[];
+        users: AssignedUser[];
+        timeline: ActivityEntry[];
     };
 };
+
+const userColumns: DataTableColumn<AssignedUser>[] = [
+    {
+        id: 'name',
+        header: 'Nama',
+        cell: (user) => user.name,
+        className: 'font-medium',
+        mobile: 'title',
+    },
+    {
+        id: 'username',
+        header: 'Username',
+        cell: (user) => user.username,
+        mobile: 'subtitle',
+    },
+    {
+        id: 'status',
+        header: 'Status',
+        cell: (user) => <ActiveStatusBadge active={user.is_active} />,
+        mobile: 'badge',
+    },
+    {
+        id: 'nip',
+        header: 'NIP',
+        cell: (user) => user.nip ?? '—',
+        mono: true,
+    },
+    {
+        id: 'role',
+        header: 'Role',
+        cell: (user) => user.role_label,
+    },
+];
 
 export default function ShowLoket({ loket }: Props) {
     return (
         <>
             <Head title={loket.name} />
 
-            <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                    <div className="space-y-2">
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href={index()}>
-                                <ArrowLeft data-icon="inline-start" />
-                                Kembali ke Master Loket
-                            </Link>
-                        </Button>
-                        <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-2xl font-semibold tracking-tight">
-                                {loket.name}
-                            </h1>
-                            <Badge
-                                variant={
-                                    loket.is_active
-                                        ? 'secondary'
-                                        : 'destructive'
-                                }
-                            >
-                                {loket.is_active ? 'Aktif' : 'Tidak aktif'}
-                            </Badge>
-                        </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
+                <PageHeader
+                    back={{ href: index(), label: 'Kembali ke Master Loket' }}
+                    title={loket.name}
+                    badges={<ActiveStatusBadge active={loket.is_active} />}
+                    meta={
                         <p className="text-muted-foreground font-mono text-sm">
                             {loket.code}
                         </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" asChild>
-                            <Link href={edit(loket.id)}>
-                                <Pencil data-icon="inline-start" />
-                                Edit Loket
-                            </Link>
-                        </Button>
-                        {loket.can.delete ? (
-                            <LoketDeleteDialog loket={loket} />
-                        ) : null}
-                    </div>
-                </div>
+                    }
+                    actions={
+                        <>
+                            <Button variant="outline" asChild>
+                                <Link href={edit(loket.id)}>
+                                    <Pencil />
+                                    Ubah Loket
+                                </Link>
+                            </Button>
+                            {loket.can.delete ? (
+                                <LoketDeleteDialog loket={loket} />
+                            ) : null}
+                        </>
+                    }
+                />
 
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card>
                         <CardHeader>
                             <CardTitle>Identitas</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid gap-3 text-sm">
-                            <DetailRow label="Kode" value={loket.code} mono />
-                            <DetailRow
-                                label="Status"
-                                value={
-                                    loket.is_active ? 'Aktif' : 'Tidak aktif'
-                                }
-                            />
-                            <DetailRow
-                                label="Dibuat pada"
-                                value={formatDateTime(loket.created_at)}
-                            />
+                        <CardContent>
+                            <DetailList>
+                                <DetailRow
+                                    label="Kode"
+                                    value={loket.code}
+                                    mono
+                                />
+                                <DetailRow
+                                    label="Status"
+                                    value={
+                                        <ActiveStatusBadge
+                                            active={loket.is_active}
+                                        />
+                                    }
+                                />
+                                <DetailRow
+                                    label="Dibuat pada"
+                                    value={formatDateTime(loket.created_at)}
+                                />
+                            </DetailList>
                         </CardContent>
                     </Card>
-                    <Card className="lg:col-span-2">
+                    <Card>
                         <CardHeader>
-                            <CardTitle>Deskripsi</CardTitle>
+                            <CardTitle>Riwayat penggunaan</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground text-sm leading-6">
-                                {loket.description ?? 'Tidak ada deskripsi.'}
+                            <DetailList>
+                                <DetailRow
+                                    label="Pengguna ditugaskan"
+                                    value={formatQuantity(loket.users_count)}
+                                    numeric
+                                />
+                                <DetailRow
+                                    label="Alokasi"
+                                    value={formatQuantity(
+                                        loket.allocations_count,
+                                    )}
+                                    numeric
+                                />
+                                <DetailRow
+                                    label="BAP"
+                                    value={formatQuantity(loket.baps_count)}
+                                    numeric
+                                />
+                            </DetailList>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Keterangan</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground text-sm leading-6 break-words">
+                                {loket.description ?? 'Tidak ada keterangan.'}
                             </p>
                         </CardContent>
                     </Card>
                 </section>
 
                 <Card>
-                    <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
                             <Users className="text-muted-foreground size-4" />
-                            <CardTitle>Pengguna yang ditugaskan</CardTitle>
-                        </div>
-                        <p className="text-muted-foreground text-sm tabular-nums">
-                            {loket.users_count} pengguna ·{' '}
-                            {loket.allocations_count} alokasi ·{' '}
-                            {loket.baps_count} BAP
-                        </p>
+                            Pengguna yang ditugaskan
+                        </CardTitle>
+                        <CardDescription>
+                            Petugas yang bekerja atas nama Loket ini.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loket.users.length === 0 ? (
-                            <p className="text-muted-foreground text-sm">
-                                Belum ada pengguna yang ditugaskan pada Loket
-                                ini.
-                            </p>
-                        ) : (
-                            <>
-                                <div className="hidden overflow-x-auto sm:block">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Nama</TableHead>
-                                                <TableHead>Username</TableHead>
-                                                <TableHead>NIP</TableHead>
-                                                <TableHead>Role</TableHead>
-                                                <TableHead>Status</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {loket.users.map((user) => (
-                                                <TableRow key={user.id}>
-                                                    <TableCell className="font-medium">
-                                                        {user.name}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {user.username}
-                                                    </TableCell>
-                                                    <TableCell className="font-mono text-xs tabular-nums">
-                                                        {user.nip ?? '—'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {user.role}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge
-                                                            variant={
-                                                                user.is_active
-                                                                    ? 'secondary'
-                                                                    : 'destructive'
-                                                            }
-                                                        >
-                                                            {user.is_active
-                                                                ? 'Aktif'
-                                                                : 'Tidak aktif'}
-                                                        </Badge>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                                <div className="grid gap-3 sm:hidden">
-                                    {loket.users.map((user) => (
-                                        <div
-                                            key={user.id}
-                                            className="rounded-lg border p-4"
+                        <DataTable
+                            rows={loket.users}
+                            columns={userColumns}
+                            getRowKey={(user) => user.id}
+                            rowHref={(user) => userShow(user.id)}
+                            breakpoint="md"
+                            caption={`Pengguna yang ditugaskan pada ${loket.name}`}
+                            actions={(user) => (
+                                <>
+                                    <Button variant="ghost" size="icon" asChild>
+                                        <Link
+                                            href={userEdit(user.id)}
+                                            aria-label={`Ubah ${user.name}`}
+                                            title="Ubah pengguna"
                                         >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {user.name}
-                                                    </p>
-                                                    <p className="text-muted-foreground text-sm">
-                                                        {user.username}
-                                                    </p>
-                                                </div>
-                                                <Badge
-                                                    variant={
-                                                        user.is_active
-                                                            ? 'secondary'
-                                                            : 'destructive'
-                                                    }
-                                                >
-                                                    {user.is_active
-                                                        ? 'Aktif'
-                                                        : 'Tidak aktif'}
-                                                </Badge>
-                                            </div>
-                                            <p className="text-muted-foreground mt-3 font-mono text-xs tabular-nums">
-                                                {user.nip ?? '—'} · {user.role}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        )}
+                                            <Pencil />
+                                        </Link>
+                                    </Button>
+                                    <Button variant="ghost" size="icon" asChild>
+                                        <Link
+                                            href={userShow(user.id)}
+                                            aria-label={`Lihat ${user.name}`}
+                                            title="Lihat detail"
+                                        >
+                                            <Eye />
+                                        </Link>
+                                    </Button>
+                                </>
+                            )}
+                            empty={
+                                <EmptyState
+                                    icon={Users}
+                                    title="Belum ada pengguna yang ditugaskan."
+                                    description="Tetapkan Loket ini pada akun Petugas Loket melalui menu Pengguna."
+                                />
+                            }
+                        />
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader className="flex-row items-center gap-2">
-                        <History className="text-muted-foreground size-4" />
-                        <CardTitle>Riwayat singkat</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {loket.timeline.length === 0 ? (
-                            <p className="text-muted-foreground text-sm">
-                                Belum ada riwayat yang dapat ditampilkan.
-                            </p>
-                        ) : (
-                            <div className="space-y-4">
-                                {loket.timeline.map((entry, entryIndex) => (
-                                    <div key={entry.id}>
-                                        {entryIndex > 0 ? (
-                                            <Separator className="mb-4" />
-                                        ) : null}
-                                        <p className="font-medium">
-                                            {entry.event}
-                                        </p>
-                                        <p className="text-muted-foreground text-sm">
-                                            {entry.actor} ·{' '}
-                                            {formatDateTime(entry.created_at)}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </main>
+                <RecentActivityCard entries={loket.timeline} />
+            </div>
         </>
     );
 }
 
-function DetailRow({
-    label,
-    value,
-    mono = false,
-}: {
-    label: string;
-    value: string;
-    mono?: boolean;
-}) {
-    return (
-        <div className="flex items-start justify-between gap-4">
-            <span className="text-muted-foreground">{label}</span>
-            <span
-                className={`text-right font-medium ${mono ? 'font-mono text-xs whitespace-nowrap' : ''}`}
-            >
-                {value}
-            </span>
-        </div>
-    );
-}
-
-ShowLoket.layout = {
+ShowLoket.layout = (props: Props) => ({
     breadcrumbs: [
         { title: 'Master Loket', href: index() },
-        { title: 'Detail Loket', href: index() },
+        { title: props.loket.name, href: show(props.loket.id) },
     ],
-};
+});

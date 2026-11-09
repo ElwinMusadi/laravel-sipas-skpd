@@ -11,8 +11,8 @@ export function AppearanceToggle() {
     const { resolvedAppearance, updateAppearance } = useAppearance();
     const enablesDarkMode = resolvedAppearance === 'light';
     const label = enablesDarkMode
-        ? 'Aktifkan dark mode'
-        : 'Aktifkan light mode';
+        ? 'Aktifkan mode gelap'
+        : 'Aktifkan mode terang';
 
     return (
         <Tooltip>

@@ -47,6 +47,10 @@ class SkpdLaporanPemakaianController extends Controller
         ]);
     }
 
+    /**
+     * Stream every row for the current filters inline, so "Cetak PDF" opens
+     * a printable document in a new tab instead of a paginated screen.
+     */
     public function pdf(Request $request): HttpResponse
     {
         $this->actor($request);
@@ -71,7 +75,7 @@ class SkpdLaporanPemakaianController extends Controller
                 'Title' => 'Laporan Sistem Pemakaian SKPD',
                 'Author' => 'SIPAS-SKPD',
             ])
-            ->download($report->pdfFilename());
+            ->stream($report->pdfFilename());
     }
 
     public function excel(Request $request): BinaryFileResponse

@@ -142,7 +142,7 @@ test('PDF and Excel exports contain the same completed BAP totals and preserve s
 
     $pdfResponse
         ->assertOk()
-        ->assertDownload('laporan-pemakaian-skpd-agustus-2026.pdf')
+        ->assertHeader('content-disposition', 'inline; filename=laporan-pemakaian-skpd-agustus-2026.pdf')
         ->assertHeader('content-type', 'application/pdf');
     expect($pdfResponse->getContent())->toStartWith('%PDF');
 
@@ -195,7 +195,7 @@ test('PDF and Excel apply the selected month, year, and Loket filters consistent
     $this->actingAs($bendahara)
         ->get(route('laporan-pemakaian.pdf', $filters))
         ->assertOk()
-        ->assertDownload('laporan-pemakaian-skpd-agustus-2026.pdf');
+        ->assertHeader('content-disposition', 'inline; filename=laporan-pemakaian-skpd-agustus-2026.pdf');
 
     $excelResponse = $this->actingAs($bendahara)
         ->get(route('laporan-pemakaian.excel', $filters));
@@ -253,7 +253,7 @@ test('PDF and Excel return an empty report without changing completed source rec
     $this->actingAs($bendahara)
         ->get(route('laporan-pemakaian.pdf', $filters))
         ->assertOk()
-        ->assertDownload('laporan-pemakaian-skpd-september-2026.pdf');
+        ->assertHeader('content-disposition', 'inline; filename=laporan-pemakaian-skpd-september-2026.pdf');
     $excelResponse = $this->actingAs($bendahara)
         ->get(route('laporan-pemakaian.excel', $filters));
 

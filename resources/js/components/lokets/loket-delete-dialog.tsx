@@ -1,4 +1,5 @@
 import { Form } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import LoketController from '@/actions/App/Http/Controllers/LoketController';
 import FormErrorSummary from '@/components/form-error-summary';
@@ -24,15 +25,18 @@ export function LoketDeleteDialog({ loket }: Props) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="destructive">Hapus Loket</Button>
+                <Button variant="destructive">
+                    <Trash2 />
+                    Hapus Loket
+                </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Hapus Loket yang belum digunakan?</DialogTitle>
                     <DialogDescription>
                         {loket.code} — {loket.name} hanya boleh dihapus bila
-                        belum memiliki pengguna, alokasi, maupun BAP. Audit
-                        penghapusan tetap dicatat.
+                        belum memiliki pengguna, alokasi, maupun BAP.
+                        Penghapusan tetap tercatat di riwayat audit.
                     </DialogDescription>
                 </DialogHeader>
                 <Form
@@ -56,7 +60,9 @@ export function LoketDeleteDialog({ loket }: Props) {
                                     variant="destructive"
                                     disabled={processing}
                                 >
-                                    Hapus Loket
+                                    {processing
+                                        ? 'Menghapus...'
+                                        : 'Hapus Loket'}
                                 </Button>
                             </DialogFooter>
                         </>

@@ -41,6 +41,7 @@ class SkpdBapCancellationController extends Controller
             $query->where(function (Builder $query) use ($search): void {
                 $query
                     ->where('description', 'like', "%{$search}%")
+                    ->orWhereHas('bap', fn (Builder $query): Builder => $query->where('document_number', 'like', "%{$search}%"))
                     ->orWhereHas('bap.loket', fn (Builder $query): Builder => $query->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('creator', fn (Builder $query): Builder => $query->where('name', 'like', "%{$search}%"));
 

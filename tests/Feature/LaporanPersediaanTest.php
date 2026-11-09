@@ -260,7 +260,7 @@ test('Laporan Persediaan PDF and Excel exports share the position and keep seven
 
     $pdfResponse
         ->assertOk()
-        ->assertDownload('laporan-persediaan-skpd-oktober-2026.pdf')
+        ->assertHeader('content-disposition', 'inline; filename=laporan-persediaan-skpd-oktober-2026.pdf')
         ->assertHeader('content-type', 'application/pdf');
     expect($pdfResponse->getContent())->toStartWith('%PDF');
 

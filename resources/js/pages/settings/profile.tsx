@@ -25,8 +25,6 @@ export default function Profile() {
         <>
             <Head title="Profil" />
 
-            <h1 className="sr-only">Profil</h1>
-
             <div className="space-y-6">
                 <Heading
                     variant="small"

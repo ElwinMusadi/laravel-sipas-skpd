@@ -22,6 +22,16 @@ export type DocumentOfficialFormData = {
     effective_from: string;
 };
 
+/** Fields rendered with an inline error; anything else goes to the summary. */
+export const documentOfficialFieldNames = [
+    'role',
+    'name',
+    'nip',
+    'rank',
+    'position',
+    'effective_from',
+];
+
 type Props = {
     errors: Partial<
         Record<
@@ -50,17 +60,23 @@ export function DocumentOfficialFormFields({
     return (
         <div className="grid gap-6">
             <div className="grid gap-2">
-                <Label htmlFor="role">Peran tanda tangan</Label>
                 {official ? (
-                    <p className="bg-muted rounded-xl px-3 py-2.5 text-sm font-medium">
-                        {official.role_label}
-                    </p>
+                    <>
+                        <span className="text-sm font-medium">
+                            Peran tanda tangan
+                        </span>
+                        <p className="bg-muted rounded-xl px-3 py-2.5 text-sm font-medium">
+                            {official.role_label}
+                        </p>
+                    </>
                 ) : (
                     <>
+                        <Label htmlFor="role">Peran tanda tangan</Label>
                         <input type="hidden" name="role" value={role} />
                         <Select value={role} onValueChange={setRole}>
                             <SelectTrigger
                                 id="role"
+                                className="w-full"
                                 aria-invalid={Boolean(errors.role)}
                             >
                                 <SelectValue placeholder="Pilih peran" />
@@ -87,6 +103,7 @@ export function DocumentOfficialFormFields({
                     id="name"
                     name="name"
                     defaultValue={official?.name}
+                    required
                     maxLength={255}
                     aria-invalid={Boolean(errors.name)}
                 />
@@ -95,7 +112,7 @@ export function DocumentOfficialFormFields({
 
             <div className="grid gap-6 sm:grid-cols-2">
                 <div className="grid gap-2">
-                    <Label htmlFor="nip">NIP</Label>
+                    <Label htmlFor="nip">NIP (opsional)</Label>
                     <Input
                         id="nip"
                         name="nip"
@@ -108,7 +125,7 @@ export function DocumentOfficialFormFields({
                     <InputError message={errors.nip} />
                 </div>
                 <div className="grid gap-2">
-                    <Label htmlFor="rank">Pangkat/Golongan</Label>
+                    <Label htmlFor="rank">Pangkat/Golongan (opsional)</Label>
                     <Input
                         id="rank"
                         name="rank"
@@ -127,6 +144,7 @@ export function DocumentOfficialFormFields({
                     id="position"
                     name="position"
                     defaultValue={official?.position}
+                    required
                     maxLength={255}
                     aria-invalid={Boolean(errors.position)}
                 />
@@ -134,17 +152,15 @@ export function DocumentOfficialFormFields({
             </div>
 
             <div className="grid gap-2 sm:max-w-xs">
-                <Label>Mulai berlaku</Label>
-                <input
-                    type="hidden"
-                    name="effective_from"
-                    value={effectiveFrom}
-                />
+                <Label htmlFor="effective_from">Mulai berlaku</Label>
                 <DatePicker
+                    id="effective_from"
+                    name="effective_from"
                     value={effectiveFrom}
                     onChange={setEffectiveFrom}
                     placeholder="Pilih tanggal"
-                    aria-label="Tanggal mulai berlaku"
+                    invalid={Boolean(errors.effective_from)}
+                    clearable={false}
                 />
                 <p className="text-muted-foreground text-xs">
                     BAP dengan tanggal pelayanan sejak tanggal ini memakai

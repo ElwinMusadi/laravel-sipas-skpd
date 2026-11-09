@@ -1,18 +1,25 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { ExternalLink, Search, X } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { parseISO } from 'date-fns';
+import { useState } from 'react';
+import { DataTable, type DataTableColumn } from '@/components/app/data-table';
 import { EmptyState } from '@/components/app/empty-state';
-import { BapStatusBadge } from '@/components/bap/bap-status-badge';
+import {
+    FilterBar,
+    FilterField,
+    FilterSearch,
+    FilterSelect,
+} from '@/components/app/filter-bar';
+import { ListFooter, type Paginator } from '@/components/app/list-footer';
+import { PageHeader } from '@/components/app/page-header';
 import {
     formatDate,
     formatDateTime,
     formatQuantity,
     formatRange,
 } from '@/components/inventory/format';
-import { Pagination } from '@/components/inventory/pagination';
-import type { PaginationLink } from '@/components/inventory/types';
+import { LaporanBapLink } from '@/components/laporan/laporan-bap-link';
+import { LaporanSummaryCard } from '@/components/laporan/laporan-summary-card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -21,23 +28,6 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { show as showBap } from '@/routes/baps';
 import { index } from '@/routes/buku-kendali';
 
@@ -56,21 +46,19 @@ type BukuKendaliBap = {
     status: 'completed';
 };
 
+type Filters = {
+    search: string;
+    start_date: string;
+    end_date: string;
+    loket: number | null;
+};
+
+type LoketOption = { id: number; name: string };
+
 type Props = {
-    baps: {
-        data: BukuKendaliBap[];
-        links: PaginationLink[];
-        from: number | null;
-        to: number | null;
-        total: number;
-    };
-    filters: {
-        search: string;
-        start_date: string;
-        end_date: string;
-        loket: number | null;
-    };
-    lokets: { id: number; name: string }[];
+    baps: Paginator & { data: BukuKendaliBap[] };
+    filters: Filters;
+    lokets: LoketOption[];
     summary: {
         total_baps: number;
         total_usage: number;
@@ -79,151 +67,113 @@ type Props = {
     };
 };
 
+const columns: DataTableColumn<BukuKendaliBap>[] = [
+    {
+        id: 'service_date',
+        header: 'Tanggal pelayanan',
+        cell: (bap) => formatDate(bap.service_date),
+        className: 'whitespace-nowrap',
+        mobile: 'subtitle',
+    },
+    {
+        id: 'number',
+        header: 'Nomor BAP',
+        cell: (bap) => bap.number,
+        className: 'font-medium whitespace-nowrap',
+        mobile: 'title',
+    },
+    {
+        id: 'loket',
+        header: 'Loket',
+        cell: (bap) => bap.loket,
+        mobile: 'subtitle',
+    },
+    {
+        id: 'numerator',
+        header: 'Nomerator',
+        cell: (bap) => formatRange(bap.numerator_start, bap.numerator_end),
+        mono: true,
+    },
+    {
+        id: 'total_usage',
+        header: 'Terpakai',
+        cell: (bap) => formatQuantity(bap.total_usage),
+        numeric: true,
+    },
+    {
+        id: 'online',
+        header: 'Online',
+        cell: (bap) => formatQuantity(bap.online_usage_count),
+        numeric: true,
+    },
+    {
+        id: 'cancellations',
+        header: 'Batal/Rusak',
+        cell: (bap) => formatQuantity(bap.cancellation_count),
+        numeric: true,
+    },
+    {
+        id: 'received',
+        header: 'Diterima Bendahara Barang',
+        cell: (bap) => <ReceiptCell bap={bap} />,
+    },
+];
+
 export default function BukuKendaliIndex({
     baps,
     filters,
     lokets,
     summary,
 }: Props) {
-    const [search, setSearch] = useState(filters.search);
-    const [startDate, setStartDate] = useState(filters.start_date);
-    const [endDate, setEndDate] = useState(filters.end_date);
-    const [loket, setLoket] = useState(filters.loket?.toString() ?? 'all');
-
-    function applyFilters(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        router.get(
-            index.url(),
-            {
-                search: search || undefined,
-                start_date: startDate || undefined,
-                end_date: endDate || undefined,
-                loket: loket === 'all' ? undefined : Number(loket),
-            },
-            { preserveState: true, replace: true },
-        );
-    }
-
-    function resetFilters() {
-        setSearch('');
-        setStartDate('');
-        setEndDate('');
-        setLoket('all');
-        router.get(index.url(), {}, { replace: true });
-    }
+    const { url } = usePage();
 
     return (
         <>
             <Head title="Buku Kendali" />
 
-            <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
-                <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                    <div className="flex flex-col gap-1.5">
-                        <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-2xl font-semibold tracking-tight">
-                                Buku Kendali
-                            </h1>
-                            <Badge variant="outline">Bendahara Barang</Badge>
-                        </div>
-                        <p className="text-muted-foreground max-w-3xl text-sm">
-                            Rekap administratif BAP yang telah selesai.
+            <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
+                <PageHeader
+                    title="Buku Kendali"
+                    description="Rekap administratif BAP yang telah selesai dan diterima Bendahara Barang."
+                    badges={<Badge variant="outline">Hanya baca</Badge>}
+                    meta={
+                        <p className="text-muted-foreground text-sm">
+                            Periode:{' '}
+                            <span className="text-foreground font-medium">
+                                {formatDate(filters.start_date)} –{' '}
+                                {formatDate(filters.end_date)}
+                            </span>
                         </p>
-                    </div>
-                </section>
+                    }
+                />
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Filter Buku Kendali</CardTitle>
-                        <CardDescription>
-                            Periode menggunakan tanggal pelayanan BAP.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form
-                            onSubmit={applyFilters}
-                            className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_11rem_11rem_14rem_auto]"
-                        >
-                            <div className="relative">
-                                <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                                <Input
-                                    value={search}
-                                    onChange={(event) =>
-                                        setSearch(event.target.value)
-                                    }
-                                    className="pl-9"
-                                    placeholder="Cari nomor BAP, Loket, atau nomerator"
-                                    aria-label="Cari nomor BAP, Loket, atau nomerator"
-                                />
-                            </div>
-                            <DatePicker
-                                value={startDate}
-                                onChange={setStartDate}
-                                placeholder="Tanggal mulai"
-                                aria-label="Tanggal mulai pelayanan"
-                            />
-                            <DatePicker
-                                value={endDate}
-                                onChange={setEndDate}
-                                placeholder="Tanggal akhir"
-                                aria-label="Tanggal akhir pelayanan"
-                            />
-                            <Select value={loket} onValueChange={setLoket}>
-                                <SelectTrigger aria-label="Filter Loket">
-                                    <SelectValue placeholder="Semua Loket" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectItem value="all">
-                                            Semua Loket
-                                        </SelectItem>
-                                        {lokets.map((option) => (
-                                            <SelectItem
-                                                key={option.id}
-                                                value={option.id.toString()}
-                                            >
-                                                {option.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                            <div className="flex gap-2">
-                                <Button type="submit">Terapkan</Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={resetFilters}
-                                    aria-label="Reset filter"
-                                >
-                                    <X />
-                                </Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+                <BukuKendaliFilters
+                    key={url}
+                    url={url}
+                    filters={filters}
+                    lokets={lokets}
+                />
 
                 <section
                     aria-label="Ringkasan Buku Kendali"
                     className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
                 >
-                    <SummaryCard
+                    <LaporanSummaryCard
                         label="Total BAP"
                         value={formatQuantity(summary.total_baps)}
                         description="BAP selesai administratif"
                     />
-                    <SummaryCard
+                    <LaporanSummaryCard
                         label="SKPD Terpakai"
                         value={formatQuantity(summary.total_usage)}
                         description="Total pemakaian BAP"
                     />
-                    <SummaryCard
+                    <LaporanSummaryCard
                         label="Online"
                         value={formatQuantity(summary.total_online)}
                         description="Termasuk dalam total pemakaian"
                     />
-                    <SummaryCard
+                    <LaporanSummaryCard
                         label="Batal/Rusak"
                         value={formatQuantity(summary.total_cancellations)}
                         description="Tetap termasuk SKPD terpakai"
@@ -239,122 +189,31 @@ export default function BukuKendaliIndex({
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {baps.data.length === 0 ? (
-                            <EmptyState
-                                title="Belum ada BAP selesai administratif."
-                                description="BAP yang telah diterima Bendahara Barang pada periode ini akan muncul di Buku Kendali."
-                            />
-                        ) : (
-                            <>
-                                <div className="grid gap-3 lg:hidden">
-                                    {baps.data.map((bap) => (
-                                        <BapMobileCard key={bap.id} bap={bap} />
-                                    ))}
-                                </div>
-                                <div className="hidden lg:block">
-                                    <Table className="min-w-[70rem]">
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Tanggal</TableHead>
-                                                <TableHead>BAP</TableHead>
-                                                <TableHead>Loket</TableHead>
-                                                <TableHead>Nomerator</TableHead>
-                                                <TableHead>Total</TableHead>
-                                                <TableHead>Online</TableHead>
-                                                <TableHead>
-                                                    Batal/Rusak
-                                                </TableHead>
-                                                <TableHead>
-                                                    Diterima Bendahara Barang
-                                                </TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead className="text-right">
-                                                    Aksi
-                                                </TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {baps.data.map((bap) => (
-                                                <TableRow key={bap.id}>
-                                                    <TableCell>
-                                                        {formatDate(
-                                                            bap.service_date,
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="font-medium tabular-nums">
-                                                        {bap.number}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {bap.loket}
-                                                    </TableCell>
-                                                    <TableCell className="font-mono text-xs">
-                                                        {formatRange(
-                                                            bap.numerator_start,
-                                                            bap.numerator_end,
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="tabular-nums">
-                                                        {formatQuantity(
-                                                            bap.total_usage,
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="tabular-nums">
-                                                        {formatQuantity(
-                                                            bap.online_usage_count,
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="tabular-nums">
-                                                        {formatQuantity(
-                                                            bap.cancellation_count,
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="text-muted-foreground">
-                                                        <ReceiptCell
-                                                            bap={bap}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <BapStatusBadge
-                                                            status={bap.status}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            asChild
-                                                        >
-                                                            <Link
-                                                                href={showBap(
-                                                                    bap.id,
-                                                                )}
-                                                                aria-label={
-                                                                    'Detail BAP ' +
-                                                                    bap.number
-                                                                }
-                                                            >
-                                                                <ExternalLink />
-                                                            </Link>
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            </>
-                        )}
+                        <DataTable
+                            rows={baps.data}
+                            columns={columns}
+                            getRowKey={(bap) => bap.id}
+                            rowHref={(bap) => showBap(bap.id)}
+                            actions={(bap) => (
+                                <LaporanBapLink
+                                    bapId={bap.id}
+                                    documentNumber={bap.number}
+                                />
+                            )}
+                            minWidthClassName="min-w-5xl"
+                            caption="Rekap BAP selesai administratif"
+                            empty={
+                                <EmptyState
+                                    title="Belum ada BAP selesai administratif."
+                                    description="BAP yang telah diterima Bendahara Barang pada periode ini akan muncul di Buku Kendali."
+                                />
+                            }
+                        />
                     </CardContent>
                 </Card>
 
-                <div className="flex flex-col justify-between gap-3 text-sm sm:flex-row sm:items-center">
-                    <p className="text-muted-foreground">
-                        Menampilkan {baps.from ?? 0}–{baps.to ?? 0} dari{' '}
-                        {baps.total} BAP
-                    </p>
-                    <Pagination links={baps.links} />
-                </div>
-            </main>
+                <ListFooter paginator={baps} noun="BAP" />
+            </div>
         </>
     );
 }
@@ -363,113 +222,124 @@ BukuKendaliIndex.layout = {
     breadcrumbs: [{ title: 'Buku Kendali', href: index() }],
 };
 
-function SummaryCard({
-    label,
-    value,
-    description,
+/**
+ * Keyed by the page URL by its parent, so after every visit the fields show
+ * the filters the server applied, including its default period.
+ */
+function BukuKendaliFilters({
+    url,
+    filters,
+    lokets,
 }: {
-    label: string;
-    value: string;
-    description: string;
+    url: string;
+    filters: Filters;
+    lokets: LoketOption[];
 }) {
+    const [search, setSearch] = useState(filters.search);
+    const [startDate, setStartDate] = useState(filters.start_date);
+    const [endDate, setEndDate] = useState(filters.end_date);
+    const [loket, setLoket] = useState(filters.loket?.toString() ?? '');
+
+    function visit(query: Record<string, string>): void {
+        router.get(index.url(), query, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    }
+
+    function applyFilters(): void {
+        visit(
+            Object.fromEntries(
+                Object.entries({
+                    search: search.trim(),
+                    start_date: startDate,
+                    end_date: endDate,
+                    loket,
+                }).filter(([, value]) => value !== ''),
+            ),
+        );
+    }
+
     return (
-        <Card>
-            <CardHeader className="gap-1">
-                <CardDescription>{label}</CardDescription>
-                <CardTitle className="text-2xl font-semibold tabular-nums">
-                    {value}
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="text-muted-foreground text-xs">
-                {description}
-            </CardContent>
-        </Card>
+        <FilterBar
+            onSubmit={applyFilters}
+            onReset={() => visit({})}
+            activeCount={appliedFilterCount(url)}
+        >
+            <FilterSearch
+                id="buku-kendali-search"
+                label="Cari"
+                value={search}
+                onChange={setSearch}
+                placeholder="Nomor BAP, Loket, atau Nomerator"
+                className="sm:col-span-2 xl:col-span-1"
+            />
+            <FilterField id="buku-kendali-start-date" label="Tanggal mulai">
+                <DatePicker
+                    id="buku-kendali-start-date"
+                    value={startDate}
+                    onChange={setStartDate}
+                    placeholder="Pilih tanggal mulai"
+                    clearable={false}
+                    disabledDays={
+                        endDate === ''
+                            ? undefined
+                            : { after: parseISO(endDate) }
+                    }
+                />
+            </FilterField>
+            <FilterField id="buku-kendali-end-date" label="Tanggal akhir">
+                <DatePicker
+                    id="buku-kendali-end-date"
+                    value={endDate}
+                    onChange={setEndDate}
+                    placeholder="Pilih tanggal akhir"
+                    clearable={false}
+                    disabledDays={
+                        startDate === ''
+                            ? undefined
+                            : { before: parseISO(startDate) }
+                    }
+                />
+            </FilterField>
+            <FilterSelect
+                id="buku-kendali-loket"
+                label="Loket"
+                value={loket}
+                onChange={setLoket}
+                options={lokets.map((option) => ({
+                    value: option.id.toString(),
+                    label: option.name,
+                }))}
+                allLabel="Semua Loket"
+            />
+        </FilterBar>
     );
 }
 
-function BapMobileCard({ bap }: { bap: BukuKendaliBap }) {
-    return (
-        <Card>
-            <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
-                <div className="flex flex-col gap-1">
-                    <CardTitle className="text-base tabular-nums">
-                        {bap.number}
-                    </CardTitle>
-                    <CardDescription>
-                        {formatDate(bap.service_date)} · {bap.loket}
-                    </CardDescription>
-                </div>
-                <BapStatusBadge status={bap.status} />
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                    <MobileValue
-                        label="Nomerator"
-                        value={formatRange(
-                            bap.numerator_start,
-                            bap.numerator_end,
-                        )}
-                        mono
-                    />
-                    <MobileValue
-                        label="Total pemakaian"
-                        value={formatQuantity(bap.total_usage)}
-                    />
-                    <MobileValue
-                        label="Online"
-                        value={formatQuantity(bap.online_usage_count)}
-                    />
-                    <MobileValue
-                        label="Batal/rusak"
-                        value={formatQuantity(bap.cancellation_count)}
-                    />
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <ReceiptCell bap={bap} />
-                    <Button variant="outline" size="sm" asChild>
-                        <Link href={showBap(bap.id)}>
-                            <ExternalLink data-icon="inline-start" />
-                            Detail BAP
-                        </Link>
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
+/**
+ * Filters the user chose explicitly: search, the date range (once), and the
+ * Loket. Without a range the server shows the current month up to today.
+ */
+function appliedFilterCount(url: string): number {
+    const query = new URLSearchParams(url.split('?')[1] ?? '');
+    const hasValue = (key: string): boolean => (query.get(key) ?? '') !== '';
 
-function MobileValue({
-    label,
-    value,
-    mono = false,
-}: {
-    label: string;
-    value: string;
-    mono?: boolean;
-}) {
     return (
-        <div className="flex flex-col gap-0.5">
-            <span className="text-muted-foreground text-xs">{label}</span>
-            <span
-                className={
-                    mono
-                        ? 'font-mono text-xs tabular-nums'
-                        : 'font-medium tabular-nums'
-                }
-            >
-                {value}
-            </span>
-        </div>
+        Number(hasValue('search')) +
+        Number(hasValue('start_date') || hasValue('end_date')) +
+        Number(hasValue('loket'))
     );
 }
 
 function ReceiptCell({ bap }: { bap: BukuKendaliBap }) {
     return (
-        <div className="flex flex-col gap-1 text-sm">
+        <span className="flex flex-col">
             <span>{bap.received_by ?? '—'}</span>
             <span className="text-muted-foreground text-xs">
                 {bap.received_at ? formatDateTime(bap.received_at) : '—'}
             </span>
-        </div>
+        </span>
     );
 }

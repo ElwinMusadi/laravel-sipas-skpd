@@ -1,213 +1,216 @@
-import { Head, Link } from "@inertiajs/react";
-import { ArrowLeft, FileText } from "lucide-react";
+import { Head, Link } from '@inertiajs/react';
+import { FileText } from 'lucide-react';
+import { DetailList, DetailRow } from '@/components/app/detail-list';
+import { PageHeader } from '@/components/app/page-header';
+import { StatusBadge } from '@/components/app/status-badge';
 import {
-  BapStatusBadge,
-  type BapStatus,
-} from "@/components/bap/bap-status-badge";
+    BapStatusBadge,
+    type BapStatus,
+} from '@/components/bap/bap-status-badge';
 import {
-  formatDate,
-  formatDateTime,
-  formatNomerator,
-  formatQuantity,
-  formatRange,
-} from "@/components/inventory/format";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { index } from "@/routes/bap-cancellations";
-import { show as showBap } from "@/routes/baps";
+    formatDate,
+    formatDateTime,
+    formatNomerator,
+    formatQuantity,
+    formatRange,
+} from '@/components/inventory/format';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { index, show } from '@/routes/bap-cancellations';
+import { show as showBap } from '@/routes/baps';
 
 type Props = {
-  cancellation: {
-    id: number;
-    numerator: number;
-    reason: string;
-    reason_label: string;
-    description: string | null;
-    created_by: string;
-    created_at: string;
-    bap: {
-      id: number;
-      document_number: string;
-      service_date: string;
-      loket: { id: number; name: string };
-      numerator_start: number;
-      numerator_end: number;
-      total_usage: number;
-      cancellation_quantity: number;
-      normal_usage_quantity: number;
-      status: BapStatus;
-      created_by: string;
+    cancellation: {
+        id: number;
+        numerator: number;
+        reason: string;
+        reason_label: string;
+        description: string | null;
+        created_by: string;
+        created_at: string;
+        bap: {
+            id: number;
+            document_number: string;
+            service_date: string;
+            loket: { id: number; name: string };
+            numerator_start: number;
+            numerator_end: number;
+            total_usage: number;
+            cancellation_quantity: number;
+            normal_usage_quantity: number;
+            status: BapStatus;
+            created_by: string;
+        };
     };
-  };
 };
 
 export default function ShowBapCancellation({ cancellation }: Props) {
-  return (
-    <>
-      <Head
-        title={`BAP Batal/Rusak ${formatNomerator(cancellation.numerator)}`}
-      />
+    const numerator = formatNomerator(cancellation.numerator);
+    const bap = cancellation.bap;
 
-      <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-          <div className="grid gap-2">
-            <Button
-              variant="link"
-              size="sm"
-              className="pl-0 hover:no-underline"
-              asChild
-            >
-              <Link href={index()}>
-                <ArrowLeft data-icon="inline-start" />
-                Kembali ke BAP Batal/Rusak
-              </Link>
-            </Button>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="font-mono text-2xl font-semibold tracking-tight">
-                {formatNomerator(cancellation.numerator)}
-              </h1>
-              <Badge variant="outline">{cancellation.reason_label}</Badge>
+    return (
+        <>
+            <Head title={`Batal/Rusak ${numerator}`} />
+
+            <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
+                <PageHeader
+                    back={{
+                        href: index(),
+                        label: 'Kembali ke riwayat Batal/Rusak',
+                    }}
+                    title={`Batal/Rusak ${numerator}`}
+                    badges={
+                        <StatusBadge
+                            label={cancellation.reason_label}
+                            tone="neutral"
+                        />
+                    }
+                    description={`Tercatat pada ${bap.document_number} · ${bap.loket.name} · ${formatDate(bap.service_date)}`}
+                    actions={
+                        <Button variant="outline" asChild>
+                            <Link href={showBap(bap.id)}>
+                                <FileText data-icon="inline-start" />
+                                Lihat BAP SKPD
+                            </Link>
+                        </Button>
+                    }
+                />
+
+                <section className="grid gap-4 lg:grid-cols-3">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Informasi</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <DetailList>
+                                <DetailRow
+                                    label="Nomerator"
+                                    value={numerator}
+                                    mono
+                                />
+                                <DetailRow
+                                    label="Klasifikasi"
+                                    value={cancellation.reason_label}
+                                />
+                                <DetailRow
+                                    label="Dicatat oleh"
+                                    value={cancellation.created_by}
+                                />
+                                <DetailRow
+                                    label="Dicatat pada"
+                                    value={formatDateTime(
+                                        cancellation.created_at,
+                                    )}
+                                />
+                            </DetailList>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Keterangan</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm break-words whitespace-pre-wrap">
+                                {cancellation.description ??
+                                    'Tidak ada keterangan tambahan.'}
+                            </p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>BAP terkait</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <DetailList>
+                                <DetailRow
+                                    label="Nomor BAP"
+                                    value={
+                                        <Link
+                                            href={showBap(bap.id)}
+                                            className="underline-offset-4 hover:underline"
+                                        >
+                                            {bap.document_number}
+                                        </Link>
+                                    }
+                                />
+                                <DetailRow
+                                    label="Loket"
+                                    value={bap.loket.name}
+                                />
+                                <DetailRow
+                                    label="Tanggal pelayanan"
+                                    value={formatDate(bap.service_date)}
+                                />
+                                <DetailRow
+                                    label="Status"
+                                    value={
+                                        <BapStatusBadge status={bap.status} />
+                                    }
+                                />
+                            </DetailList>
+                        </CardContent>
+                    </Card>
+                </section>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Ringkasan pemakaian BAP</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <SummaryValue
+                            label="Range Nomerator"
+                            value={formatRange(
+                                bap.numerator_start,
+                                bap.numerator_end,
+                            )}
+                            mono
+                        />
+                        <SummaryValue
+                            label="Total pemakaian"
+                            value={`${formatQuantity(bap.total_usage)} set`}
+                        />
+                        <SummaryValue
+                            label="Batal/Rusak"
+                            value={`${formatQuantity(bap.cancellation_quantity)} set`}
+                        />
+                        <SummaryValue
+                            label="Pemakaian normal (termasuk online)"
+                            value={`${formatQuantity(bap.normal_usage_quantity)} set`}
+                        />
+                    </CardContent>
+                </Card>
             </div>
-            <p className="text-muted-foreground text-sm">
-              Tercatat pada {cancellation.bap.document_number}.
-            </p>
-          </div>
-          <Button variant="outline" asChild>
-            <Link href={showBap(cancellation.bap.id)}>
-              <FileText data-icon="inline-start" />
-              Lihat BAP SKPD
-            </Link>
-          </Button>
-        </div>
-
-        <section className="grid gap-4 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informasi</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              <DetailRow
-                label="Nomerator"
-                value={formatNomerator(cancellation.numerator)}
-                mono
-              />
-              <DetailRow
-                label="Klasifikasi"
-                value={cancellation.reason_label}
-              />
-              <DetailRow label="Dicatat oleh" value={cancellation.created_by} />
-              <DetailRow
-                label="Dicatat pada"
-                value={formatDateTime(cancellation.created_at)}
-              />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Keterangan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm whitespace-pre-wrap">
-                {cancellation.description ?? "Tidak ada keterangan tambahan."}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>BAP terkait</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              <DetailRow label="Loket" value={cancellation.bap.loket.name} />
-              <DetailRow
-                label="Tanggal"
-                value={formatDate(cancellation.bap.service_date)}
-              />
-              <DetailRow
-                label="Status"
-                value={<BapStatusBadge status={cancellation.bap.status} />}
-              />
-            </CardContent>
-          </Card>
-        </section>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Ringkasan pemakaian BAP</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <SummaryValue
-              label="Range BAP"
-              value={formatRange(
-                cancellation.bap.numerator_start,
-                cancellation.bap.numerator_end,
-              )}
-              mono
-            />
-            <SummaryValue
-              label="Total pemakaian"
-              value={`${formatQuantity(cancellation.bap.total_usage)} set`}
-            />
-            <SummaryValue
-              label="Batal/rusak"
-              value={`${formatQuantity(cancellation.bap.cancellation_quantity)} set`}
-            />
-            <SummaryValue
-              label="Pemakaian normal"
-              value={`${formatQuantity(cancellation.bap.normal_usage_quantity)} set`}
-            />
-          </CardContent>
-        </Card>
-      </main>
-    </>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string;
-  value: React.ReactNode;
-  mono?: boolean;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <span className="text-muted-foreground">{label}</span>
-      <span
-        className={`text-right font-medium ${mono ? "font-mono text-xs whitespace-nowrap" : ""}`}
-      >
-        {value}
-      </span>
-    </div>
-  );
+        </>
+    );
 }
 
 function SummaryValue({
-  label,
-  value,
-  mono = false,
+    label,
+    value,
+    mono = false,
 }: {
-  label: string;
-  value: string;
-  mono?: boolean;
+    label: string;
+    value: string;
+    mono?: boolean;
 }) {
-  return (
-    <div className="bg-muted rounded-xl p-4">
-      <p className="text-muted-foreground text-sm">{label}</p>
-      <p
-        className={`mt-1 font-semibold tabular-nums ${mono ? "font-mono text-xs" : ""}`}
-      >
-        {value}
-      </p>
-    </div>
-  );
+    return (
+        <div className="bg-muted rounded-xl p-4">
+            <p className="text-muted-foreground text-sm">{label}</p>
+            <p
+                className={`mt-1 font-semibold tabular-nums ${mono ? 'font-mono text-sm' : ''}`}
+            >
+                {value}
+            </p>
+        </div>
+    );
 }
 
-ShowBapCancellation.layout = {
-  breadcrumbs: [
-    { title: "BAP Batal/Rusak", href: index() },
-    { title: "Detail Batal/Rusak", href: index() },
-  ],
-};
+ShowBapCancellation.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Riwayat Batal/Rusak', href: index() },
+        {
+            title: `${formatNomerator(props.cancellation.numerator)} · ${props.cancellation.bap.document_number}`,
+            href: show(props.cancellation.id),
+        },
+    ],
+});

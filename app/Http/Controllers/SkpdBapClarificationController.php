@@ -125,7 +125,7 @@ class SkpdBapClarificationController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => 'Tanggapan klarifikasi telah dikirim dan menunggu review verifier.',
+            'message' => 'Tanggapan klarifikasi telah dikirim dan menunggu tinjauan verifier.',
         ]);
 
         return to_route('bap-clarifications.show', $clarification);
@@ -295,7 +295,7 @@ class SkpdBapClarificationController extends Controller
     {
         return match ($status) {
             BapClarificationStatus::WaitingResponse => 'Menunggu Tanggapan',
-            BapClarificationStatus::Responded => 'Menunggu Review',
+            BapClarificationStatus::Responded => 'Menunggu Tinjauan',
             BapClarificationStatus::Resolved => 'Selesai',
             BapClarificationStatus::Reopened => 'Perlu Klarifikasi Ulang',
         };

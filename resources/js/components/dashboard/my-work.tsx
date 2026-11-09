@@ -19,7 +19,7 @@ export function MyWork({ items }: { items: readonly DashboardWorkItem[] }) {
                         <ClipboardList className="size-4" />
                     </span>
                     <div>
-                        <CardTitle>My Work</CardTitle>
+                        <CardTitle>Tugas Saya</CardTitle>
                         <CardDescription>
                             Tugas yang perlu menjadi perhatian Anda.
                         </CardDescription>

@@ -1,19 +1,9 @@
-import { Form } from '@inertiajs/react';
-import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import SkpdBapController from '@/actions/App/Http/Controllers/SkpdBapController';
-import FormErrorSummary from '@/components/form-error-summary';
+import { DetailList, DetailRow } from '@/components/app/detail-list';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 import { formatRange } from '@/components/inventory/format';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 
 type Props = {
     bap: {
@@ -26,51 +16,31 @@ type Props = {
 };
 
 export function BapDeleteDialog({ bap }: Props) {
-    const [open, setOpen] = useState(false);
-
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="destructive">Hapus draft</Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Hapus draft BAP SKPD?</DialogTitle>
-                    <DialogDescription>
-                        {bap.document_number} dari {bap.loket.name} dengan range{' '}
-                        {formatRange(bap.numerator_start, bap.numerator_end)}{' '}
-                        akan dihapus beserta detail Batal/Rusak-nya. Nomerator
-                        kembali tersedia untuk BAP berikutnya.
-                    </DialogDescription>
-                </DialogHeader>
-                <Form
-                    action={SkpdBapController.destroy(bap.id)}
-                    className="grid gap-4"
-                >
-                    {({ processing, errors }) => (
-                        <>
-                            <FormErrorSummary
-                                errors={errors}
-                                title="Draft BAP tidak dapat dihapus."
-                            />
-                            <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button type="button" variant="outline">
-                                        Kembali
-                                    </Button>
-                                </DialogClose>
-                                <Button
-                                    type="submit"
-                                    variant="destructive"
-                                    disabled={processing}
-                                >
-                                    Hapus draft
-                                </Button>
-                            </DialogFooter>
-                        </>
-                    )}
-                </Form>
-            </DialogContent>
-        </Dialog>
+        <ConfirmActionDialog
+            action={SkpdBapController.destroy(bap.id)}
+            trigger={
+                <Button variant="destructive">
+                    <Trash2 data-icon="inline-start" />
+                    Hapus draft
+                </Button>
+            }
+            title="Hapus draft BAP SKPD?"
+            description="Draft beserta detail Batal/Rusak-nya akan dihapus. Nomerator kembali tersedia untuk BAP berikutnya."
+            confirmLabel="Ya, hapus draft"
+            processingLabel="Menghapus..."
+            errorTitle="Draft BAP tidak dapat dihapus."
+            destructive
+        >
+            <DetailList className="bg-muted rounded-xl p-4">
+                <DetailRow label="Nomor BAP" value={bap.document_number} />
+                <DetailRow label="Loket" value={bap.loket.name} />
+                <DetailRow
+                    label="Range Nomerator"
+                    value={formatRange(bap.numerator_start, bap.numerator_end)}
+                    mono
+                />
+            </DetailList>
+        </ConfirmActionDialog>
     );
 }

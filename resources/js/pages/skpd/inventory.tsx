@@ -1,14 +1,25 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Archive,
+    ArrowRightLeft,
     Boxes,
     CheckCircle2,
     Clock3,
+    Eye,
     PackageCheck,
+    PackagePlus,
+    Plus,
     ReceiptText,
+    TriangleAlert,
+    UserX,
 } from 'lucide-react';
-import { AllocationStatusBadge } from '@/components/allocation/allocation-status-badge';
+import {
+    AllocationStatusBadge,
+    type AllocationStatus,
+} from '@/components/allocation/allocation-status-badge';
+import { DataTable, type DataTableColumn } from '@/components/app/data-table';
 import { EmptyState } from '@/components/app/empty-state';
+import { PageHeader } from '@/components/app/page-header';
 import { BoxStatusBadge } from '@/components/inventory/box-status-badge';
 import {
     formatDate,
@@ -17,10 +28,25 @@ import {
 } from '@/components/inventory/format';
 import { InventoryMetricCard } from '@/components/inventory/inventory-metric-card';
 import type { SkpdBoxSummary } from '@/components/inventory/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { show as allocationShow } from '@/routes/skpd/allocations';
-import { index as boxesIndex, show as boxShow } from '@/routes/skpd/boxes';
+import {
+    Card,
+    CardAction,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import {
+    create as allocationCreate,
+    index as allocationsIndex,
+    show as allocationShow,
+} from '@/routes/skpd/allocations';
+import {
+    create as boxCreate,
+    index as boxesIndex,
+    show as boxShow,
+} from '@/routes/skpd/boxes';
 import { index } from '@/routes/skpd/inventory';
 
 type CentralMetrics = {
@@ -40,7 +66,7 @@ type LoketAllocation = {
     numerator_start: number;
     numerator_end: number;
     quantity: number;
-    status: 'pending' | 'accepted' | 'completed' | 'cancelled' | 'returned';
+    status: AllocationStatus;
     allocation_date: string | null;
 };
 
@@ -64,18 +90,98 @@ type Props =
           recent_allocations: LoketAllocation[];
       };
 
+const pendingAllocationsHref = allocationsIndex({
+    query: { status: 'pending' },
+});
+
+const boxColumns: DataTableColumn<SkpdBoxSummary>[] = [
+    {
+        id: 'box_number',
+        header: 'Nomor Box',
+        cell: (box) => box.box_number,
+        className: 'font-medium',
+        mobile: 'title',
+    },
+    {
+        id: 'numerator',
+        header: 'Nomerator',
+        cell: (box) => formatRange(box.numerator_start, box.numerator_end),
+        mono: true,
+        mobile: 'subtitle',
+    },
+    {
+        id: 'status',
+        header: 'Status',
+        cell: (box) => <BoxStatusBadge status={box.status} />,
+        mobile: 'badge',
+    },
+    {
+        id: 'available',
+        header: 'Tersedia',
+        cell: (box) => `${formatQuantity(box.available_quantity)} set`,
+        numeric: true,
+    },
+    {
+        id: 'received_at',
+        header: 'Diterima',
+        cell: (box) => formatDate(box.received_at),
+        className: 'whitespace-nowrap',
+    },
+];
+
+const allocationColumns: DataTableColumn<LoketAllocation>[] = [
+    {
+        id: 'box_number',
+        header: 'Box',
+        cell: (allocation) => allocation.box_number,
+        className: 'font-medium',
+        mobile: 'title',
+    },
+    {
+        id: 'numerator',
+        header: 'Nomerator',
+        cell: (allocation) =>
+            formatRange(allocation.numerator_start, allocation.numerator_end),
+        mono: true,
+        mobile: 'subtitle',
+    },
+    {
+        id: 'status',
+        header: 'Status',
+        cell: (allocation) => (
+            <AllocationStatusBadge status={allocation.status} />
+        ),
+        mobile: 'badge',
+    },
+    {
+        id: 'quantity',
+        header: 'Jumlah',
+        cell: (allocation) => `${formatQuantity(allocation.quantity)} set`,
+        numeric: true,
+    },
+    {
+        id: 'allocation_date',
+        header: 'Tanggal alokasi',
+        cell: (allocation) =>
+            allocation.allocation_date
+                ? formatDate(allocation.allocation_date)
+                : 'Belum tercatat',
+        className: 'whitespace-nowrap',
+    },
+];
+
 export default function SkpdInventory(props: Props) {
     return (
         <>
             <Head title="Persediaan SKPD" />
 
-            <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
+            <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
                 {props.scope === 'central' ? (
                     <CentralInventory {...props} />
                 ) : (
                     <LoketInventory {...props} />
                 )}
-            </main>
+            </div>
         </>
     );
 }
@@ -84,25 +190,42 @@ function CentralInventory({
     metrics,
     recent_boxes: recentBoxes,
 }: Extract<Props, { scope: 'central' }>) {
+    const { auth } = usePage().props;
+    const canManage = auth.permissions.manageSkpdInventory;
+
     return (
         <>
-            <section className="space-y-1.5">
-                <p className="text-muted-foreground text-sm">Inventory pusat</p>
-                <h1 className="text-2xl font-semibold tracking-tight">
-                    Persediaan SKPD
-                </h1>
-                <p className="text-muted-foreground max-w-3xl text-sm">
-                    Ringkasan ledger Box, alokasi, dan pemakaian yang tercatat.
-                    Alokasi pending masih berada fisik di pusat, tetapi sudah
-                    tidak tersedia untuk alokasi baru.
-                </p>
-            </section>
+            <PageHeader
+                title="Persediaan SKPD"
+                description="Ringkasan Box, alokasi, dan pemakaian Bukti SKPD yang tercatat. Alokasi yang menunggu handover masih tersimpan di pusat, tetapi tidak lagi tersedia untuk alokasi baru."
+                actions={
+                    canManage ? (
+                        <>
+                            <Button variant="outline" asChild>
+                                <Link href={boxCreate()}>
+                                    <Plus />
+                                    Tambah Box
+                                </Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href={allocationCreate()}>
+                                    <PackagePlus />
+                                    Buat alokasi
+                                </Link>
+                            </Button>
+                        </>
+                    ) : null
+                }
+            />
 
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <section
+                aria-label="Ringkasan persediaan"
+                className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            >
                 <InventoryMetricCard
-                    label="Total Persediaan"
+                    label="Total persediaan"
                     value={`${formatQuantity(metrics.total_inventory)} set`}
-                    description={`${formatQuantity(metrics.total_boxes)} Box terdaftar`}
+                    description={`Dari ${formatQuantity(metrics.total_boxes)} Box, di luar yang sudah terpakai`}
                     icon={Boxes}
                 />
                 <InventoryMetricCard
@@ -114,105 +237,94 @@ function CentralInventory({
                 <InventoryMetricCard
                     label="Dialokasikan"
                     value={`${formatQuantity(metrics.allocated_quantity)} set`}
-                    description="Persediaan administratif Loket"
+                    description="Sudah diterima Loket"
                     icon={Archive}
                 />
                 <InventoryMetricCard
                     label="Terpakai"
                     value={`${formatQuantity(metrics.used_quantity)} set`}
-                    description="Berdasarkan segment BAP"
+                    description="Tercatat pada BAP"
                     icon={ReceiptText}
                 />
             </section>
 
-            <section className="grid gap-4 sm:grid-cols-3">
-                <Card size="sm">
-                    <CardContent className="space-y-1">
-                        <p className="text-muted-foreground text-sm">
-                            Handover pending
-                        </p>
-                        <p className="text-xl font-semibold">
-                            {formatQuantity(metrics.pending_allocations)}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card size="sm">
-                    <CardContent className="space-y-1">
-                        <p className="text-muted-foreground text-sm">
-                            Alokasi aktif
-                        </p>
-                        <p className="text-xl font-semibold">
-                            {formatQuantity(metrics.active_allocations)}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card size="sm">
-                    <CardContent className="space-y-1">
-                        <p className="text-muted-foreground text-sm">
-                            Box hampir habis
-                        </p>
-                        <p className="text-xl font-semibold">
-                            {formatQuantity(metrics.nearly_depleted_boxes)}
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                            Sisa tersedia maksimal 10%
-                        </p>
-                    </CardContent>
-                </Card>
+            <section
+                aria-label="Status alokasi"
+                className="grid gap-4 sm:grid-cols-3"
+            >
+                <InventoryMetricCard
+                    label="Menunggu handover"
+                    value={`${formatQuantity(metrics.pending_allocations)} alokasi`}
+                    description="Belum diterima Petugas Loket"
+                    icon={Clock3}
+                    href={pendingAllocationsHref}
+                    linkLabel="Lihat alokasi"
+                />
+                <InventoryMetricCard
+                    label="Alokasi aktif"
+                    value={`${formatQuantity(metrics.active_allocations)} alokasi`}
+                    description="Sudah diterima dan masih dipakai Loket"
+                    icon={ArrowRightLeft}
+                    href={allocationsIndex({ query: { status: 'accepted' } })}
+                    linkLabel="Lihat alokasi"
+                />
+                <InventoryMetricCard
+                    label="Box hampir habis"
+                    value={`${formatQuantity(metrics.nearly_depleted_boxes)} Box`}
+                    description="Sisa tersedia maksimal 10%"
+                    icon={TriangleAlert}
+                />
             </section>
 
             <Card>
-                <CardHeader className="flex-row items-center justify-between gap-4">
-                    <div>
-                        <CardTitle>Box terbaru</CardTitle>
-                        <p className="text-muted-foreground mt-1 text-sm">
-                            Lima penerimaan Box SKPD terakhir.
-                        </p>
-                    </div>
-                    <Button variant="outline" asChild>
-                        <Link href={boxesIndex()}>Lihat Box</Link>
-                    </Button>
+                <CardHeader>
+                    <CardTitle>Box terbaru</CardTitle>
+                    <CardDescription>
+                        Lima penerimaan Box SKPD terakhir.
+                    </CardDescription>
+                    <CardAction>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={boxesIndex()}>Lihat semua Box</Link>
+                        </Button>
+                    </CardAction>
                 </CardHeader>
                 <CardContent>
-                    {recentBoxes.length === 0 ? (
-                        <EmptyState
-                            icon={Boxes}
-                            title="Belum ada Box SKPD."
-                            description="Bendahara Barang dapat mendaftarkan Box saat persediaan diterima."
-                        />
-                    ) : (
-                        <div className="divide-y">
-                            {recentBoxes.map((box) => (
+                    <DataTable
+                        rows={recentBoxes}
+                        columns={boxColumns}
+                        getRowKey={(box) => box.id}
+                        rowHref={(box) => boxShow(box.id)}
+                        breakpoint="md"
+                        caption="Box SKPD terbaru"
+                        actions={(box) => (
+                            <Button variant="ghost" size="icon" asChild>
                                 <Link
-                                    key={box.id}
                                     href={boxShow(box.id)}
-                                    className="hover:bg-muted/50 grid gap-3 rounded-lg py-3 transition-colors sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
+                                    aria-label={`Lihat ${box.box_number}`}
+                                    title="Lihat detail"
                                 >
-                                    <div>
-                                        <p className="font-medium">
-                                            {box.box_number}
-                                        </p>
-                                        <p className="text-muted-foreground font-mono text-xs">
-                                            {formatRange(
-                                                box.numerator_start,
-                                                box.numerator_end,
-                                            )}
-                                        </p>
-                                    </div>
-                                    <div className="text-muted-foreground text-sm sm:text-right">
-                                        {formatQuantity(box.available_quantity)}{' '}
-                                        set tersedia
-                                    </div>
-                                    <div className="flex items-center gap-2 sm:justify-end">
-                                        <BoxStatusBadge status={box.status} />
-                                        <span className="text-muted-foreground text-xs">
-                                            {formatDate(box.received_at)}
-                                        </span>
-                                    </div>
+                                    <Eye />
                                 </Link>
-                            ))}
-                        </div>
-                    )}
+                            </Button>
+                        )}
+                        empty={
+                            <EmptyState
+                                icon={Boxes}
+                                title="Belum ada Box SKPD."
+                                description="Bendahara Barang dapat mendaftarkan Box saat persediaan diterima."
+                                action={
+                                    canManage ? (
+                                        <Button asChild>
+                                            <Link href={boxCreate()}>
+                                                <Plus />
+                                                Tambah Box
+                                            </Link>
+                                        </Button>
+                                    ) : null
+                                }
+                            />
+                        }
+                    />
                 </CardContent>
             </Card>
         </>
@@ -224,32 +336,44 @@ function LoketInventory({
     metrics,
     recent_allocations: recentAllocations,
 }: Extract<Props, { scope: 'loket' }>) {
+    if (loket === null) {
+        return (
+            <>
+                <PageHeader title="Persediaan SKPD" />
+                <Card>
+                    <CardContent>
+                        <EmptyState
+                            icon={UserX}
+                            title="Akun Anda belum ditugaskan ke Loket."
+                            description="Persediaan Loket akan tampil setelah Superadmin menetapkan Loket untuk akun Anda."
+                        />
+                    </CardContent>
+                </Card>
+            </>
+        );
+    }
+
     return (
         <>
-            <section className="space-y-1.5">
-                <p className="text-muted-foreground text-sm">
-                    Persediaan administratif Loket
-                </p>
-                <h1 className="text-2xl font-semibold tracking-tight">
-                    {loket?.name ?? 'Loket belum ditetapkan'}
-                </h1>
-                <p className="text-muted-foreground max-w-3xl text-sm">
-                    Hanya alokasi yang sudah diterima menjadi persediaan aktif
-                    Loket ini.
-                </p>
-            </section>
+            <PageHeader
+                title={`Persediaan ${loket.name}`}
+                description="Persediaan administratif Loket. Hanya alokasi yang sudah diterima menjadi persediaan aktif Loket ini."
+            />
 
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <section
+                aria-label="Ringkasan persediaan Loket"
+                className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            >
                 <InventoryMetricCard
                     label="Total diterima"
                     value={`${formatQuantity(metrics.received_quantity)} set`}
-                    description="Alokasi accepted dan completed"
+                    description="Dari alokasi yang sudah diterima"
                     icon={PackageCheck}
                 />
                 <InventoryMetricCard
                     label="Terpakai"
                     value={`${formatQuantity(metrics.used_quantity)} set`}
-                    description="Berdasarkan segment BAP"
+                    description="Tercatat pada BAP"
                     icon={ReceiptText}
                 />
                 <InventoryMetricCard
@@ -260,62 +384,59 @@ function LoketInventory({
                 />
                 <InventoryMetricCard
                     label="Menunggu handover"
-                    value={formatQuantity(metrics.pending_allocations)}
+                    value={`${formatQuantity(metrics.pending_allocations)} alokasi`}
                     description="Belum menjadi persediaan aktif"
                     icon={Clock3}
+                    href={pendingAllocationsHref}
+                    linkLabel={
+                        metrics.pending_allocations > 0
+                            ? 'Terima handover'
+                            : 'Lihat alokasi'
+                    }
                 />
             </section>
 
             <Card>
                 <CardHeader>
                     <CardTitle>Alokasi terbaru</CardTitle>
+                    <CardDescription>
+                        Lima alokasi terakhir untuk Loket ini.
+                    </CardDescription>
+                    <CardAction>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={allocationsIndex()}>
+                                Lihat semua alokasi
+                            </Link>
+                        </Button>
+                    </CardAction>
                 </CardHeader>
                 <CardContent>
-                    {recentAllocations.length === 0 ? (
-                        <EmptyState
-                            icon={CheckCircle2}
-                            title="Belum ada distribusi SKPD."
-                            description="Alokasi yang ditujukan ke Loket ini akan muncul di sini."
-                        />
-                    ) : (
-                        <div className="divide-y">
-                            {recentAllocations.map((allocation) => (
+                    <DataTable
+                        rows={recentAllocations}
+                        columns={allocationColumns}
+                        getRowKey={(allocation) => allocation.id}
+                        rowHref={(allocation) => allocationShow(allocation.id)}
+                        breakpoint="md"
+                        caption="Alokasi terbaru Loket"
+                        actions={(allocation) => (
+                            <Button variant="ghost" size="icon" asChild>
                                 <Link
-                                    key={allocation.id}
                                     href={allocationShow(allocation.id)}
-                                    className="hover:bg-muted/50 grid gap-3 rounded-lg py-3 transition-colors sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                                    aria-label={`Lihat alokasi ${allocation.box_number}`}
+                                    title="Lihat detail"
                                 >
-                                    <div>
-                                        <p className="font-medium">
-                                            {allocation.box_number}
-                                        </p>
-                                        <p className="text-muted-foreground font-mono text-xs">
-                                            {formatRange(
-                                                allocation.numerator_start,
-                                                allocation.numerator_end,
-                                            )}
-                                        </p>
-                                        <p className="text-muted-foreground text-xs">
-                                            {allocation.allocation_date
-                                                ? `Dialokasikan ${formatDate(allocation.allocation_date)}`
-                                                : 'Tanggal alokasi belum tercatat'}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-3 sm:justify-end">
-                                        <span className="text-muted-foreground text-sm">
-                                            {formatQuantity(
-                                                allocation.quantity,
-                                            )}{' '}
-                                            set
-                                        </span>
-                                        <AllocationStatusBadge
-                                            status={allocation.status}
-                                        />
-                                    </div>
+                                    <Eye />
                                 </Link>
-                            ))}
-                        </div>
-                    )}
+                            </Button>
+                        )}
+                        empty={
+                            <EmptyState
+                                icon={CheckCircle2}
+                                title="Belum ada alokasi untuk Loket ini."
+                                description="Alokasi dari Bendahara Barang akan muncul di sini dan perlu diterima sebelum dipakai."
+                            />
+                        }
+                    />
                 </CardContent>
             </Card>
         </>

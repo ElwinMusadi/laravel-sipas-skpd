@@ -245,7 +245,7 @@ test('Laporan Distribusi PDF and Excel exports share the summary and keep seven-
 
     $pdfResponse
         ->assertOk()
-        ->assertDownload('laporan-distribusi-skpd-agustus-2026.pdf')
+        ->assertHeader('content-disposition', 'inline; filename=laporan-distribusi-skpd-agustus-2026.pdf')
         ->assertHeader('content-type', 'application/pdf');
     expect($pdfResponse->getContent())->toStartWith('%PDF');
 

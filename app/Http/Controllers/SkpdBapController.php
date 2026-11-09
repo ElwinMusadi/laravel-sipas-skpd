@@ -60,7 +60,8 @@ class SkpdBapController extends Controller
         if ($search = $filters['search'] ?? null) {
             $query->where(function (Builder $query) use ($search): void {
                 $query
-                    ->whereHas('loket', fn (Builder $query): Builder => $query->where('name', 'like', "%{$search}%"))
+                    ->where('document_number', 'like', "%{$search}%")
+                    ->orWhereHas('loket', fn (Builder $query): Builder => $query->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('creator', fn (Builder $query): Builder => $query->where('name', 'like', "%{$search}%"));
             });
         }
@@ -535,7 +536,7 @@ class SkpdBapController extends Controller
     {
         return match ($status) {
             BapClarificationStatus::WaitingResponse => 'Menunggu Tanggapan',
-            BapClarificationStatus::Responded => 'Menunggu Review',
+            BapClarificationStatus::Responded => 'Menunggu Tinjauan',
             BapClarificationStatus::Resolved => 'Selesai',
             BapClarificationStatus::Reopened => 'Perlu Klarifikasi Ulang',
         };

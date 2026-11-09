@@ -1,8 +1,8 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
+import { DataTable, type DataTableColumn } from '@/components/app/data-table';
 import { EmptyState } from '@/components/app/empty-state';
+import { ListFooter, type Paginator } from '@/components/app/list-footer';
 import { formatQuantity, formatRange } from '@/components/inventory/format';
-import { Pagination } from '@/components/inventory/pagination';
-import type { PaginationLink } from '@/components/inventory/types';
 import { LaporanFilterCard } from '@/components/laporan/laporan-filter-card';
 import {
     formatLaporanPeriod,
@@ -12,11 +12,10 @@ import {
 } from '@/components/laporan/laporan-filters';
 import { LaporanHeader } from '@/components/laporan/laporan-header';
 import {
-    LaporanMobileValue,
-    LaporanSummaryCard,
-} from '@/components/laporan/laporan-summary-card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+    LaporanRecapTable,
+    type LaporanRecapColumn,
+} from '@/components/laporan/laporan-recap-table';
+import { LaporanSummaryCard } from '@/components/laporan/laporan-summary-card';
 import {
     Card,
     CardContent,
@@ -24,15 +23,6 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { index, pdf, xlsx } from '@/routes/laporan-persediaan';
 
 type PersediaanBox = {
@@ -58,13 +48,7 @@ type PersediaanLoketRecap = {
 };
 
 type Props = {
-    boxes: {
-        data: PersediaanBox[];
-        links: PaginationLink[];
-        from: number | null;
-        to: number | null;
-        total: number;
-    };
+    boxes: Paginator & { data: PersediaanBox[] };
     filters: LaporanFilters;
     lokets: LaporanLoketOption[];
     position: {
@@ -84,6 +68,83 @@ type Props = {
     loket_recaps: PersediaanLoketRecap[];
 };
 
+const boxColumns: DataTableColumn<PersediaanBox>[] = [
+    {
+        id: 'box',
+        header: 'Box',
+        cell: (box) => box.box_number,
+        className: 'font-medium whitespace-nowrap',
+        mobile: 'title',
+    },
+    {
+        id: 'numerator',
+        header: 'Nomerator',
+        cell: (box) => formatRange(box.numerator_start, box.numerator_end),
+        mono: true,
+        mobile: 'subtitle',
+    },
+    {
+        id: 'total_sets',
+        header: 'Total set',
+        cell: (box) => formatQuantity(box.total_sets),
+        numeric: true,
+    },
+    {
+        id: 'allocated',
+        header: 'Dialokasikan ke Loket',
+        cell: (box) => formatQuantity(box.allocated_quantity),
+        numeric: true,
+    },
+    {
+        id: 'pending',
+        header: 'Menunggu handover',
+        cell: (box) => formatQuantity(box.pending_quantity),
+        numeric: true,
+    },
+    {
+        id: 'used',
+        header: 'Terpakai',
+        cell: (box) => formatQuantity(box.used_quantity),
+        numeric: true,
+    },
+    {
+        id: 'central_remaining',
+        header: 'Sisa di pusat',
+        cell: (box) => formatQuantity(box.central_remaining),
+        numeric: true,
+    },
+    {
+        id: 'loket_remaining',
+        header: 'Sisa di Loket',
+        cell: (box) => formatQuantity(box.loket_remaining),
+        numeric: true,
+    },
+];
+
+const recapColumns: LaporanRecapColumn<PersediaanLoketRecap>[] = [
+    {
+        id: 'received',
+        header: 'Diterima',
+        value: (recap) => recap.received_quantity,
+    },
+    {
+        id: 'pending',
+        header: 'Menunggu handover',
+        value: (recap) => recap.pending_quantity,
+    },
+    {
+        id: 'used',
+        header: 'Terpakai',
+        value: (recap) => recap.used_quantity,
+    },
+    {
+        id: 'remaining',
+        header: 'Sisa di Loket',
+        value: (recap) => recap.remaining_quantity,
+        emphasis: true,
+    },
+];
+
 export default function LaporanPersediaanIndex({
     boxes,
     filters,
@@ -98,7 +159,7 @@ export default function LaporanPersediaanIndex({
         <>
             <Head title="Laporan Persediaan SKPD" />
 
-            <main
+            <div
                 data-print-document
                 className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6"
             >
@@ -109,10 +170,11 @@ export default function LaporanPersediaanIndex({
                         filters.month,
                         filters.year,
                     )}
+                    periodBasis="posisi akhir bulan (WITA); bulan berjalan memakai posisi saat ini"
                     pdfUrl={pdf.url(exportOptions)}
                     xlsxUrl={xlsx.url(exportOptions)}
                 >
-                    <p className="text-muted-foreground text-sm">
+                    <p>
                         Posisi per{' '}
                         <span className="text-foreground font-medium">
                             {position.label}
@@ -124,7 +186,6 @@ export default function LaporanPersediaanIndex({
                     indexUrl={index.url()}
                     filters={filters}
                     lokets={lokets}
-                    description="Posisi akhir bulan (WITA); bulan berjalan memakai posisi saat ini."
                 />
 
                 <section
@@ -167,108 +228,24 @@ export default function LaporanPersediaanIndex({
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loketRecaps.length === 0 ? (
-                            <EmptyState
-                                title="Belum ada persediaan SKPD di Loket pada posisi ini."
-                                description="Alokasi yang diterima Loket akan masuk ke laporan ini."
-                            />
-                        ) : (
-                            <>
-                                <div
-                                    data-print-mobile
-                                    className="grid gap-3 lg:hidden"
-                                >
-                                    {loketRecaps.map((recap) => (
-                                        <LoketMobileCard
-                                            key={recap.loket_id}
-                                            recap={recap}
-                                            filters={filters}
-                                        />
-                                    ))}
-                                </div>
-                                <div
-                                    data-print-table
-                                    className="hidden lg:block"
-                                >
-                                    <Table className="min-w-3xl">
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Loket</TableHead>
-                                                <TableHead className="text-right">
-                                                    Diterima
-                                                </TableHead>
-                                                <TableHead className="text-right">
-                                                    Menunggu handover
-                                                </TableHead>
-                                                <TableHead className="text-right">
-                                                    Terpakai
-                                                </TableHead>
-                                                <TableHead className="text-right">
-                                                    Sisa di Loket
-                                                </TableHead>
-                                                <TableHead
-                                                    data-print-action
-                                                    className="text-right"
-                                                >
-                                                    Aksi
-                                                </TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {loketRecaps.map((recap) => (
-                                                <TableRow key={recap.loket_id}>
-                                                    <TableCell className="font-medium">
-                                                        {recap.loket}
-                                                    </TableCell>
-                                                    <NumberCell
-                                                        value={
-                                                            recap.received_quantity
-                                                        }
-                                                    />
-                                                    <NumberCell
-                                                        value={
-                                                            recap.pending_quantity
-                                                        }
-                                                    />
-                                                    <NumberCell
-                                                        value={
-                                                            recap.used_quantity
-                                                        }
-                                                    />
-                                                    <NumberCell
-                                                        value={
-                                                            recap.remaining_quantity
-                                                        }
-                                                    />
-                                                    <TableCell
-                                                        data-print-action
-                                                        className="text-right"
-                                                    >
-                                                        <Button
-                                                            data-print-hidden
-                                                            variant="outline"
-                                                            size="sm"
-                                                            asChild
-                                                        >
-                                                            <Link
-                                                                href={index(
-                                                                    laporanQuery(
-                                                                        filters,
-                                                                        recap.loket_id,
-                                                                    ),
-                                                                )}
-                                                            >
-                                                                Detail Box
-                                                            </Link>
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            </>
-                        )}
+                        <LaporanRecapTable
+                            rows={loketRecaps}
+                            columns={recapColumns}
+                            getRowKey={(recap) => recap.loket_id}
+                            getLoket={(recap) => recap.loket}
+                            detailHref={(recap) =>
+                                index(laporanQuery(filters, recap.loket_id))
+                            }
+                            detailLabel="Detail Box"
+                            caption="Persediaan SKPD per Loket"
+                            minWidthClassName="min-w-3xl"
+                            empty={
+                                <EmptyState
+                                    title="Belum ada persediaan SKPD di Loket pada posisi ini."
+                                    description="Alokasi yang diterima Loket akan masuk ke laporan ini."
+                                />
+                            }
+                        />
                     </CardContent>
                 </Card>
 
@@ -278,156 +255,39 @@ export default function LaporanPersediaanIndex({
                         <CardDescription>
                             {filters.loket === null
                                 ? 'Sisa di pusat = total set − dialokasikan ke Loket − menunggu handover.'
-                                : 'Filter Loket aktif: kolom pusat hanya memperhitungkan alokasi Loket terpilih.'}
+                                : 'Filter Loket aktif: kolom pusat hanya memperhitungkan alokasi Loket terpilih.'}{' '}
+                            Cetak PDF memuat seluruh baris, bukan hanya halaman
+                            ini.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        {boxes.data.length === 0 ? (
-                            <EmptyState
-                                title="Belum ada Box SKPD pada posisi ini."
-                                description="Box yang diterima pusat sampai posisi laporan akan tampil di sini."
-                            />
-                        ) : (
-                            <>
-                                <div
-                                    data-print-mobile
-                                    className="grid gap-3 lg:hidden"
-                                >
-                                    {boxes.data.map((box) => (
-                                        <BoxMobileCard key={box.id} box={box} />
-                                    ))}
-                                </div>
-                                <div
-                                    data-print-table
-                                    className="hidden lg:block"
-                                >
-                                    <Table className="min-w-5xl">
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Box</TableHead>
-                                                <TableHead>Nomerator</TableHead>
-                                                <TableHead className="text-right">
-                                                    Total set
-                                                </TableHead>
-                                                <TableHead className="text-right">
-                                                    Dialokasikan ke Loket
-                                                </TableHead>
-                                                <TableHead className="text-right">
-                                                    Menunggu handover
-                                                </TableHead>
-                                                <TableHead className="text-right">
-                                                    Terpakai
-                                                </TableHead>
-                                                <TableHead className="text-right">
-                                                    Sisa di pusat
-                                                </TableHead>
-                                                <TableHead className="text-right">
-                                                    Sisa di Loket
-                                                </TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {boxes.data.map((box) => (
-                                                <TableRow key={box.id}>
-                                                    <TableCell className="font-medium">
-                                                        {box.box_number}
-                                                    </TableCell>
-                                                    <TableCell className="font-mono text-xs">
-                                                        {formatRange(
-                                                            box.numerator_start,
-                                                            box.numerator_end,
-                                                        )}
-                                                    </TableCell>
-                                                    <NumberCell
-                                                        value={box.total_sets}
-                                                    />
-                                                    <NumberCell
-                                                        value={
-                                                            box.allocated_quantity
-                                                        }
-                                                    />
-                                                    <NumberCell
-                                                        value={
-                                                            box.pending_quantity
-                                                        }
-                                                    />
-                                                    <NumberCell
-                                                        value={
-                                                            box.used_quantity
-                                                        }
-                                                    />
-                                                    <NumberCell
-                                                        value={
-                                                            box.central_remaining
-                                                        }
-                                                    />
-                                                    <NumberCell
-                                                        value={
-                                                            box.loket_remaining
-                                                        }
-                                                    />
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                        <TableFooter>
-                                            <TableRow>
-                                                <TableCell colSpan={2}>
-                                                    Total
-                                                </TableCell>
-                                                <NumberCell
-                                                    value={summary.total_sets}
-                                                />
-                                                <NumberCell
-                                                    value={
-                                                        summary.allocated_quantity
-                                                    }
-                                                />
-                                                <NumberCell
-                                                    value={
-                                                        summary.pending_quantity
-                                                    }
-                                                />
-                                                <NumberCell
-                                                    value={
-                                                        summary.used_quantity
-                                                    }
-                                                />
-                                                <NumberCell
-                                                    value={
-                                                        summary.central_remaining
-                                                    }
-                                                />
-                                                <NumberCell
-                                                    value={
-                                                        summary.loket_remaining
-                                                    }
-                                                />
-                                            </TableRow>
-                                        </TableFooter>
-                                    </Table>
-                                </div>
-                            </>
-                        )}
+                    <CardContent className="flex flex-col gap-4">
+                        <DataTable
+                            rows={boxes.data}
+                            columns={boxColumns}
+                            getRowKey={(box) => box.id}
+                            minWidthClassName="min-w-5xl"
+                            caption="Persediaan SKPD per Box"
+                            empty={
+                                <EmptyState
+                                    title="Belum ada Box SKPD pada posisi ini."
+                                    description="Box yang diterima pusat sampai posisi laporan akan tampil di sini."
+                                />
+                            }
+                        />
+                        {boxes.data.length > 0 ? (
+                            <BoxTotals summary={summary} />
+                        ) : null}
                     </CardContent>
                 </Card>
 
-                <div
-                    data-print-hidden
-                    className="flex flex-col justify-between gap-3 text-sm sm:flex-row sm:items-center"
-                >
-                    <p className="text-muted-foreground">
-                        Menampilkan {boxes.from ?? 0}–{boxes.to ?? 0} dari{' '}
-                        {boxes.total} Box
-                    </p>
-                    <Pagination links={boxes.links} />
-                </div>
+                <ListFooter paginator={boxes} noun="Box" />
 
                 <p className="text-muted-foreground text-xs">
                     Alokasi yang ditarik ke pusat dihitung dengan jumlah saat
                     ini, sehingga periode sebelum penarikan menampilkan angka
                     yang sudah berkurang. Alokasi dibatalkan tidak dihitung.
                 </p>
-            </main>
+            </div>
         </>
     );
 }
@@ -436,92 +296,39 @@ LaporanPersediaanIndex.layout = {
     breadcrumbs: [{ title: 'Laporan Persediaan SKPD', href: index() }],
 };
 
-function NumberCell({ value }: { value: number }) {
-    return (
-        <TableCell className="text-right tabular-nums">
-            {formatQuantity(value)}
-        </TableCell>
-    );
-}
+/**
+ * Totals of every Box in the report, not just the page on screen.
+ */
+function BoxTotals({ summary }: { summary: Props['summary'] }) {
+    const totals = [
+        { label: 'Total set', value: summary.total_sets },
+        { label: 'Dialokasikan ke Loket', value: summary.allocated_quantity },
+        { label: 'Menunggu handover', value: summary.pending_quantity },
+        { label: 'Terpakai', value: summary.used_quantity },
+        { label: 'Sisa di pusat', value: summary.central_remaining },
+        { label: 'Sisa di Loket', value: summary.loket_remaining },
+    ];
 
-function LoketMobileCard({
-    recap,
-    filters,
-}: {
-    recap: PersediaanLoketRecap;
-    filters: LaporanFilters;
-}) {
     return (
-        <Card>
-            <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
-                <CardTitle className="text-base">{recap.loket}</CardTitle>
-                <Badge variant="outline">
-                    Sisa {formatQuantity(recap.remaining_quantity)}
-                </Badge>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                    <LaporanMobileValue
-                        label="Diterima"
-                        value={formatQuantity(recap.received_quantity)}
-                    />
-                    <LaporanMobileValue
-                        label="Menunggu handover"
-                        value={formatQuantity(recap.pending_quantity)}
-                    />
-                    <LaporanMobileValue
-                        label="Terpakai"
-                        value={formatQuantity(recap.used_quantity)}
-                    />
-                </div>
-                <Button data-print-hidden variant="outline" size="sm" asChild>
-                    <Link href={index(laporanQuery(filters, recap.loket_id))}>
-                        Detail Box
-                    </Link>
-                </Button>
-            </CardContent>
-        </Card>
-    );
-}
-
-function BoxMobileCard({ box }: { box: PersediaanBox }) {
-    return (
-        <Card>
-            <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
-                <div className="flex flex-col gap-1">
-                    <CardTitle className="text-base">
-                        {box.box_number}
-                    </CardTitle>
-                    <CardDescription className="font-mono text-xs">
-                        {formatRange(box.numerator_start, box.numerator_end)}
-                    </CardDescription>
-                </div>
-                <Badge variant="outline">
-                    {formatQuantity(box.total_sets)} set
-                </Badge>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-3 text-sm">
-                <LaporanMobileValue
-                    label="Dialokasikan ke Loket"
-                    value={formatQuantity(box.allocated_quantity)}
-                />
-                <LaporanMobileValue
-                    label="Menunggu handover"
-                    value={formatQuantity(box.pending_quantity)}
-                />
-                <LaporanMobileValue
-                    label="Terpakai"
-                    value={formatQuantity(box.used_quantity)}
-                />
-                <LaporanMobileValue
-                    label="Sisa di pusat"
-                    value={formatQuantity(box.central_remaining)}
-                />
-                <LaporanMobileValue
-                    label="Sisa di Loket"
-                    value={formatQuantity(box.loket_remaining)}
-                />
-            </CardContent>
-        </Card>
+        <section
+            aria-label="Total seluruh Box"
+            className="bg-muted/50 rounded-lg border p-4"
+        >
+            <p className="text-sm font-medium">
+                Total seluruh Box ({formatQuantity(summary.total_boxes)})
+            </p>
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3 xl:grid-cols-6">
+                {totals.map((total) => (
+                    <div key={total.label} className="min-w-0">
+                        <dt className="text-muted-foreground text-xs">
+                            {total.label}
+                        </dt>
+                        <dd className="font-medium tabular-nums">
+                            {formatQuantity(total.value)}
+                        </dd>
+                    </div>
+                ))}
+            </dl>
+        </section>
     );
 }

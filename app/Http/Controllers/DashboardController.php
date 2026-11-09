@@ -107,7 +107,7 @@ class DashboardController extends Controller
                         'loket' => $bap->loket->name,
                         'serviceDate' => $bap->service_date->toDateString(),
                         'submittedAt' => $bap->submitted_at?->toIso8601String(),
-                        'status' => $this->dashboardStatus($bap->status),
+                        'status' => $bap->status->value,
                     ])
                     ->all(),
             ],
@@ -162,7 +162,7 @@ class DashboardController extends Controller
                 ],
                 [
                     'id' => 'discrepancy',
-                    'label' => 'Klarifikasi Menunggu Review',
+                    'label' => 'Klarifikasi Menunggu Tinjauan',
                     'value' => $clarificationReviewCount,
                     'description' => 'Tanggapan Loket untuk selisih Tahap 1',
                 ],
@@ -261,7 +261,7 @@ class DashboardController extends Controller
                 ],
                 [
                     'id' => 'discrepancy',
-                    'label' => 'Klarifikasi Menunggu Review',
+                    'label' => 'Klarifikasi Menunggu Tinjauan',
                     'value' => $clarificationReviewCount,
                     'description' => 'Tanggapan Loket untuk selisih Tahap 2',
                 ],
@@ -432,7 +432,7 @@ class DashboardController extends Controller
 
     /**
      * @param  Builder<Bap>  $bapQuery
-     * @return list<array{id: int, loket: string, serviceDate: string, submittedAt: string|null, status: string}>
+     * @return list<array{id: int, documentNumber: string, loket: string, serviceDate: string, submittedAt: string|null, status: string}>
      */
     private function recentBaps(Builder $bapQuery): array
     {
@@ -448,25 +448,9 @@ class DashboardController extends Controller
                 'loket' => $bap->loket->name,
                 'serviceDate' => $bap->service_date->toDateString(),
                 'submittedAt' => $bap->submitted_at?->toIso8601String(),
-                'status' => $this->dashboardStatus($bap->status),
+                'status' => $bap->status->value,
             ])
             ->values()
             ->all());
-    }
-
-    private function dashboardStatus(BapStatus $status): string
-    {
-        return match ($status) {
-            BapStatus::Draft => 'draft',
-            BapStatus::Submitted => 'waiting',
-            BapStatus::UnderVerification => 'in_progress',
-            BapStatus::NeedsClarification => 'discrepancy',
-            BapStatus::WaitingReverificationPhase1 => 'waiting',
-            BapStatus::WaitingVerificationPhase2 => 'completed',
-            BapStatus::UnderVerificationPhase2 => 'in_progress',
-            BapStatus::WaitingReverificationPhase2 => 'waiting',
-            BapStatus::VerifiedPhase2 => 'completed',
-            BapStatus::Completed => 'completed',
-        };
     }
 }

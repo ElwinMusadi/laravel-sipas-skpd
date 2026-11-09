@@ -22,7 +22,12 @@ export function AppSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton
+                            size="lg"
+                            className="h-auto min-h-14"
+                            tooltip="SIPAS-SKPD"
+                            asChild
+                        >
                             <Link
                                 href={dashboard()}
                                 prefetch

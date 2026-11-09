@@ -4,6 +4,11 @@ import { type FormEvent, useState } from 'react';
 import SkpdBapController from '@/actions/App/Http/Controllers/SkpdBapController';
 import FormErrorSummary from '@/components/form-error-summary';
 import InputError from '@/components/input-error';
+import { DetailList, DetailRow } from '@/components/app/detail-list';
+import {
+    BapStatusBadge,
+    type BapStatus,
+} from '@/components/bap/bap-status-badge';
 import { formatDate, formatRange } from '@/components/inventory/format';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -29,7 +34,7 @@ type Props = {
         service_date: string;
         numerator_start: number;
         numerator_end: number;
-        status: string;
+        status: BapStatus;
     };
 };
 
@@ -88,20 +93,20 @@ export function BapHardDeleteDialog({ bap }: Props) {
                 <DialogHeader>
                     <DialogTitle>Hapus permanen BAP SKPD?</DialogTitle>
                     <DialogDescription>
-                        Tindakan khusus untuk menghapus BAP berstatus completed.
-                        Ini berbeda dari penghapusan draft dan tidak dapat
-                        dibatalkan.
+                        Tindakan khusus untuk menghapus BAP berstatus Selesai
+                        Administratif. Ini berbeda dari penghapusan draft dan
+                        tidak dapat dipulihkan.
                     </DialogDescription>
                 </DialogHeader>
 
-                <dl className="bg-muted grid gap-3 rounded-xl p-4 text-sm">
-                    <ReviewLine label="Nomor BAP" value={bap.document_number} />
-                    <ReviewLine label="Loket" value={bap.loket.name} />
-                    <ReviewLine
+                <DetailList className="bg-muted rounded-xl p-4">
+                    <DetailRow label="Nomor BAP" value={bap.document_number} />
+                    <DetailRow label="Loket" value={bap.loket.name} />
+                    <DetailRow
                         label="Tanggal pelayanan"
                         value={formatDate(bap.service_date)}
                     />
-                    <ReviewLine
+                    <DetailRow
                         label="Range Nomerator"
                         value={formatRange(
                             bap.numerator_start,
@@ -109,23 +114,19 @@ export function BapHardDeleteDialog({ bap }: Props) {
                         )}
                         mono
                     />
-                    <ReviewLine
+                    <DetailRow
                         label="Status"
-                        value={
-                            bap.status === 'completed'
-                                ? 'Selesai (completed)'
-                                : bap.status
-                        }
+                        value={<BapStatusBadge status={bap.status} />}
                     />
-                </dl>
+                </DetailList>
 
                 <Alert variant="destructive">
                     <TriangleAlert />
                     <AlertTitle>Penghapusan ini permanen</AlertTitle>
                     <AlertDescription>
-                        Seluruh riwayat verifikasi, klarifikasi, receipt, dan
-                        report terkait ikut hilang. Inventory akan
-                        direkonsiliasi oleh sistem setelah penghapusan.
+                        Seluruh riwayat verifikasi, klarifikasi, penerimaan, dan
+                        laporan terkait ikut terhapus. Persediaan direkonsiliasi
+                        otomatis oleh sistem setelah penghapusan.
                     </AlertDescription>
                 </Alert>
 
@@ -205,7 +206,7 @@ export function BapHardDeleteDialog({ bap }: Props) {
                     <DialogFooter>
                         <DialogClose asChild>
                             <Button type="button" variant="outline">
-                                Batal
+                                Kembali
                             </Button>
                         </DialogClose>
                         <Button
@@ -222,26 +223,5 @@ export function BapHardDeleteDialog({ bap }: Props) {
                 </form>
             </DialogContent>
         </Dialog>
-    );
-}
-
-function ReviewLine({
-    label,
-    value,
-    mono = false,
-}: {
-    label: string;
-    value: string;
-    mono?: boolean;
-}) {
-    return (
-        <div className="flex items-start justify-between gap-4">
-            <dt className="text-muted-foreground">{label}</dt>
-            <dd
-                className={`text-right font-medium ${mono ? 'font-mono text-xs whitespace-nowrap' : ''}`}
-            >
-                {value}
-            </dd>
-        </div>
     );
 }

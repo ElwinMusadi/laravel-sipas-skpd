@@ -393,7 +393,7 @@ class SkpdBapAdministrativeReceiptController extends Controller
     {
         return match ($status) {
             BapClarificationStatus::WaitingResponse => 'Menunggu Tanggapan',
-            BapClarificationStatus::Responded => 'Menunggu Review',
+            BapClarificationStatus::Responded => 'Menunggu Tinjauan',
             BapClarificationStatus::Resolved => 'Selesai',
             BapClarificationStatus::Reopened => 'Perlu Klarifikasi Ulang',
         };

@@ -3,6 +3,7 @@ import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 
 export type LoketFormData = {
     id: number;
@@ -64,39 +65,45 @@ export function LoketFormFields({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="description">Deskripsi</Label>
-                <textarea
+                <Label htmlFor="description">Keterangan (opsional)</Label>
+                <Textarea
                     id="description"
                     name="description"
+                    rows={3}
                     defaultValue={loket?.description ?? ''}
-                    className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 min-h-24 w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
-                    placeholder="Keterangan singkat Loket (opsional)"
+                    placeholder="Keterangan singkat Loket"
                     aria-invalid={Boolean(errors.description)}
                 />
                 <InputError message={errors.description} />
             </div>
 
             {includeStatus ? (
-                <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
-                    <div className="grid gap-1">
-                        <Label htmlFor="is_active">Status Loket</Label>
-                        <p className="text-muted-foreground text-sm">
-                            Loket tidak aktif tidak dapat menerima alokasi,
-                            penugasan baru, atau BAP baru. Riwayatnya tetap
-                            dapat dibaca.
-                        </p>
+                <div className="grid gap-2">
+                    <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+                        <div className="grid gap-1">
+                            <Label htmlFor="is_active">Loket aktif</Label>
+                            <p
+                                id="is_active-description"
+                                className="text-muted-foreground text-sm"
+                            >
+                                Loket tidak aktif tidak dapat menerima alokasi,
+                                penugasan baru, atau BAP baru. Riwayatnya tetap
+                                dapat dibaca.
+                            </p>
+                        </div>
+                        <input
+                            type="hidden"
+                            name="is_active"
+                            value={isActive ? '1' : '0'}
+                        />
+                        <Switch
+                            id="is_active"
+                            checked={isActive}
+                            onCheckedChange={setIsActive}
+                            aria-describedby="is_active-description"
+                            aria-invalid={Boolean(errors.is_active)}
+                        />
                     </div>
-                    <input
-                        type="hidden"
-                        name="is_active"
-                        value={isActive ? '1' : '0'}
-                    />
-                    <Switch
-                        id="is_active"
-                        checked={isActive}
-                        onCheckedChange={setIsActive}
-                        aria-label="Status Loket aktif"
-                    />
                     <InputError message={errors.is_active} />
                 </div>
             ) : null}

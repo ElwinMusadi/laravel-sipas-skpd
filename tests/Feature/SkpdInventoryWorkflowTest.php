@@ -202,6 +202,53 @@ test('allocation endpoint requires a valid allocation date', function () {
     $this->assertDatabaseCount('skpd_allocations', 0);
 });
 
+test('allocation form preselects the Box from the box query parameter and defaults to the business date', function () {
+    $this->travelTo('2026-11-09 23:30:00');
+
+    $bendahara = phaseFiveBendahara();
+    $box = phaseFiveBox($bendahara);
+    $fullyAllocatedBox = phaseFiveBox($bendahara, 'BOX-PHASE-05-FULL', 6_000_000, 6_000_099);
+    phaseFiveAllocation($bendahara, $fullyAllocatedBox, Loket::factory()->create(), 6_000_000, 6_000_099);
+
+    $this->actingAs($bendahara)
+        ->get(route('skpd.allocations.create', ['box' => $box->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('skpd/allocations/create')
+            ->has('boxes', 1)
+            ->where('defaults.skpd_box_id', $box->id)
+            ->where('defaults.allocation_date', '2026-11-10'),
+        );
+
+    $this->actingAs($bendahara)
+        ->get(route('skpd.allocations.create', ['box' => $fullyAllocatedBox->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('defaults.skpd_box_id', null)
+            ->etc(),
+        );
+
+    $this->actingAs($bendahara)
+        ->get(route('skpd.allocations.create', ['box' => 'bukan-angka']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('defaults.skpd_box_id', null)
+            ->etc(),
+        );
+});
+
+test('Box registration form defaults the received date to the business date', function () {
+    $this->travelTo('2026-11-09 23:30:00');
+
+    $this->actingAs(phaseFiveBendahara())
+        ->get(route('skpd.boxes.create'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('skpd/boxes/create')
+            ->where('defaults.received_at', '2026-11-10'),
+        );
+});
+
 test('allocation endpoint rejects a range outside its Box', function () {
     $bendahara = phaseFiveBendahara();
     $loket = Loket::factory()->create();

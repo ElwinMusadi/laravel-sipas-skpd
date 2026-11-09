@@ -13,6 +13,7 @@ use App\Models\SkpdAllocation;
 use App\Models\SkpdBox;
 use App\SkpdAllocationStatus;
 use App\SkpdBoxStatus;
+use App\Support\BusinessDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -80,7 +81,9 @@ class SkpdBoxController extends Controller
     {
         Gate::authorize('manage-skpd-inventory');
 
-        return Inertia::render('skpd/boxes/create');
+        return Inertia::render('skpd/boxes/create', [
+            'defaults' => ['received_at' => BusinessDate::today()],
+        ]);
     }
 
     /**
