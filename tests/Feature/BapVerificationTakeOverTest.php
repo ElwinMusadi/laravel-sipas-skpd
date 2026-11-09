@@ -127,8 +127,8 @@ test('a colleague Petugas Penetapan takes over a stalled Phase 1 check with an a
         ->and($bap->refresh()->status)->toBe(BapStatus::UnderVerification)
         ->and($audit->actor_id)->toBe($colleague->id)
         ->and($audit->auditable_id)->toBe($bap->id)
-        ->and($audit->old_values)->toBe(['verification_id' => $verification->id, 'verifier_id' => $starter->id])
-        ->and($audit->new_values)->toBe(['verification_id' => $verification->id, 'attempt' => 1, 'verifier_id' => $colleague->id]);
+        ->and($audit->old_values)->toEqual(['verification_id' => $verification->id, 'verifier_id' => $starter->id])
+        ->and($audit->new_values)->toEqual(['verification_id' => $verification->id, 'attempt' => 1, 'verifier_id' => $colleague->id]);
 
     $this->actingAs($colleague)
         ->post(route('bap-verifications.complete', $bap), takeOverPassingPayload($bap))

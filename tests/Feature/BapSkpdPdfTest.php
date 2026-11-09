@@ -188,8 +188,9 @@ test('streaming a BAP PDF does not mutate source records', function () {
         'received_at',
         'receipt_notes',
     ];
+    $persisted = $bap->fresh();
     $source = collect($fields)
-        ->mapWithKeys(fn (string $field): array => [$field => $bap->getRawOriginal($field)])
+        ->mapWithKeys(fn (string $field): array => [$field => $persisted?->getRawOriginal($field)])
         ->all();
 
     $this->actingAs($creator)
