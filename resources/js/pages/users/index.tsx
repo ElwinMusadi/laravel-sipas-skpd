@@ -66,12 +66,14 @@ const columns: DataTableColumn<ManagedUserRow>[] = [
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (user) => <ActiveStatusBadge active={user.is_active} />,
         mobile: 'badge',
     },
     {
         id: 'nip',
+        wideOnly: true,
         header: 'NIP',
         cell: (user) => user.nip,
         mono: true,
@@ -88,6 +90,7 @@ const columns: DataTableColumn<ManagedUserRow>[] = [
     },
     {
         id: 'last_login_at',
+        wideOnly: true,
         header: 'Login terakhir',
         cell: (user) =>
             user.last_login_at

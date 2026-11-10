@@ -65,6 +65,7 @@ const columns: DataTableColumn<Loket>[] = [
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (loket) => <ActiveStatusBadge active={loket.is_active} />,
         mobile: 'badge',

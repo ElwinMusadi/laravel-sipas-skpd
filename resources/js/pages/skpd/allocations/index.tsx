@@ -70,12 +70,12 @@ const columns: DataTableColumn<Allocation>[] = [
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (allocation) => (
             <AllocationStatusBadge status={allocation.status} />
         ),
         mobile: 'badge',
-        className: 'min-w-36',
     },
     {
         id: 'numerator',
@@ -98,6 +98,7 @@ const columns: DataTableColumn<Allocation>[] = [
     },
     {
         id: 'allocation_date',
+        wideOnly: true,
         header: 'Tanggal alokasi',
         cell: (allocation) =>
             allocation.allocation_date
@@ -107,6 +108,7 @@ const columns: DataTableColumn<Allocation>[] = [
     },
     {
         id: 'accepted',
+        wideOnly: true,
         header: 'Diterima oleh',
         cell: (allocation) =>
             allocation.accepted_at ? (

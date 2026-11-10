@@ -457,9 +457,11 @@ export default function ShowBap({ bap }: Props) {
                 </Card>
 
                 <Card>
-                    <CardHeader className="flex-row items-center gap-2">
-                        <History className="text-muted-foreground size-4" />
-                        <CardTitle>Riwayat singkat</CardTitle>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <History className="text-muted-foreground size-4" />
+                            Riwayat singkat
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         {bap.timeline.length === 0 ? (

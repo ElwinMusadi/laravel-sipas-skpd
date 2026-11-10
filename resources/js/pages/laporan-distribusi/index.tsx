@@ -118,6 +118,7 @@ const allocationColumns: DataTableColumn<DistribusiRow>[] = [
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (allocation) => (
             <AllocationStatusBadge status={allocation.status} />

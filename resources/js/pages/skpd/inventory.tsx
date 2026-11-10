@@ -111,6 +111,7 @@ const boxColumns: DataTableColumn<SkpdBoxSummary>[] = [
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (box) => <BoxStatusBadge status={box.status} />,
         mobile: 'badge',
@@ -147,6 +148,7 @@ const allocationColumns: DataTableColumn<LoketAllocation>[] = [
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (allocation) => (
             <AllocationStatusBadge status={allocation.status} />

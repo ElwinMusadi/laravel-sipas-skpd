@@ -16,8 +16,18 @@ export type DataTableColumn<T> = {
     cell: (row: T) => ReactNode;
     /** Right-aligned with tabular figures, for quantities. */
     numeric?: boolean;
-    /** Monospace, for Nomerator ranges and codes; applies to the card too. */
+    /** Monospace cells, for Nomerator ranges and codes; applies to the card too. */
     mono?: boolean;
+    /**
+     * A status badge column: fixed width and centered; a long label wraps
+     * inside the badge instead of widening the column.
+     */
+    status?: boolean;
+    /**
+     * Secondary detail shown as a table column only on wide screens (2xl and
+     * up) so common laptop widths fit without scrolling; cards always show it.
+     */
+    wideOnly?: boolean;
     align?: 'left' | 'center' | 'right';
     className?: string;
     headerClassName?: string;
@@ -33,10 +43,10 @@ type Props<T> = {
     rows: T[];
     columns: DataTableColumn<T>[];
     getRowKey: (row: T) => Key;
-    /** Row actions; kept visible at the right edge while the table scrolls. */
+    /** Row actions, in the last column of the table and the foot of a card. */
     actions?: (row: T) => ReactNode;
     actionsHeader?: string;
-    /** Makes the mobile card title a link to the record. */
+    /** Makes the title column a link to the record. */
     rowHref?: (row: T) => NonNullable<InertiaLinkProps['href']>;
     empty: ReactNode;
     /** Minimum table width class so columns do not squash, e.g. `min-w-240`. */
@@ -64,12 +74,31 @@ const alignClassName = {
     right: 'text-right',
 } as const;
 
-function columnAlign<T>(column: DataTableColumn<T>): string {
+const statusColumnClassName =
+    'w-42 min-w-42 text-center [&_[data-slot=badge]]:h-auto [&_[data-slot=badge]]:max-w-full [&_[data-slot=badge]]:py-1 [&_[data-slot=badge]]:text-center [&_[data-slot=badge]]:leading-tight [&_[data-slot=badge]]:whitespace-normal';
+
+function headerAlign<T>(column: DataTableColumn<T>): string {
     return cn(
-        column.numeric
-            ? 'text-right tabular-nums'
-            : alignClassName[column.align ?? 'left'],
-        column.mono && 'font-mono text-xs whitespace-nowrap',
+        column.status
+            ? statusColumnClassName
+            : column.numeric
+              ? 'text-right'
+              : alignClassName[column.align ?? 'left'],
+        column.wideOnly && 'hidden 2xl:table-cell',
+    );
+}
+
+function cellAlign<T>(column: DataTableColumn<T>): string {
+    return cn(
+        column.status
+            ? statusColumnClassName
+            : cn(
+                  column.numeric
+                      ? 'text-right tabular-nums'
+                      : alignClassName[column.align ?? 'left'],
+                  column.mono && 'font-mono text-xs whitespace-nowrap',
+              ),
+        column.wideOnly && 'hidden 2xl:table-cell',
     );
 }
 
@@ -105,7 +134,7 @@ export function DataTable<T>({
     return (
         <>
             <div
-                className={cn(tableVisibility[breakpoint], 'overflow-x-auto')}
+                className={cn(tableVisibility[breakpoint], 'min-w-0')}
                 data-print-table
             >
                 <Table className={minWidthClassName}>
@@ -113,12 +142,12 @@ export function DataTable<T>({
                         <caption className="sr-only">{caption}</caption>
                     ) : null}
                     <TableHeader>
-                        <TableRow>
+                        <TableRow className="hover:bg-transparent">
                             {columns.map((column) => (
                                 <TableHead
                                     key={column.id}
                                     className={cn(
-                                        columnAlign(column),
+                                        headerAlign(column),
                                         column.headerClassName,
                                     )}
                                 >
@@ -127,7 +156,7 @@ export function DataTable<T>({
                             ))}
                             {actions ? (
                                 <TableHead
-                                    className="bg-card sticky right-0 text-right"
+                                    className="text-right"
                                     data-print-action
                                 >
                                     <span className="sr-only">
@@ -139,12 +168,12 @@ export function DataTable<T>({
                     </TableHeader>
                     <TableBody>
                         {rows.map((row) => (
-                            <TableRow key={getRowKey(row)} className="group">
+                            <TableRow key={getRowKey(row)}>
                                 {columns.map((column) => (
                                     <TableCell
                                         key={column.id}
                                         className={cn(
-                                            columnAlign(column),
+                                            cellAlign(column),
                                             column.className,
                                         )}
                                     >
@@ -163,7 +192,7 @@ export function DataTable<T>({
                                 ))}
                                 {actions ? (
                                     <TableCell
-                                        className="bg-card group-hover:bg-muted/50 sticky right-0 text-right"
+                                        className="w-px text-right"
                                         data-print-action
                                     >
                                         <div className="flex justify-end gap-1">
@@ -178,17 +207,23 @@ export function DataTable<T>({
             </div>
 
             <ul
-                className={cn(cardVisibility[breakpoint], 'grid gap-3')}
+                className={cn(
+                    cardVisibility[breakpoint],
+                    'grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3',
+                )}
                 data-print-mobile
             >
                 {rows.map((row) => (
-                    <li key={getRowKey(row)} className="rounded-lg border p-4">
+                    <li
+                        key={getRowKey(row)}
+                        className="min-w-0 rounded-lg border p-4"
+                    >
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 space-y-0.5">
                                 {titleColumns.map((column) => (
                                     <div
                                         key={column.id}
-                                        className="font-medium break-words"
+                                        className="font-medium [overflow-wrap:anywhere]"
                                     >
                                         {rowHref ? (
                                             <Link
@@ -212,7 +247,7 @@ export function DataTable<T>({
                                 ))}
                             </div>
                             {badgeColumns.length > 0 ? (
-                                <div className="flex shrink-0 flex-col items-end gap-1">
+                                <div className="flex max-w-[50%] shrink-0 flex-col items-end gap-1 text-right [&_[data-slot=badge]]:h-auto [&_[data-slot=badge]]:py-0.5 [&_[data-slot=badge]]:text-right [&_[data-slot=badge]]:leading-tight [&_[data-slot=badge]]:whitespace-normal">
                                     {badgeColumns.map((column) => (
                                         <div key={column.id}>
                                             {column.cell(row)}

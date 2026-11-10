@@ -14,7 +14,8 @@ type Props = {
 
 /**
  * The one page heading pattern: optional back link, the page `h1` with status
- * badges, a short description, and the page actions that wrap on small screens.
+ * badges, a short description, and the page actions. The title keeps at least
+ * 20rem; when the actions do not fit beside it they move below as a row.
  */
 export function PageHeader({
     title,
@@ -25,8 +26,8 @@ export function PageHeader({
     actions,
 }: Props) {
     return (
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-            <div className="min-w-0 space-y-2">
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+            <div className="min-w-0 flex-[1_1_20rem] space-y-2">
                 {back ? (
                     <Button
                         variant="link"
@@ -55,10 +56,7 @@ export function PageHeader({
                 {meta}
             </div>
             {actions ? (
-                <div
-                    className="flex flex-wrap gap-2 sm:shrink-0 sm:justify-end"
-                    data-print-hidden
-                >
+                <div className="flex flex-wrap gap-2" data-print-hidden>
                     {actions}
                 </div>
             ) : null}

@@ -7,6 +7,7 @@ import { formatDate, formatDateTime } from '@/components/inventory/format';
 import { Button } from '@/components/ui/button';
 import {
     Card,
+    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -32,6 +33,7 @@ const columns: DataTableColumn<RecentBap>[] = [
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (item) => <BapStatusBadge status={item.status} />,
         mobile: 'badge',
@@ -50,16 +52,16 @@ const columns: DataTableColumn<RecentBap>[] = [
 export function RecentBaps({ items }: { items: readonly RecentBap[] }) {
     return (
         <Card className="rounded-xl">
-            <CardHeader className="flex-row items-start justify-between gap-4">
-                <div className="grid gap-1">
-                    <CardTitle>BAP Terbaru</CardTitle>
-                    <CardDescription>
-                        Lima BAP terakhir dalam akses Anda.
-                    </CardDescription>
-                </div>
-                <Button variant="outline" size="sm" asChild>
-                    <Link href={index()}>Lihat semua</Link>
-                </Button>
+            <CardHeader>
+                <CardTitle>BAP Terbaru</CardTitle>
+                <CardDescription>
+                    Lima BAP terakhir dalam akses Anda.
+                </CardDescription>
+                <CardAction>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={index()}>Lihat semua</Link>
+                    </Button>
+                </CardAction>
             </CardHeader>
             <CardContent>
                 <DataTable

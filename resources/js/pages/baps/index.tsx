@@ -57,17 +57,25 @@ const columns: DataTableColumn<Bap>[] = [
     },
     {
         id: 'service_date',
-        header: 'Tanggal pelayanan',
-        cell: (bap) => `${formatDate(bap.service_date)} · ${bap.loket.name}`,
+        header: 'Tanggal · Loket',
+        cell: (bap) => (
+            <>
+                <span className="block whitespace-nowrap">
+                    {formatDate(bap.service_date)}
+                </span>
+                <span className="text-muted-foreground block text-xs">
+                    {bap.loket.name}
+                </span>
+            </>
+        ),
         mobile: 'subtitle',
-        className: 'whitespace-nowrap',
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (bap) => <BapStatusBadge status={bap.status} />,
         mobile: 'badge',
-        className: 'min-w-44',
     },
     {
         id: 'numerator',
@@ -95,17 +103,18 @@ const columns: DataTableColumn<Bap>[] = [
     },
     {
         id: 'created_by',
-        header: 'Dibuat oleh',
-        cell: (bap) => bap.created_by,
-    },
-    {
-        id: 'submitted_at',
-        header: 'Diajukan',
-        cell: (bap) =>
-            bap.submitted_at
-                ? formatDateTime(bap.submitted_at)
-                : 'Belum diajukan',
-        className: 'text-muted-foreground whitespace-nowrap',
+        wideOnly: true,
+        header: 'Dibuat · Diajukan',
+        cell: (bap) => (
+            <>
+                <span className="block">{bap.created_by}</span>
+                <span className="text-muted-foreground block text-xs whitespace-nowrap">
+                    {bap.submitted_at
+                        ? formatDateTime(bap.submitted_at)
+                        : 'Belum diajukan'}
+                </span>
+            </>
+        ),
     },
 ];
 
@@ -164,7 +173,7 @@ export default function BapIndex({ baps, filters, can }: Props) {
                             columns={columns}
                             getRowKey={(bap) => bap.id}
                             rowHref={(bap) => show(bap.id)}
-                            minWidthClassName="min-w-240"
+                            minWidthClassName="min-w-224"
                             caption="Daftar BAP SKPD"
                             actions={(bap) => (
                                 <>

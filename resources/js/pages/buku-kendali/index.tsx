@@ -273,7 +273,6 @@ function BukuKendaliFilters({
                 value={search}
                 onChange={setSearch}
                 placeholder="Nomor BAP, Loket, atau Nomerator"
-                className="sm:col-span-2 xl:col-span-1"
             />
             <FilterField id="buku-kendali-start-date" label="Tanggal mulai">
                 <DatePicker

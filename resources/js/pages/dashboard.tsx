@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, type InertiaLinkProps } from '@inertiajs/react';
 import {
     BarChart3,
     ClipboardCheck,
@@ -6,7 +6,7 @@ import {
     PackagePlus,
     Plus,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { PageHeader } from '@/components/app/page-header';
 import type { DashboardPresentationData } from '@/components/dashboard/dashboard-data';
 import { DashboardMetrics } from '@/components/dashboard/dashboard-metrics';
@@ -23,76 +23,61 @@ import { create as createAllocation } from '@/routes/skpd/allocations';
 
 type Props = { dashboard: DashboardPresentationData };
 
+/**
+ * A role-based shortcut in the page header; the first one is the primary
+ * action and the rest are outlined so one button stands out.
+ */
+type QuickAction = {
+    key: string;
+    href: NonNullable<InertiaLinkProps['href']>;
+    icon: LucideIcon;
+    label: string;
+};
+
 export default function Dashboard({ dashboard: dashboardData }: Props) {
     const { auth } = usePage().props;
     const permissions = auth.permissions;
-    const quickActions: ReactNode[] = [];
-
-    if (permissions.createBap) {
-        quickActions.push(
-            <Button key="create-bap" asChild>
-                <Link href={createBap()}>
-                    <Plus />
-                    Buat BAP
-                </Link>
-            </Button>,
-        );
-    }
-
-    if (permissions.viewBapVerificationsPhase1) {
-        quickActions.push(
-            <Button key="phase-1" asChild>
-                <Link href={bapVerificationsIndex()}>
-                    <ClipboardList />
-                    Antrean Verifikasi Tahap 1
-                </Link>
-            </Button>,
-        );
-    }
-
-    if (permissions.viewBapVerificationsPhase2) {
-        quickActions.push(
-            <Button key="phase-2" asChild>
-                <Link href={bapVerificationsPhaseTwoIndex()}>
-                    <ClipboardList />
-                    Antrean Verifikasi Tahap 2
-                </Link>
-            </Button>,
-        );
-    }
-
-    if (permissions.viewBapAdministrations) {
-        quickActions.push(
-            <Button key="receipts" asChild>
-                <Link href={bapAdministrationsIndex()}>
-                    <ClipboardCheck />
-                    Terima BAP
-                </Link>
-            </Button>,
-        );
-    }
-
-    if (permissions.manageSkpdInventory) {
-        quickActions.push(
-            <Button key="allocation" variant="outline" asChild>
-                <Link href={createAllocation()}>
-                    <PackagePlus />
-                    Buat alokasi
-                </Link>
-            </Button>,
-        );
-    }
-
-    if (permissions.viewLaporanPemakaian) {
-        quickActions.push(
-            <Button key="report" variant="outline" asChild>
-                <Link href={laporanPemakaianIndex()}>
-                    <BarChart3 />
-                    Laporan Pemakaian
-                </Link>
-            </Button>,
-        );
-    }
+    const availableActions: (QuickAction | false)[] = [
+        permissions.createBap && {
+            key: 'create-bap',
+            href: createBap(),
+            icon: Plus,
+            label: 'Buat BAP',
+        },
+        permissions.viewBapVerificationsPhase1 && {
+            key: 'phase-1',
+            href: bapVerificationsIndex(),
+            icon: ClipboardList,
+            label: 'Antrean Verifikasi Tahap 1',
+        },
+        permissions.viewBapVerificationsPhase2 && {
+            key: 'phase-2',
+            href: bapVerificationsPhaseTwoIndex(),
+            icon: ClipboardList,
+            label: 'Antrean Verifikasi Tahap 2',
+        },
+        permissions.viewBapAdministrations && {
+            key: 'receipts',
+            href: bapAdministrationsIndex(),
+            icon: ClipboardCheck,
+            label: 'Terima BAP',
+        },
+        permissions.manageSkpdInventory && {
+            key: 'allocation',
+            href: createAllocation(),
+            icon: PackagePlus,
+            label: 'Buat alokasi',
+        },
+        permissions.viewLaporanPemakaian && {
+            key: 'report',
+            href: laporanPemakaianIndex(),
+            icon: BarChart3,
+            label: 'Laporan Pemakaian',
+        },
+    ];
+    const quickActions = availableActions.filter(
+        (action): action is QuickAction => action !== false,
+    );
 
     return (
         <>
@@ -106,12 +91,31 @@ export default function Dashboard({ dashboard: dashboardData }: Props) {
                             UPTD Pendapatan Daerah Wilayah Kota Kupang
                         </p>
                     }
-                    actions={quickActions.length > 0 ? quickActions : null}
+                    actions={
+                        quickActions.length > 0
+                            ? quickActions.map((action, actionIndex) => (
+                                  <Button
+                                      key={action.key}
+                                      variant={
+                                          actionIndex === 0
+                                              ? 'default'
+                                              : 'outline'
+                                      }
+                                      asChild
+                                  >
+                                      <Link href={action.href}>
+                                          <action.icon />
+                                          {action.label}
+                                      </Link>
+                                  </Button>
+                              ))
+                            : null
+                    }
                 />
 
                 <DashboardMetrics metrics={dashboardData.metrics} />
 
-                <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                <section className="grid gap-4">
                     <MyWork items={dashboardData.workItems} />
                     <RecentBaps items={dashboardData.recentBaps} />
                 </section>

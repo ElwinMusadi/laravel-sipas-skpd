@@ -24,8 +24,9 @@ type FilterBarProps = {
 };
 
 /**
- * Filter card shared by list pages: labelled fields, one submit button, and a
- * reset button that is only enabled while filters are applied.
+ * Filter card shared by list pages: labelled fields that flow in one row while
+ * they fit and wrap otherwise, one submit button, and a reset button that is
+ * only enabled while filters are applied.
  */
 export function FilterBar({
     onSubmit,
@@ -44,13 +45,11 @@ export function FilterBar({
             <CardContent>
                 <form
                     onSubmit={handleSubmit}
-                    className="flex flex-col gap-3 xl:flex-row xl:items-end"
+                    className="flex flex-wrap items-end gap-3"
                 >
-                    <div className="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        {children}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button type="submit" className="flex-1 xl:flex-none">
+                    {children}
+                    <div className="flex w-full items-center gap-2 sm:w-auto">
+                        <Button type="submit" className="flex-1 sm:flex-none">
                             {submitLabel}
                         </Button>
                         <Button
@@ -93,7 +92,7 @@ export function FilterSearch({
     placeholder?: string;
 }) {
     return (
-        <div className={cn('grid gap-1.5 sm:col-span-2', className)}>
+        <div className={cn('grid min-w-0 flex-[2_1_14rem] gap-1.5', className)}>
             <Label htmlFor={id} className="text-muted-foreground text-xs">
                 {label}
             </Label>
@@ -127,7 +126,7 @@ export function FilterSelect({
     allLabel: string;
 }) {
     return (
-        <div className={cn('grid gap-1.5', className)}>
+        <div className={cn('grid min-w-0 flex-[1_1_12rem] gap-1.5', className)}>
             <Label htmlFor={id} className="text-muted-foreground text-xs">
                 {label}
             </Label>
@@ -161,7 +160,7 @@ export function FilterField({
     children,
 }: FieldProps & { children: ReactNode }) {
     return (
-        <div className={cn('grid gap-1.5', className)}>
+        <div className={cn('grid min-w-0 flex-[1_1_12rem] gap-1.5', className)}>
             <Label htmlFor={id} className="text-muted-foreground text-xs">
                 {label}
             </Label>

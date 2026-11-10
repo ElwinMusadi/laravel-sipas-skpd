@@ -4,14 +4,32 @@
 **Fase saat ini:** Phase 19 — Manual Testing Readiness & End-to-End Workflow Hardening
 **Status:** PARTIAL — regresi otomatis siap; validasi browser manual belum dapat dinyatakan lulus.
 
+## Perbaikan Tampilan Pasca-Deploy UI/UX (10 November 2026)
+
+Setelah deploy, beberapa tampilan di production berantakan pada lebar 1024–1366px. Perbaikannya dilakukan di komponen bersama:
+
+- **Header halaman:** judul tidak lagi terjepit oleh tombol aksi, dan tombol aksi pindah ke bawah judul bila tidak muat. Dashboard hanya memiliki satu tombol aksi utama; sisanya bergaya outline.
+- **Badge status:** warna kembali seperti sebelumnya (oranye untuk antre/proses, amber untuk Tahap 2, hijau untuk selesai, merah untuk masalah). Kolom Status di tabel kini rata tengah dengan lebar tetap.
+- **Tabel:**
+  - kolom aksi tidak lagi menempel di kanan, tetapi tabel tetap bisa digeser seperti sebelumnya;
+  - header Nomerator tidak lagi memakai huruf monospace kecil;
+  - kolom sekunder (misalnya Dibuat/Diajukan, NIP, Login terakhir, Dicatat oleh) hanya tampil di layar ≥1536px, sehingga daftar utama muat di 1366px tanpa digeser; di kartu ponsel kolom tersebut tetap tampil;
+  - tabel tidak lagi melebarkan kartu induknya.
+- **Lain-lain:**
+  - filter tampil dalam satu baris selama muat;
+  - baris detail di kartu sempit menumpuk label di atas nilai;
+  - "Lihat semua" di Dashboard kembali sejajar dengan judul kartu;
+  - kartu daftar di ponsel tidak lagi terpotong;
+  - breadcrumb di ponsel hanya menampilkan halaman saat ini.
+
 ## Audit dan Perbaikan UI/UX Menyeluruh (10 November 2026)
 
 Audit statis seluruh halaman dan audit visual di browser (ponsel 390px dan desktop 1366px) menghasilkan fondasi UI bersama yang kini dipakai semua menu:
 
-- **Komponen bersama** (`resources/js/components/app/`): `PageHeader` (h1, tombol kembali, aksi), `DataTable` (tabel di layar lebar, kartu di ponsel, kolom aksi menempel di kanan), `FilterBar`/`FilterSearch`/`FilterSelect`/`FilterField` + hook `useIndexFilters` (filter berlabel, Reset dengan jumlah filter aktif), `ListFooter` (paginasi berbahasa Indonesia), `DetailList`/`DetailRow`, `StatusBadge` dengan peta status bersama (BAP, alokasi, Box, aktif/tidak aktif), `NomeratorInput`, dan `DatePicker` yang mendukung `id`/`name`/batas tanggal. Token warna baru `--info` dan `--warning` (terang/gelap); dialog panjang kini bisa di-scroll.
+- **Komponen bersama** (`resources/js/components/app/`): `PageHeader` (h1, tombol kembali, aksi), `DataTable` (tabel di layar lebar, kartu di ponsel), `FilterBar`/`FilterSearch`/`FilterSelect`/`FilterField` + hook `useIndexFilters` (filter berlabel, Reset dengan jumlah filter aktif), `ListFooter` (paginasi berbahasa Indonesia), `DetailList`/`DetailRow`, `StatusBadge` dengan peta status bersama (BAP, alokasi, Box, aktif/tidak aktif), `NomeratorInput`, dan `DatePicker` yang mendukung `id`/`name`/batas tanggal. Dialog panjang kini bisa di-scroll.
 - **Perbaikan utama:**
   - dashboard tidak lagi salah menampilkan "Tahap 1 lulus" untuk BAP yang sudah selesai, dan kini punya aksi cepat sesuai peran;
-  - semua daftar tampil sebagai kartu di ponsel, dan kolom aksi tidak lagi tersembunyi di desktop;
+  - semua daftar tampil sebagai kartu di ponsel;
   - nomor BAP menjadi kolom utama dan bisa dicari;
   - breadcrumb menyebut record yang benar;
   - label status, tombol "Kembali", Pengaturan, dan teks lain berbahasa Indonesia;

@@ -65,6 +65,7 @@ const userColumns: DataTableColumn<AssignedUser>[] = [
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (user) => <ActiveStatusBadge active={user.is_active} />,
         mobile: 'badge',

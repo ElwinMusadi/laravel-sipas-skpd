@@ -7,15 +7,17 @@ export type StatusMeta = { label: string; tone: StatusTone };
 
 const toneClassName: Record<StatusTone, string> = {
     neutral: 'border-border bg-muted text-muted-foreground',
-    info: 'border-info/30 bg-info/10 text-info',
-    warning: 'border-warning/30 bg-warning/10 text-warning',
-    success: 'border-success/30 bg-success/10 text-success',
+    info: 'border-primary/30 bg-primary/15 text-primary',
+    warning:
+        'border-amber-600/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
+    success: 'border-success/30 bg-success/15 text-success',
     danger: 'border-destructive/30 bg-destructive/10 text-destructive',
 };
 
 /**
- * Status pill on semantic color tokens so every status reads the same in light
- * and dark mode. Long labels wrap instead of being clipped.
+ * Status pill in the app's established colors: primary for waiting/in progress,
+ * amber for phase 2, green for done, red for problems. Stays on one line; the
+ * table status column and mobile cards decide when a long label may wrap.
  */
 export function StatusBadge({
     label,
@@ -23,14 +25,7 @@ export function StatusBadge({
     className,
 }: StatusMeta & { className?: string }) {
     return (
-        <Badge
-            variant="outline"
-            className={cn(
-                'h-auto max-w-full py-0.5 leading-tight whitespace-normal',
-                toneClassName[tone],
-                className,
-            )}
-        >
+        <Badge variant="outline" className={cn(toneClassName[tone], className)}>
             {label}
         </Badge>
     );

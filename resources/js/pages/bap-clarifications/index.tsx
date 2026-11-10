@@ -48,9 +48,17 @@ type Props = {
 const columns: DataTableColumn<Clarification>[] = [
     {
         id: 'bap',
-        header: 'Nomor BAP',
-        cell: (clarification) => clarification.bap_document_number,
-        className: 'font-medium whitespace-nowrap',
+        header: 'Nomor BAP · Tahap',
+        cell: (clarification) => (
+            <>
+                <span className="block font-medium whitespace-nowrap">
+                    {clarification.bap_document_number}
+                </span>
+                <span className="text-muted-foreground block text-xs font-normal">
+                    {clarification.stage_label}
+                </span>
+            </>
+        ),
         mobile: 'title',
     },
     {
@@ -69,12 +77,6 @@ const columns: DataTableColumn<Clarification>[] = [
         mobile: 'subtitle',
     },
     {
-        id: 'stage',
-        header: 'Tahap',
-        cell: (clarification) => clarification.stage_label,
-        className: 'whitespace-nowrap',
-    },
-    {
         id: 'discrepancy',
         header: 'Selisih',
         cell: (clarification) => (
@@ -87,10 +89,11 @@ const columns: DataTableColumn<Clarification>[] = [
                 </span>
             </>
         ),
-        className: 'max-w-xs whitespace-normal',
+        className: 'min-w-56 max-w-xs whitespace-normal',
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (clarification) => (
             <ClarificationStatusBadge
@@ -102,6 +105,7 @@ const columns: DataTableColumn<Clarification>[] = [
     },
     {
         id: 'requested',
+        wideOnly: true,
         header: 'Diminta',
         cell: (clarification) => (
             <>

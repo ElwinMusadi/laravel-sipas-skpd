@@ -86,6 +86,7 @@ const columns: DataTableColumn<Cancellation>[] = [
     },
     {
         id: 'description',
+        wideOnly: true,
         header: 'Keterangan singkat',
         cell: (cancellation) => (
             <span className="line-clamp-2">
@@ -96,6 +97,7 @@ const columns: DataTableColumn<Cancellation>[] = [
     },
     {
         id: 'created_by',
+        wideOnly: true,
         header: 'Dicatat oleh',
         cell: (cancellation) => cancellation.created_by,
     },
@@ -109,6 +111,7 @@ const columns: DataTableColumn<Cancellation>[] = [
     },
     {
         id: 'created_at',
+        wideOnly: true,
         header: 'Dicatat pada',
         cell: (cancellation) => formatDateTime(cancellation.created_at),
         className: 'text-muted-foreground whitespace-nowrap',
@@ -164,7 +167,7 @@ export default function BapCancellationIndex({
                             columns={columns}
                             getRowKey={(cancellation) => cancellation.id}
                             rowHref={(cancellation) => show(cancellation.id)}
-                            minWidthClassName="min-w-300"
+                            minWidthClassName="min-w-232"
                             caption="Riwayat SKPD Batal/Rusak"
                             actions={(cancellation) => (
                                 <>

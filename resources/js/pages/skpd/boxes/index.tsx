@@ -56,10 +56,10 @@ const columns: DataTableColumn<SkpdBoxSummary>[] = [
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (box) => <BoxStatusBadge status={box.status} />,
         mobile: 'badge',
-        className: 'min-w-36',
     },
     {
         id: 'total',
@@ -86,6 +86,7 @@ const columns: DataTableColumn<SkpdBoxSummary>[] = [
     },
     {
         id: 'received_at',
+        wideOnly: true,
         header: 'Diterima',
         cell: (box) => formatDate(box.received_at),
         className: 'whitespace-nowrap',

@@ -139,6 +139,7 @@ function queueColumns(isCompletedQueue: boolean): DataTableColumn<QueueBap>[] {
         },
         {
             id: 'status',
+            status: true,
             header: 'Status',
             cell: (bap) => (
                 <BapStatusBadge
@@ -165,6 +166,7 @@ function queueColumns(isCompletedQueue: boolean): DataTableColumn<QueueBap>[] {
         },
         {
             id: 'online',
+            wideOnly: true,
             header: 'Online',
             cell: (bap) => formatQuantity(bap.online_usage_count),
             numeric: true,
@@ -177,6 +179,7 @@ function queueColumns(isCompletedQueue: boolean): DataTableColumn<QueueBap>[] {
         },
         {
             id: 'verifiers',
+            wideOnly: true,
             header: 'Pemeriksa',
             cell: (bap) => (
                 <>

@@ -63,6 +63,7 @@ const columns: DataTableColumn<OfficialEntry>[] = [
     },
     {
         id: 'state',
+        status: true,
         header: 'Status',
         cell: (entry) => <StatusBadge {...officialStateMeta[entry.state]} />,
         mobile: 'badge',

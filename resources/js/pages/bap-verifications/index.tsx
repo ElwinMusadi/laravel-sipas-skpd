@@ -82,22 +82,18 @@ function queueColumns(stage: VerificationStage): DataTableColumn<QueueBap>[] {
         },
         {
             id: 'service_date',
-            header: 'Tanggal pelayanan',
-            cell: (bap) => formatDate(bap.service_date),
-            className: 'whitespace-nowrap',
-            mobile: 'subtitle',
-        },
-        {
-            id: 'loket',
-            header: 'Loket',
+            header: 'Tanggal · Loket',
             cell: (bap) => (
                 <>
-                    <span className="block">{bap.loket}</span>
+                    <span className="block whitespace-nowrap">
+                        {formatDate(bap.service_date)}
+                    </span>
                     <span className="text-muted-foreground block text-xs">
-                        oleh {bap.created_by}
+                        {bap.loket}
                     </span>
                 </>
             ),
+            mobile: 'subtitle',
         },
         {
             id: 'numerator',
@@ -113,15 +109,16 @@ function queueColumns(stage: VerificationStage): DataTableColumn<QueueBap>[] {
         },
         {
             id: 'online',
+            wideOnly: true,
             header: 'Online',
             cell: (bap) => formatQuantity(bap.online_usage_count),
             numeric: true,
         },
         {
             id: 'status',
+            status: true,
             header: 'Status',
             cell: (bap) => <BapStatusBadge status={bap.status} />,
-            className: 'min-w-40',
             mobile: 'badge',
         },
         {
@@ -169,10 +166,18 @@ function queueColumns(stage: VerificationStage): DataTableColumn<QueueBap>[] {
     } else {
         columns.push({
             id: 'submitted_at',
-            header: 'Diajukan',
-            cell: (bap) =>
-                bap.submitted_at ? formatDateTime(bap.submitted_at) : '—',
-            className: 'text-muted-foreground whitespace-nowrap',
+            wideOnly: true,
+            header: 'Dibuat · Diajukan',
+            cell: (bap) => (
+                <>
+                    <span className="block">{bap.created_by}</span>
+                    <span className="text-muted-foreground block text-xs whitespace-nowrap">
+                        {bap.submitted_at
+                            ? formatDateTime(bap.submitted_at)
+                            : '—'}
+                    </span>
+                </>
+            ),
         });
     }
 

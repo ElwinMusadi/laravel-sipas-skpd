@@ -73,12 +73,12 @@ const allocationColumns: DataTableColumn<Allocation>[] = [
     },
     {
         id: 'status',
+        status: true,
         header: 'Status',
         cell: (allocation) => (
             <AllocationStatusBadge status={allocation.status} />
         ),
         mobile: 'badge',
-        className: 'min-w-36',
     },
     {
         id: 'quantity',

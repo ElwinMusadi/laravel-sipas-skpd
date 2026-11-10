@@ -3,6 +3,8 @@ import { cn } from '@/lib/utils';
 
 /**
  * Label/value pairs for detail cards. Wrap `DetailRow`s in a `DetailList`.
+ * The list is a size container: in a narrow card each value sits under its
+ * label, and from 20rem the label and value share one line.
  */
 export function DetailList({
     children,
@@ -11,7 +13,11 @@ export function DetailList({
     children: ReactNode;
     className?: string;
 }) {
-    return <dl className={cn('grid gap-3 text-sm', className)}>{children}</dl>;
+    return (
+        <dl className={cn('@container grid gap-3 text-sm', className)}>
+            {children}
+        </dl>
+    );
 }
 
 export function DetailRow({
@@ -26,12 +32,12 @@ export function DetailRow({
     numeric?: boolean;
 }) {
     return (
-        <div className="flex items-start justify-between gap-4">
-            <dt className="text-muted-foreground shrink-0">{label}</dt>
+        <div className="flex flex-col gap-0.5 @xs:flex-row @xs:items-start @xs:justify-between @xs:gap-4">
+            <dt className="text-muted-foreground @xs:shrink-0">{label}</dt>
             <dd
                 className={cn(
-                    'min-w-0 text-right font-medium break-words',
-                    mono && 'font-mono text-xs whitespace-nowrap',
+                    'min-w-0 font-medium break-words @xs:text-right',
+                    mono && 'font-mono text-xs',
                     numeric && 'tabular-nums',
                 )}
             >

@@ -34,7 +34,7 @@ export const bapStatusMeta: Record<BapStatus, StatusMeta> = {
     },
     under_verification_phase_2: {
         label: 'Sedang Diverifikasi Tahap 2',
-        tone: 'warning',
+        tone: 'info',
     },
     waiting_reverification_phase_2: {
         label: 'Menunggu Verifikasi Ulang Tahap 2',
