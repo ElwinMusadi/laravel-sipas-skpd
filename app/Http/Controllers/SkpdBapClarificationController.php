@@ -7,6 +7,7 @@ use App\Actions\SkpdVerification\ReviewBapClarification;
 use App\Actions\SkpdVerification\SubmitBapClarificationResponse;
 use App\BapClarificationResolutionOutcome;
 use App\BapClarificationStatus;
+use App\BapStatus;
 use App\BapVerificationStage;
 use App\Http\Requests\SkpdVerification\ReviewBapClarificationRequest;
 use App\Http\Requests\SkpdVerification\StoreBapClarificationResponseRequest;
@@ -90,14 +91,19 @@ class SkpdBapClarificationController extends Controller
 
         Gate::authorize('view-bap-clarification', $clarification);
 
+        $awaitsResponse = $clarification->bap->status === BapStatus::NeedsClarification
+            && $clarification->status->canReceiveResponse();
+
         return Inertia::render('bap-clarifications/show', [
             'clarification' => $this->detailData($clarification),
             'can' => [
-                'open' => $actor->can('open-bap-clarification', $clarification),
-                'respond' => $actor->can('respond-bap-clarification', $clarification)
-                    && $clarification->status->canReceiveResponse(),
-                'review' => $actor->can('review-bap-clarification', $clarification)
-                    && $clarification->status === BapClarificationStatus::Responded,
+                'open' => $awaitsResponse
+                    && $actor->can('open-bap-clarification', $clarification),
+                'respond' => $awaitsResponse
+                    && $actor->can('respond-bap-clarification', $clarification),
+                'review' => $clarification->bap->status === BapStatus::NeedsClarification
+                    && $clarification->status === BapClarificationStatus::Responded
+                    && $actor->can('review-bap-clarification', $clarification),
             ],
         ]);
     }

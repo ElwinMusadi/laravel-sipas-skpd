@@ -216,7 +216,8 @@ class SkpdBapVerificationController extends Controller
             'phase_one_verification' => $this->verificationData($phaseOneVerification),
             'checklist' => $this->checklistData($bap, $verification),
             'can' => [
-                'start' => $actor->can($this->ability($stage, 'start'), $bap),
+                'start' => $stage->canStartFrom($bap->status)
+                    && $actor->can($this->ability($stage, 'start'), $bap),
                 'complete' => $actor->can($this->ability($stage, 'complete'))
                     && $verification?->status === BapVerificationStatus::InProgress
                     && $verification->verifier_id === $actor->id,

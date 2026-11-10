@@ -314,10 +314,14 @@ class SkpdAllocationController extends Controller
             'accepted_by' => $allocation->acceptor?->name,
             'accepted_at' => $allocation->accepted_at?->toIso8601String(),
             'can' => [
-                'accept' => $actor->can('accept-skpd-allocation', $allocation),
-                'edit' => $actor->can('update-skpd-allocation', $allocation),
-                'cancel' => $actor->can('cancel-skpd-allocation', $allocation),
-                'return_remainder' => $actor->can('return-skpd-allocation-remainder', $allocation)
+                'accept' => $allocation->status === SkpdAllocationStatus::Pending
+                    && $actor->can('accept-skpd-allocation', $allocation),
+                'edit' => $allocation->status === SkpdAllocationStatus::Pending
+                    && $actor->can('update-skpd-allocation', $allocation),
+                'cancel' => $allocation->status === SkpdAllocationStatus::Pending
+                    && $actor->can('cancel-skpd-allocation', $allocation),
+                'return_remainder' => $allocation->status === SkpdAllocationStatus::Accepted
+                    && $actor->can('return-skpd-allocation-remainder', $allocation)
                     && $allocation->quantity > $usedQuantity,
             ],
         ];

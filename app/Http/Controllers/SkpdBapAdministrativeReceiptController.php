@@ -235,7 +235,8 @@ class SkpdBapAdministrativeReceiptController extends Controller
                 'receipt_notes' => $bap->receipt_notes,
             ],
             'can' => [
-                'receive' => $actor->can('receive-bap-administratively', $bap),
+                'receive' => $bap->status === BapStatus::VerifiedPhase2
+                    && $actor->can('receive-bap-administratively', $bap),
             ],
             'segments' => $bap->usageSegments
                 ->map(fn ($segment): array => [

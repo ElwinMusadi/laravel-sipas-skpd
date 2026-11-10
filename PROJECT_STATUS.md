@@ -4,6 +4,21 @@
 **Fase saat ini:** Phase 19 — Manual Testing Readiness & End-to-End Workflow Hardening
 **Status:** PARTIAL — regresi otomatis siap; validasi browser manual belum dapat dinyatakan lulus.
 
+## Tombol Aksi Superadmin Mengikuti Status Record (10 November 2026)
+
+Superadmin lolos semua gate lewat `Gate::before`, termasuk syarat status di dalam gate. Akibatnya, tombol aksi yang tidak berlaku ikut tampil, misalnya:
+- "Terima handover" dan "Batalkan alokasi" pada alokasi yang sudah Diterima;
+- "Terima secara administratif" pada BAP yang sudah selesai;
+- "Mulai Verifikasi" pada BAP yang tidak sedang antre.
+
+Kini flag `can` di controller memeriksa status secara eksplisit:
+- `SkpdAllocationController`: terima, ubah, dan batal hanya untuk alokasi Pending; kembalikan sisa hanya untuk alokasi Accepted;
+- `SkpdBapAdministrativeReceiptController`: penerimaan hanya untuk BAP `verified_phase_2`;
+- `SkpdBapVerificationController`: Mulai hanya bila `canStartFrom`;
+- `SkpdBapClarificationController`: buka dan tanggapi hanya bila BAP `needs_clarification` dan tiket masih menunggu tanggapan; tinjau hanya bila tiket Responded.
+
+Wewenang Superadmin dan validasi status di Action tidak berubah. Test: `tests/Feature/SuperadminActionFlagsTest.php` (14 kasus).
+
 ## Perbaikan Tampilan Pasca-Deploy UI/UX (10 November 2026)
 
 Setelah deploy, beberapa tampilan di production berantakan pada lebar 1024–1366px. Perbaikannya dilakukan di komponen bersama:
